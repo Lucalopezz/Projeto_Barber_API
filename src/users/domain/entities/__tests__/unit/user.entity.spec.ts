@@ -24,10 +24,12 @@ describe('User Entity unit tests', () => {
     expect(sut.role).toBeDefined();
     expect(sut.role).toEqual(props.role);
   });
-  it('Should update name field', () => {
+  it('Should update name and role field', () => {
     const newName = 'New Name';
-    sut.update(newName);
+    const newRole = 'BARBER';
+    sut.update(newName, newRole as any);
     expect(sut.name).toEqual(newName);
+    expect(sut.role).toEqual(newRole);
   });
   it('Getter of email field', () => {
     expect(sut.email).toBeDefined();

@@ -15,16 +15,17 @@ export class UserEntity extends Entity<UserProps> {
     public readonly props: UserProps,
     id?: string,
   ) {
-    // UserEntity.validade(props);
+    UserEntity.validade(props);
     super(props, id);
     this.props.createdAt = this.props.createdAt ?? new Date();
   }
-  update(value: string): void {
-    //UserEntity.validade({ ...this.props, name: value });
-    this.name = value;
+  update(name: string, role: Role): void {
+    UserEntity.validade({ ...this.props, name, role });
+    this.name = name;
+    this.role = role;
   }
   updatePassword(value: string): void {
-    //UserEntity.validade({ ...this.props, password: value });
+    UserEntity.validade({ ...this.props, password: value });
     this.password = value;
   }
 
