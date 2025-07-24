@@ -1,9 +1,15 @@
 import { Entity } from 'src/shared/domain/entities/entity';
+import { UserValidatorFactory } from '../validators/user.validator';
+
+export enum Role {
+  CLIENT = 'CLIENT',
+  BARBER = 'BARBER',
+}
 
 export type UserProps = {
   name: string;
   email: string;
-  role: string;
+  role: Role;
   password: string;
   createdAt?: Date;
 };
@@ -45,5 +51,11 @@ export class UserEntity extends Entity<UserProps> {
     return this.props.createdAt;
   }
 
-  //   static validade(data: UserProps) {}
+  static validade(data: UserProps) {
+    const userValidator = UserValidatorFactory.create();
+    const isValid = userValidator.validate(data);
+    if (!isValid) {
+      throw new Error('Need to implement a proper error ');
+    }
+  }
 }
