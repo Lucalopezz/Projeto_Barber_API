@@ -28,15 +28,53 @@ The project applies **Clean Architecture**, **Domain-Driven Design (DDD)** princ
 The application follows Clean Architecture, dividing the project into layers such as:
 
 src/
+├── appointments/            ⬅ Módulo de agendamentos
+│   ├── application/
+│   │   ├── dtos/
+│   │   ├── use-cases/
+│   │   └── interfaces/
+│   │
+│   ├── domain/
+│   │   ├── entities/         ⬅ Ex: Appointment.ts
+│   │   └── value-objects/    ⬅ Ex: DateRange.ts
+│   │
+│   └── infrastructure/
+│       ├── controllers/
+│       ├── repositories/
+│       ├── mappers/
+│       └── appointment.module.ts
 │
-├── shared/ # Reusable building blocks (base classes, core logic)
-├── modules/
-│ ├── users/ # User context (auth, profiles, etc.)
-│ ├── appointments/ # Scheduling and availability
-│ └── barbers/ # Barber-specific logic
+├── users/                   ⬅ Módulo de usuários (clientes e barbearia)
+│   ├── application/
+│   ├── domain/
+│   └── infrastructure/
 │
-├── infra/ # Infrastructure (DB, services, controllers, etc.)
-└── main.ts # Application bootstrap
+├── services/                ⬅ Serviços oferecidos (corte, barba, combo etc)
+│   ├── application/
+│   ├── domain/
+│   └── infrastructure/
+│
+├── auth/                    ⬅ Autenticação e autorização
+│   ├── application/
+│   ├── domain/
+│   └── infrastructure/
+│
+├── shared/                  ⬅ Código reutilizável e utilitários
+│   ├── application/
+│   │   └── interfaces/
+│   ├── domain/
+│   │   └── value-objects/     ⬅ Ex: Email.ts, UUID.ts
+│   └── infrastructure/
+│       ├── database/
+│       ├── exceptions/
+│       ├── middlewares/
+│       ├── guards/
+│       ├── interceptors/
+│       └── utils/
+│
+├── app.module.ts
+├── global-config.ts
+└── main.ts
 
 
 ## 🚧 Status
