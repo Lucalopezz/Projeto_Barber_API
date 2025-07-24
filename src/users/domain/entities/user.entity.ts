@@ -1,6 +1,7 @@
 import { Entity } from '@/shared/domain/entities/entity';
 import { UserValidatorFactory } from '../validators/user.validator';
 import { Role } from './role.enum';
+import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
 export type UserProps = {
   name: string;
@@ -19,10 +20,21 @@ export class UserEntity extends Entity<UserProps> {
     super(props, id);
     this.props.createdAt = this.props.createdAt ?? new Date();
   }
-  update(name: string, role: Role): void {
-    UserEntity.validade({ ...this.props, name, role });
-    this.name = name;
-    this.role = role;
+  update(name?: string, role?: Role): void {
+    const updatedProps = {
+      ...this.props,
+      ...(name !== undefined && { name }),
+      ...(role !== undefined && { role }),
+    };
+
+    UserEntity.validade(updatedProps);
+
+    if (name !== undefined) {
+      this.name = name;
+    }
+    if (role !== undefined) {
+      this.role = role;
+    }
   }
   updatePassword(value: string): void {
     UserEntity.validade({ ...this.props, password: value });
@@ -58,7 +70,7 @@ export class UserEntity extends Entity<UserProps> {
     const userValidator = UserValidatorFactory.create();
     const isValid = userValidator.validate(data);
     if (!isValid) {
-      throw new Error('Need to implement a proper error ');
+      throw new EntityValidationError(userValidator.errors);
     }
   }
 }
