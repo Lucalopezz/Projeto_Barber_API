@@ -1,10 +1,6 @@
-import { Entity } from 'src/shared/domain/entities/entity';
+import { Entity } from '@/shared/domain/entities/entity';
 import { UserValidatorFactory } from '../validators/user.validator';
-
-export enum Role {
-  CLIENT = 'CLIENT',
-  BARBER = 'BARBER',
-}
+import { Role } from './role.enum';
 
 export type UserProps = {
   name: string;
@@ -37,6 +33,12 @@ export class UserEntity extends Entity<UserProps> {
   }
   private set name(value: string) {
     this.props.name = value;
+  }
+  get role(): string {
+    return this.props.role;
+  }
+  private set role(value: Role) {
+    this.props.role = value;
   }
   get email(): string {
     return this.props.email;

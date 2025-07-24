@@ -7,8 +7,9 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { Role, UserProps } from '../entities/user.entity';
-import { ClassValidatorFields } from 'src/shared/domain/validators/class-validator-fields';
+import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
+import { UserProps } from '../entities/user.entity';
+import { Role } from '../entities/role.enum';
 
 export class UserRules {
   @MaxLength(255)
