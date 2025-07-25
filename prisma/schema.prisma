@@ -6,10 +6,86 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+enum Role {
+  barber
+  client
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relacionamentos
+  barberShop   BarberShop? @relation(fields: [barberShopId], references: [id])
+  barberShopId String?
+
+  appointmentsCreated Appointment[] @relation("ClientAppointments")
+  appointmentsTaken   Appointment[] @relation("BarberAppointments")
+
+  // para simplificar, um barber só pode estar em uma barbearia
+}
+
+model BarberShop {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  barbers      User[]
+  services     Service[]
+  appointments Appointment[]
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String
+  price       Decimal
+  duration    Int // duração em minutos
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  barberShop   BarberShop @relation(fields: [barberShopId], references: [id])
+  barberShopId String
+
+  appointments Appointment[]
+}
+
+model Appointment {
+  id        String            @id @default(uuid())
+  date      DateTime
+  status    AppointmentStatus @default(scheduled)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  client   User   @relation("ClientAppointments", fields: [clientId], references: [id])
+  clientId String
+
+  barber   User   @relation("BarberAppointments", fields: [barberId], references: [id])
+  barberId String
+
+  service   Service @relation(fields: [serviceId], references: [id])
+  serviceId String
+
+  barberShop   BarberShop @relation(fields: [barberShopId], references: [id])
+  barberShopId String
+}
+
+enum AppointmentStatus {
+  scheduled
+  completed
+  cancelled
 }
