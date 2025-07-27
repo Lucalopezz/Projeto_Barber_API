@@ -5,6 +5,7 @@ import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { UserModelMapper } from './models/user-model.mapper';
+import { Role } from '@prisma/client';
 
 export class UserPrismaRepository implements UserRepository.Repository {
   constructor(private prismaService: PrismaService) {}
@@ -42,33 +43,32 @@ export class UserPrismaRepository implements UserRepository.Repository {
     const orderByField = sortable ? props.sort : 'createdAt';
     const orderByDir = sortable ? props.sortDir : 'desc';
 
-    const count = await this.prismaService.user.count({
-      ...(props.filter && {
-        where: {
-          name: {
-            contains: props.filter,
-            mode: 'insensitive',
-          },
-        },
-      }),
-    });
+    // when the valeu is not a valid role
+    const isValidRole = Object.values(Role).includes(props.filter as Role);
+
+    let where = {};
+    // Search in either name OR role fields (if role filter is valid)
+    if (props.filter) {
+      where = {
+        OR: [
+          { name: { contains: props.filter, mode: 'insensitive' } },
+          ...(isValidRole ? [{ role: { equals: props.filter } }] : []),
+        ],
+      };
+    }
+
+    // Get total count of matching records (for pagination)
+    const count = await this.prismaService.user.count({ where });
+
     const models = await this.prismaService.user.findMany({
-      ...(props.filter && {
-        where: {
-          name: {
-            contains: props.filter,
-            mode: 'insensitive',
-          },
-        },
-      }),
-      orderBy: {
-        [orderByField]: orderByDir,
-      },
-      skip: props.page && props.page > 0 ? (props.page - 1) * props.perPage : 1,
+      where, // Apply the constructed filters
+      orderBy: { [orderByField]: orderByDir },
+      skip: props.page && props.page > 0 ? (props.page - 1) * props.perPage : 0,
       take: props.perPage && props.perPage > 0 ? props.perPage : 15,
     });
+
     return new UserRepository.UserSearchResult({
-      items: await models.map((model) => UserModelMapper.toEntity(model)),
+      items: models.map((model) => UserModelMapper.toEntity(model)),
       total: count,
       currentPage: props.page,
       perPage: props.perPage,

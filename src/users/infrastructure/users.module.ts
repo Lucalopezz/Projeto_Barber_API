@@ -6,6 +6,7 @@ import { BcryptjsHashProvider } from '@/shared/application/providers/bcryptjs-ha
 import { CreateUserUseCase } from '../application/usecases/create-user.usecase';
 import { UserRepository } from '../domain/repositories/user.repository';
 import { HashProvider } from '@/shared/application/providers/hash-provider';
+import { ListUsersUseCase } from '../application/usecases/list-users.usecase';
 
 @Module({
   controllers: [UsersController],
@@ -27,7 +28,6 @@ import { HashProvider } from '@/shared/application/providers/hash-provider';
     },
     {
       provide: CreateUserUseCase.UseCase,
-      // this is the method to inject dependencies into the use case
       useFactory: (
         userRepository: UserRepository.Repository,
         hashProvider: HashProvider,
@@ -35,6 +35,13 @@ import { HashProvider } from '@/shared/application/providers/hash-provider';
         return new CreateUserUseCase.UseCase(userRepository, hashProvider);
       },
       inject: ['UserRepository', 'HashProvider'],
+    },
+    {
+      provide: ListUsersUseCase.UseCase,
+      useFactory: (userRepository: UserRepository.Repository) => {
+        return new ListUsersUseCase.UseCase(userRepository);
+      },
+      inject: ['UserRepository'],
     },
   ],
 })
