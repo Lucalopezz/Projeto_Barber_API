@@ -9,6 +9,7 @@ import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { ConflictError } from '@/shared/domain/errors/conflict-error';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
+import { Role } from '@/users/domain/entities/role.enum';
 
 describe('UserPrismaRepository integration tests', () => {
   const prismaService = new PrismaClient();
@@ -237,6 +238,100 @@ describe('UserPrismaRepository integration tests', () => {
       expect(searchOutputPage2.items[0].toJSON()).toMatchObject(
         entities[2].toJSON(),
       );
+    });
+    it('should filter users by valid role (barber)', async () => {
+      const testUsers = [
+        { ...UserDataBuilder({}), role: Role.client },
+        { ...UserDataBuilder({}), role: Role.barber },
+        { ...UserDataBuilder({}), role: Role.barber },
+        { ...UserDataBuilder({}), role: Role.client },
+        { ...UserDataBuilder({}), role: Role.barber },
+      ];
+
+      await prismaService.user.createMany({
+        data: testUsers.map((user, index) => ({
+          ...user,
+          email: `user${index}@test.com`,
+          createdAt: new Date(),
+        })),
+      });
+
+      // Act - Search for barbers
+      const result = await sut.search(
+        new UserRepository.UserSearchParams({
+          filter: 'barber',
+          sort: 'createdAt',
+          sortDir: 'asc',
+        }),
+      );
+
+      // Assert
+      expect(result.total).toBe(3); // Should find 3 barbers
+      result.items.forEach((user) => {
+        expect(user.role).toBe(Role.barber);
+      });
+    });
+    it('should not apply role filter for invalid role values', async () => {
+      await prismaService.user.createMany({
+        data: [
+          { ...UserDataBuilder({ name: 'barber1' }), role: Role.barber },
+          { ...UserDataBuilder({ name: 'client1' }), role: Role.client },
+          { ...UserDataBuilder({ name: 'testuser' }), role: Role.client },
+        ],
+      });
+      const result = await sut.search(
+        new UserRepository.UserSearchParams({
+          filter: 'invalid_role',
+          sort: 'role',
+          sortDir: 'asc',
+        }),
+      );
+      expect(result.items.length).toBe(0);
+    });
+    it('should filter STRICTLY by role when searching for valid roles', async () => {
+      await prismaService.user.createMany({
+        data: [
+          {
+            ...UserDataBuilder({ name: 'John Barber' }),
+            role: Role.barber,
+            email: 'barber1@test.com',
+          },
+          {
+            ...UserDataBuilder({ name: 'Mike Client' }),
+            role: Role.client,
+            email: 'client1@test.com',
+          },
+          {
+            ...UserDataBuilder({ name: 'Anna Barber' }),
+            role: Role.barber,
+            email: 'barber2@test.com',
+          },
+          {
+            ...UserDataBuilder({ name: 'Peter Barber' }),
+            role: Role.client,
+            email: 'client2@test.com',
+          },
+        ],
+      });
+
+      // Act: Search a role = 'barber'
+      const result = await sut.search(
+        new UserRepository.UserSearchParams({
+          filter: 'barber', // VAlid role
+          sort: 'name',
+          sortDir: 'asc',
+        }),
+      );
+
+      // Assert
+      expect(result.total).toBe(2);
+      expect(result.items.map((u) => u.email)).toEqual([
+        'barber2@test.com', // Anna Barber (barber)
+        'barber1@test.com', // John Barber (barber)
+      ]);
+      expect(
+        result.items.some((u) => u.email === 'client2@test.com'),
+      ).toBeFalsy();
     });
   });
 });

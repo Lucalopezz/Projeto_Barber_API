@@ -43,18 +43,17 @@ export class UserPrismaRepository implements UserRepository.Repository {
     const orderByField = sortable ? props.sort : 'createdAt';
     const orderByDir = sortable ? props.sortDir : 'desc';
 
-    // when the valeu is not a valid role
     const isValidRole = Object.values(Role).includes(props.filter as Role);
 
     let where = {};
-    // Search in either name OR role fields (if role filter is valid)
     if (props.filter) {
-      where = {
-        OR: [
-          { name: { contains: props.filter, mode: 'insensitive' } },
-          ...(isValidRole ? [{ role: { equals: props.filter } }] : []),
-        ],
-      };
+      if (isValidRole) {
+        // If filter is a valid role, search by role
+        where = { role: { equals: props.filter } };
+      } else {
+        // If filter is not a valid role, search only in name
+        where = { name: { contains: props.filter, mode: 'insensitive' } };
+      }
     }
 
     // Get total count of matching records (for pagination)
