@@ -2,13 +2,12 @@ import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import { UserOutput, UserOutputMapper } from '../dtos/user-output.dto';
 import { Role } from '@/users/domain/entities/role.enum';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
-
 import { HashProvider } from '@/shared/application/providers/hash-provider';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace CreateUseCase {
+export namespace CreateUserUseCase {
   export type Input = {
     email: string;
     role: Role;
@@ -19,8 +18,8 @@ export namespace CreateUseCase {
 
   export class UseCase implements UseCaseContract<Input, Output> {
     constructor(
-      private readonly hashProvider: HashProvider,
       private userRepository: UserRepository.Repository,
+      private hashProvider: HashProvider,
     ) {}
     async execute(input: Input): Promise<UserOutput> {
       const { email, password, role, name } = input;
