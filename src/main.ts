@@ -5,6 +5,7 @@ import {
 } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
 import { EnvConfigService } from './shared/infrastructure/env-config/env-config.service';
+import { applyGlobalConfig } from './global-config';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -12,6 +13,8 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
   const envConfigService = app.get(EnvConfigService);
+
+  applyGlobalConfig(app);
 
   const port = envConfigService.getAppPort() || 3001;
   await app.listen(port, '0.0.0.0');

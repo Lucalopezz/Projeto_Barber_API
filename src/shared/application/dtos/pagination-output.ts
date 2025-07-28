@@ -9,9 +9,9 @@ export type PaginationOutput<Item = any> = {
   perPage: number;
 };
 export class PaginationOutputMapper {
-  static toOutput<Item = any>(
+  static toOutput<Item = any, Filter = any>(
     items: Item[],
-    result: SearchResult<Entity>,
+    result: SearchResult<Entity, Filter>,
   ): PaginationOutput<Item> {
     return {
       items: items,

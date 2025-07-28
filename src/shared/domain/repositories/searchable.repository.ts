@@ -86,10 +86,15 @@ export class SearchParams<Filter = string> {
     return this._filter;
   }
   private set filter(value: Filter | null) {
-    this._filter =
-      value === null || value === undefined || value === ''
-        ? null
-        : (`${value}` as any);
+    if (
+      value === null ||
+      value === undefined ||
+      (typeof value === 'string' && value === '')
+    ) {
+      this._filter = null;
+    } else {
+      this._filter = value;
+    }
   }
 }
 

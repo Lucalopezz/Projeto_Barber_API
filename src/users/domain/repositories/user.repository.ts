@@ -6,9 +6,14 @@ import {
   SearchResult,
 } from '@/shared/domain/repositories/searchable.repository';
 import { UserEntity } from '../entities/user.entity';
+import { Role } from '../entities/role.enum';
 
 export namespace UserRepository {
-  export type Filter = string;
+  // An proper filter for this repo
+  export type Filter = {
+    name?: string;
+    role?: Role;
+  };
 
   export class UserSearchParams extends SearchParams<Filter> {}
 

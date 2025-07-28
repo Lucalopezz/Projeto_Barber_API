@@ -5,7 +5,6 @@ import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { UserModelMapper } from './models/user-model.mapper';
-import { Role } from '@prisma/client';
 
 export class UserPrismaRepository implements UserRepository.Repository {
   constructor(private prismaService: PrismaService) {}
@@ -43,31 +42,36 @@ export class UserPrismaRepository implements UserRepository.Repository {
     const orderByField = sortable ? props.sort : 'createdAt';
     const orderByDir = sortable ? props.sortDir : 'desc';
 
-    const isValidRole = Object.values(Role).includes(props.filter as Role);
+    const f = props.filter as UserRepository.Filter;
+    const where: any = {};
 
-    let where = {};
-    if (props.filter) {
-      if (isValidRole) {
-        // If filter is a valid role, search by role
-        where = { role: { equals: props.filter } };
-      } else {
-        // If filter is not a valid role, search only in name
-        where = { name: { contains: props.filter, mode: 'insensitive' } };
+    if (f) {
+      // Create the query as the params comes from the request
+      const clauses = [];
+      if (f.role) {
+        // If there is a role, it pushs in the array
+        clauses.push({ role: { equals: f.role } });
+      }
+      if (f.name) {
+        // If there is a name, it pushs in the array
+        clauses.push({ name: { contains: f.name, mode: 'insensitive' } });
+      }
+      // And if there are those 2, use AND to search in the both camps
+      if (clauses.length > 0) {
+        where.AND = clauses;
       }
     }
 
-    // Get total count of matching records (for pagination)
     const count = await this.prismaService.user.count({ where });
 
     const models = await this.prismaService.user.findMany({
-      where, // Apply the constructed filters
+      where,
       orderBy: { [orderByField]: orderByDir },
       skip: props.page && props.page > 0 ? (props.page - 1) * props.perPage : 0,
       take: props.perPage && props.perPage > 0 ? props.perPage : 15,
     });
-
     return new UserRepository.UserSearchResult({
-      items: models.map((model) => UserModelMapper.toEntity(model)),
+      items: models.map((m) => UserModelMapper.toEntity(m)),
       total: count,
       currentPage: props.page,
       perPage: props.perPage,
