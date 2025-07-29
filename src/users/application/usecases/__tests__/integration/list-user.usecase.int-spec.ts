@@ -61,56 +61,61 @@ describe('ListUsersUseCase integration tests', () => {
     });
   });
 
-  it('should returns output using filter, sort and paginate', async () => {
+  it('should return paginated and filtered users by name and role', async () => {
     const createdAt = new Date();
     const entities: UserEntity[] = [];
-    const arrange = ['test', 'a', 'TEST', 'b', 'TeSt'];
-    arrange.forEach((element, index) => {
+    const names = ['test', 'a', 'TEST', 'b', 'TeSt'];
+    names.forEach((nameValue, index) => {
       entities.push(
         new UserEntity({
-          ...UserDataBuilder({ name: element }),
+          ...UserDataBuilder({ name: nameValue, role: Role.client }),
           createdAt: new Date(createdAt.getTime() + index),
         }),
       );
     });
-
     await prismaService.user.createMany({
-      data: entities.map((item) => item.toJSON()),
+      data: entities.map((i) => i.toJSON()),
     });
 
+    // page 1
     let output = await sut.execute({
       page: 1,
       perPage: 2,
       sort: 'name',
       sortDir: 'asc',
-      filter: 'TEST',
+      name: 'TEST',
+      role: Role.client,
     });
 
+    const expectedPage1 = [entities[0].toJSON(), entities[4].toJSON()];
     expect(output).toMatchObject({
-      items: [entities[0].toJSON(), entities[4].toJSON()],
+      items: expectedPage1,
       total: 3,
       currentPage: 1,
       perPage: 2,
       lastPage: 2,
     });
 
+    // page 2 should return the remaining match
     output = await sut.execute({
       page: 2,
       perPage: 2,
       sort: 'name',
       sortDir: 'asc',
-      filter: 'TEST',
+      name: 'TEST',
+      role: Role.client,
     });
-
+    const expectedPage2 = [entities[2].toJSON()];
     expect(output).toMatchObject({
-      items: [entities[2].toJSON()],
+      items: expectedPage2,
       total: 3,
       currentPage: 2,
       perPage: 2,
       lastPage: 2,
     });
   });
-  it('should filter users by barber role using existing params', async () => {
+
+  it('should filter users by barber role', async () => {
     const createdAt = new Date();
     const entities: UserEntity[] = [];
 
@@ -138,8 +143,8 @@ describe('ListUsersUseCase integration tests', () => {
 
     const output = await sut.execute({
       sort: 'role',
-      filter: 'barber',
       sortDir: 'asc',
+      role: Role.barber,
     });
 
     const expectedBarbers = entities
@@ -148,7 +153,7 @@ describe('ListUsersUseCase integration tests', () => {
 
     expect(output).toMatchObject({
       items: expectedBarbers,
-      total: 3,
+      total: expectedBarbers.length,
       currentPage: 1,
       perPage: 15,
       lastPage: 1,
