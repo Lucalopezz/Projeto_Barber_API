@@ -15,6 +15,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserUseCase } from '../application/usecases/create-user.usecase';
 import { ListUsersUseCase } from '../application/usecases/list-users.usecase';
 import { ListUsersDto } from './dto/list-users.dto';
+import { UserCollectionPresenter } from './presenters/user.presenter';
 
 @Controller('users')
 export class UsersController {
@@ -23,6 +24,10 @@ export class UsersController {
 
   @Inject(ListUsersUseCase.UseCase)
   private listUsersUseCase: ListUsersUseCase.UseCase;
+
+  static listUsersToResponse(output: ListUsersUseCase.Output) {
+    return new UserCollectionPresenter(output);
+  }
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
@@ -37,8 +42,7 @@ export class UsersController {
   @Get()
   async search(@Query() searchParams: ListUsersDto) {
     const output = await this.listUsersUseCase.execute(searchParams);
-    // return UsersController.listUsersToResponse(output);
-    return output;
+    return UsersController.listUsersToResponse(output);
   }
 
   @Get(':id')
