@@ -15,7 +15,12 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { CreateUserUseCase } from '../application/usecases/create-user.usecase';
 import { ListUsersUseCase } from '../application/usecases/list-users.usecase';
 import { ListUsersDto } from './dto/list-users.dto';
-import { UserCollectionPresenter } from './presenters/user.presenter';
+import {
+  UserCollectionPresenter,
+  UserPresenter,
+} from './presenters/user.presenter';
+import { GetUserUsecase } from '../application/usecases/get-user.usecase';
+import { UserOutput } from '../application/dtos/user-output.dto';
 
 @Controller('users')
 export class UsersController {
@@ -24,6 +29,13 @@ export class UsersController {
 
   @Inject(ListUsersUseCase.UseCase)
   private listUsersUseCase: ListUsersUseCase.UseCase;
+
+  @Inject(GetUserUsecase.UseCase)
+  private getUserUsecase: GetUserUsecase.UseCase;
+
+  static userToResponse(output: UserOutput) {
+    return new UserPresenter(output);
+  }
 
   static listUsersToResponse(output: ListUsersUseCase.Output) {
     return new UserCollectionPresenter(output);
@@ -34,11 +46,6 @@ export class UsersController {
     return this.createUserUseCase.execute(createUserDto);
   }
 
-  // @Get()
-  // findAll() {
-  //   return;
-  // }
-
   @Get()
   async search(@Query() searchParams: ListUsersDto) {
     const output = await this.listUsersUseCase.execute(searchParams);
@@ -46,8 +53,9 @@ export class UsersController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return;
+  async findOne(@Param('id') id: string) {
+    const output = await this.getUserUsecase.execute({ id });
+    return UsersController.userToResponse(output);
   }
 
   @Patch(':id')
