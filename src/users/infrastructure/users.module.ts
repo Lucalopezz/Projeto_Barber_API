@@ -7,7 +7,7 @@ import { CreateUserUseCase } from '../application/usecases/create-user.usecase';
 import { UserRepository } from '../domain/repositories/user.repository';
 import { HashProvider } from '@/shared/application/providers/hash-provider';
 import { ListUsersUseCase } from '../application/usecases/list-users.usecase';
-import { GetUserUsecase } from '../application/usecases/get-user.usecase';
+import { GetUserUseCase } from '../application/usecases/get-user.usecase';
 
 @Module({
   controllers: [UsersController],
@@ -45,9 +45,9 @@ import { GetUserUsecase } from '../application/usecases/get-user.usecase';
       inject: ['UserRepository'],
     },
     {
-      provide: GetUserUsecase.UseCase,
+      provide: GetUserUseCase.UseCase,
       useFactory: (userRepository: UserRepository.Repository) => {
-        return new GetUserUsecase.UseCase(userRepository);
+        return new GetUserUseCase.UseCase(userRepository);
       },
       inject: ['UserRepository'],
     },

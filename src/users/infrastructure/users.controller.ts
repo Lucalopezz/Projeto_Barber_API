@@ -19,7 +19,7 @@ import {
   UserCollectionPresenter,
   UserPresenter,
 } from './presenters/user.presenter';
-import { GetUserUsecase } from '../application/usecases/get-user.usecase';
+import { GetUserUseCase } from '../application/usecases/get-user.usecase';
 import { UserOutput } from '../application/dtos/user-output.dto';
 
 @Controller('users')
@@ -30,8 +30,8 @@ export class UsersController {
   @Inject(ListUsersUseCase.UseCase)
   private listUsersUseCase: ListUsersUseCase.UseCase;
 
-  @Inject(GetUserUsecase.UseCase)
-  private getUserUsecase: GetUserUsecase.UseCase;
+  @Inject(GetUserUseCase.UseCase)
+  private getUserUsecase: GetUserUseCase.UseCase;
 
   static userToResponse(output: UserOutput) {
     return new UserPresenter(output);

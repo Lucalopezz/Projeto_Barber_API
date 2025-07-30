@@ -3,7 +3,7 @@ import { UserOutput, UserOutputMapper } from '../dtos/user-output.dto';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
-export namespace GetUserUsecase {
+export namespace GetUserUseCase {
   export type Input = {
     id: string;
   };
