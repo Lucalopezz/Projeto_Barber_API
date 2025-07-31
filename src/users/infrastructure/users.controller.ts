@@ -9,9 +9,10 @@ import {
   Delete,
   Inject,
   Query,
+  Put,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+
 import { CreateUserUseCase } from '../application/usecases/create-user.usecase';
 import { ListUsersUseCase } from '../application/usecases/list-users.usecase';
 import { ListUsersDto } from './dto/list-users.dto';
@@ -23,6 +24,8 @@ import { GetUserUseCase } from '../application/usecases/get-user.usecase';
 import { UserOutput } from '../application/dtos/user-output.dto';
 import { UpdatePasswordUseCase } from '../application/usecases/update-password.usecase';
 import { UpdatePasswordDto } from './dto/update-password.dto';
+import { UpdateUserUseCase } from '../application/usecases/update-user.usecase';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('users')
 export class UsersController {
@@ -31,6 +34,9 @@ export class UsersController {
 
   @Inject(UpdatePasswordUseCase.UseCase)
   private updatePasswordUseCase: UpdatePasswordUseCase.UseCase;
+
+  @Inject(UpdateUserUseCase.UseCase)
+  private updateUserUseCase: UpdateUserUseCase.UseCase;
 
   @Inject(ListUsersUseCase.UseCase)
   private listUsersUseCase: ListUsersUseCase.UseCase;
@@ -60,6 +66,15 @@ export class UsersController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const output = await this.getUserUsecase.execute({ id });
+    return UsersController.userToResponse(output);
+  }
+
+  @Put(':id')
+  async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
+    const output = await this.updateUserUseCase.execute({
+      id,
+      ...updateUserDto,
+    });
     return UsersController.userToResponse(output);
   }
 

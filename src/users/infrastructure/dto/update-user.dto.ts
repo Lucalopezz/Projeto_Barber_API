@@ -1,4 +1,13 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserDto } from './create-user.dto';
+import { UpdateUserUseCase } from '@/users/application/usecases/update-user.usecase';
+import { Role } from '@/users/domain/entities/role.enum';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
+export class UpdateUserDto implements Omit<UpdateUserUseCase.Input, 'id'> {
+  @IsString()
+  @IsOptional()
+  name: string;
+
+  @IsOptional()
+  @IsEnum(Role)
+  role: Role;
+}

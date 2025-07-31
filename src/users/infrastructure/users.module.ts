@@ -9,6 +9,7 @@ import { HashProvider } from '@/shared/application/providers/hash-provider';
 import { ListUsersUseCase } from '../application/usecases/list-users.usecase';
 import { GetUserUseCase } from '../application/usecases/get-user.usecase';
 import { UpdatePasswordUseCase } from '../application/usecases/update-password.usecase';
+import { UpdateUserUseCase } from '../application/usecases/update-user.usecase';
 
 @Module({
   controllers: [UsersController],
@@ -59,6 +60,13 @@ import { UpdatePasswordUseCase } from '../application/usecases/update-password.u
       provide: GetUserUseCase.UseCase,
       useFactory: (userRepository: UserRepository.Repository) => {
         return new GetUserUseCase.UseCase(userRepository);
+      },
+      inject: ['UserRepository'],
+    },
+    {
+      provide: UpdateUserUseCase.UseCase,
+      useFactory: (userRepository: UserRepository.Repository) => {
+        return new UpdateUserUseCase.UseCase(userRepository);
       },
       inject: ['UserRepository'],
     },
