@@ -21,11 +21,16 @@ import {
 } from './presenters/user.presenter';
 import { GetUserUseCase } from '../application/usecases/get-user.usecase';
 import { UserOutput } from '../application/dtos/user-output.dto';
+import { UpdatePasswordUseCase } from '../application/usecases/update-password.usecase';
+import { UpdatePasswordDto } from './dto/update-password.dto';
 
 @Controller('users')
 export class UsersController {
   @Inject(CreateUserUseCase.UseCase)
   private createUserUseCase: CreateUserUseCase.UseCase;
+
+  @Inject(UpdatePasswordUseCase.UseCase)
+  private updatePasswordUseCase: UpdatePasswordUseCase.UseCase;
 
   @Inject(ListUsersUseCase.UseCase)
   private listUsersUseCase: ListUsersUseCase.UseCase;
@@ -59,8 +64,15 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return;
+  async updatePassword(
+    @Param('id') id: string,
+    @Body() updatePasswordDto: UpdatePasswordDto,
+  ) {
+    const output = await this.updatePasswordUseCase.execute({
+      id,
+      ...updatePasswordDto,
+    });
+    return UsersController.userToResponse(output);
   }
 
   @Delete(':id')
