@@ -10,6 +10,7 @@ import { ListUsersUseCase } from '../application/usecases/list-users.usecase';
 import { GetUserUseCase } from '../application/usecases/get-user.usecase';
 import { UpdatePasswordUseCase } from '../application/usecases/update-password.usecase';
 import { UpdateUserUseCase } from '../application/usecases/update-user.usecase';
+import { DeleteUserUseCase } from '../application/usecases/delete-user.usecase';
 
 @Module({
   controllers: [UsersController],
@@ -67,6 +68,13 @@ import { UpdateUserUseCase } from '../application/usecases/update-user.usecase';
       provide: UpdateUserUseCase.UseCase,
       useFactory: (userRepository: UserRepository.Repository) => {
         return new UpdateUserUseCase.UseCase(userRepository);
+      },
+      inject: ['UserRepository'],
+    },
+    {
+      provide: DeleteUserUseCase.UseCase,
+      useFactory: (userRepository: UserRepository.Repository) => {
+        return new DeleteUserUseCase.UseCase(userRepository);
       },
       inject: ['UserRepository'],
     },

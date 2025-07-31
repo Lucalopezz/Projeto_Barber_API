@@ -26,6 +26,7 @@ import { UpdatePasswordUseCase } from '../application/usecases/update-password.u
 import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserUseCase } from '../application/usecases/update-user.usecase';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { DeleteUserUseCase } from '../application/usecases/delete-user.usecase';
 
 @Controller('users')
 export class UsersController {
@@ -43,6 +44,9 @@ export class UsersController {
 
   @Inject(GetUserUseCase.UseCase)
   private getUserUsecase: GetUserUseCase.UseCase;
+
+  @Inject(DeleteUserUseCase.UseCase)
+  private deleteUserUseCase: DeleteUserUseCase.UseCase;
 
   static userToResponse(output: UserOutput) {
     return new UserPresenter(output);
@@ -91,7 +95,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return;
+  async remove(@Param('id') id: string) {
+    await this.deleteUserUseCase.execute({ id });
   }
 }
