@@ -134,7 +134,7 @@ describe('UserValidator unit tests', () => {
     expect(isValid).toBeFalsy();
     expect(sut.errors['role']).toEqual(
       expect.arrayContaining([
-        'role must be one of the following values: CLIENT, BARBER',
+        'role must be one of the following values: barber, client',
         'role should not be empty',
       ]),
     );
@@ -143,23 +143,23 @@ describe('UserValidator unit tests', () => {
     isValid = sut.validate({ ...props, role: '' as any });
     expect(isValid).toBeFalsy();
     expect(sut.errors['role']).toStrictEqual([
-      'role must be one of the following values: CLIENT, BARBER',
+      'role must be one of the following values: barber, client',
       'role should not be empty',
     ]);
 
     isValid = sut.validate({ ...props, role: 'INVALID_ROLE' as any });
     expect(isValid).toBeFalsy();
     expect(sut.errors['role']).toStrictEqual([
-      'role must be one of the following values: CLIENT, BARBER',
+      'role must be one of the following values: barber, client',
     ]);
   });
 
   it('Valid cases for role field', () => {
-    let isValid = sut.validate({ ...props, role: Role.CLIENT });
+    let isValid = sut.validate({ ...props, role: Role.client });
     expect(isValid).toBeTruthy();
     expect(sut.errors).toBeNull();
 
-    isValid = sut.validate({ ...props, role: Role.BARBER });
+    isValid = sut.validate({ ...props, role: Role.barber });
     expect(isValid).toBeTruthy();
     expect(sut.errors).toBeNull();
   });

@@ -7,7 +7,7 @@ export class Address {
   constructor(value: string) {
     // “rua, número, cidade – estado”
     // Ex "Rua das Flores, 123, São Paulo – SP"
-    const parts = value.split(/[,-–]/).map((p) => p.trim());
+    const parts = value.split(/\s*[,–-]\s*/).map((p) => p.trim());
     // parts ≈ ["Rua das Flores", "123", "São Paulo", "SP"]
 
     if (parts.length < 4) {
@@ -19,6 +19,14 @@ export class Address {
     const [street, number, city, state] = parts;
     if (!street || !number || !city || !state) {
       throw new Error('All address components must be non-empty');
+    }
+
+    if (!/^\d+[A-Za-z]?$/.test(number)) {
+      throw new Error('Invalid house/building number');
+    }
+
+    if (!/^[A-Za-z]{2}$/.test(state)) {
+      throw new Error('State must be a 2-letter code');
     }
 
     this.street = street;

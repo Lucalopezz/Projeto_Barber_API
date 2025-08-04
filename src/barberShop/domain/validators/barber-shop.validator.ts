@@ -15,7 +15,10 @@ export class BarberShopRules {
   createdAt?: Date;
 
   constructor(data: BarberShopProps) {
-    Object.assign(this, data);
+    Object.assign(this, {
+      ...data,
+      address: data.address.toString(),
+    });
   }
 }
 
