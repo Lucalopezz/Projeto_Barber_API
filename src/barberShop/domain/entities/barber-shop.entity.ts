@@ -1,5 +1,7 @@
 import { Entity } from '@/shared/domain/entities/entity';
 import { Address } from '../value-objects/address.vo';
+import { BarberShopValidatorFactory } from '../validators/barber-shop.validator';
+import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
 export type BarberShopProps = {
   name: string;
@@ -48,6 +50,10 @@ export class BarberShopEntity extends Entity<BarberShopProps> {
   }
 
   static validate(data: BarberShopProps) {
-    // class validator
+    const shopValidator = BarberShopValidatorFactory.create();
+    const isValid = shopValidator.validate(data);
+    if (!isValid) {
+      throw new EntityValidationError(shopValidator.errors);
+    }
   }
 }
