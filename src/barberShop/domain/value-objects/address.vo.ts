@@ -1,3 +1,5 @@
+import { ValidationError } from '@/shared/domain/errors/validation-error';
+
 export class Address {
   private readonly street: string;
   private readonly number: string;
@@ -11,22 +13,22 @@ export class Address {
     // parts ≈ ["Rua das Flores", "123", "São Paulo", "SP"]
 
     if (parts.length < 4) {
-      throw new Error(
+      throw new ValidationError(
         'Address must include street, number, city and state (e.g.: "Street, 123, City – ST")',
       );
     }
 
     const [street, number, city, state] = parts;
     if (!street || !number || !city || !state) {
-      throw new Error('All address components must be non-empty');
+      throw new ValidationError('All address components must be non-empty');
     }
 
     if (!/^\d+[A-Za-z]?$/.test(number)) {
-      throw new Error('Invalid house/building number');
+      throw new ValidationError('Invalid house/building number');
     }
 
     if (!/^[A-Za-z]{2}$/.test(state)) {
-      throw new Error('State must be a 2-letter code');
+      throw new ValidationError('State must be a 2-letter code');
     }
 
     this.street = street;
