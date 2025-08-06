@@ -2,6 +2,7 @@
 import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entity';
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
+import { BarberShopModelMapper } from './models/barberShop-model.mapper';
 
 export class BarberShopPrismaRepository
   implements BarberShopRepository.Repository
@@ -43,7 +44,7 @@ export class BarberShopPrismaRepository
     });
 
     return new BarberShopRepository.BarberShopSearchResult({
-      items: [], // need to create a mapper to separe the data
+      items: models.map((m) => BarberShopModelMapper.toEntity(m)),
       total: count,
       currentPage: props.page,
       perPage: props.perPage,
