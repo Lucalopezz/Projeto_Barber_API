@@ -5,6 +5,7 @@ import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { UserModelMapper } from './models/user-model.mapper';
+import { Role } from '@/users/domain/entities/role.enum';
 
 export class UserPrismaRepository implements UserRepository.Repository {
   constructor(private prismaService: PrismaService) {}
@@ -48,7 +49,7 @@ export class UserPrismaRepository implements UserRepository.Repository {
     if (f) {
       // Create the query as the params comes from the request
       const clauses = [];
-      if (f.role) {
+      if (f.role && Object.values(Role).includes(f.role as Role)) {
         // If there is a role, it pushs in the array
         clauses.push({ role: { equals: f.role } });
       }

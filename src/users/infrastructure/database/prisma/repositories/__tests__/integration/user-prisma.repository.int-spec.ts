@@ -200,6 +200,7 @@ describe('UserPrismaRepository integration tests', () => {
           new UserEntity({
             ...UserDataBuilder({ name: element }),
             createdAt: new Date(createdAt.getTime() + index),
+            role: Role.barber,
           }),
         );
       });
@@ -207,14 +208,17 @@ describe('UserPrismaRepository integration tests', () => {
       await prismaService.user.createMany({
         data: entities.map((item) => item.toJSON()),
       });
-
+      const filter = {
+        name: 'TEST',
+        role: Role.barber,
+      };
       const searchOutputPage1 = await sut.search(
         new UserRepository.UserSearchParams({
           page: 1,
           perPage: 2,
           sort: 'name',
           sortDir: 'asc',
-          filter: 'TEST',
+          filter,
         }),
       );
 
@@ -231,7 +235,7 @@ describe('UserPrismaRepository integration tests', () => {
           perPage: 2,
           sort: 'name',
           sortDir: 'asc',
-          filter: 'TEST',
+          filter,
         }),
       );
 
@@ -259,7 +263,7 @@ describe('UserPrismaRepository integration tests', () => {
       // Act - Search for barbers
       const result = await sut.search(
         new UserRepository.UserSearchParams({
-          filter: 'barber',
+          filter: { role: Role.barber },
           sort: 'createdAt',
           sortDir: 'asc',
         }),
@@ -281,12 +285,12 @@ describe('UserPrismaRepository integration tests', () => {
       });
       const result = await sut.search(
         new UserRepository.UserSearchParams({
-          filter: 'invalid_role',
+          filter: { role: 'invalid_role' as Role },
           sort: 'role',
           sortDir: 'asc',
         }),
       );
-      expect(result.items.length).toBe(0);
+      expect(result.items.length).toBe(3); // Filter is ignored
     });
     it('should filter STRICTLY by role when searching for valid roles', async () => {
       await prismaService.user.createMany({
@@ -317,7 +321,7 @@ describe('UserPrismaRepository integration tests', () => {
       // Act: Search a role = 'barber'
       const result = await sut.search(
         new UserRepository.UserSearchParams({
-          filter: 'barber', // VAlid role
+          filter: { role: Role.barber }, // VAlid role
           sort: 'name',
           sortDir: 'asc',
         }),
