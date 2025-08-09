@@ -53,8 +53,13 @@ export class BarberShopPrismaRepository
       filter: props.filter,
     });
   }
-  insert(entity: BarberShopEntity): Promise<void> {
-    throw new Error('Method not implemented.');
+  async insert(entity: BarberShopEntity): Promise<void> {
+    await this.prismaService.barberShop.create({
+      data: {
+        ...entity.toJSON(),
+        address: entity.address.toString(),
+      },
+    });
   }
   findById(id: string): Promise<BarberShopEntity> {
     throw new Error('Method not implemented.');
