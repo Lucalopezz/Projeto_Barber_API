@@ -13,7 +13,7 @@ import { BarberShopRepository } from '@/barberShop/domain/repositories/barbersho
 export namespace CreateBarberShopUseCase {
   export type Input = {
     name: string;
-    address: Address;
+    address: string;
   };
   export type Output = BarberShopOutput;
 
@@ -28,7 +28,10 @@ export namespace CreateBarberShopUseCase {
       if (!address || !name) {
         throw new BadRequestError('Input data not provided');
       }
-      const entity = new BarberShopEntity(input);
+      const addressVo = new Address(address);
+      const entity = new BarberShopEntity(
+        Object.assign(input, { address: addressVo }),
+      );
 
       await this.barberShopRepository.insert(entity);
 

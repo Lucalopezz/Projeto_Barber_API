@@ -1,11 +1,11 @@
 import { CreateBarberShopUseCase } from '@/barberShop/application/usecases/create-barberShop.usecase';
-import { Address } from '@/barberShop/domain/value-objects/address.vo';
-import { IsNotEmpty, IsString } from 'class-validator';
+import { AddressValidator } from '@/barberShop/domain/validators/address.validator';
+import { IsNotEmpty, IsString, Validate } from 'class-validator';
 
 export class CreateBarberShopDto implements CreateBarberShopUseCase.Input {
-  @IsString()
+  @Validate(AddressValidator)
   @IsNotEmpty()
-  address: Address;
+  address: string;
 
   @IsString()
   @IsNotEmpty()
