@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Controller,
   Get,
@@ -6,40 +7,34 @@ import {
   Patch,
   Param,
   Delete,
+  Inject,
 } from '@nestjs/common';
 import { CreateBarberShopDto } from './dto/create-barber-shop.dto';
 import { UpdateBarberShopDto } from './dto/update-barber-shop.dto';
-import { BarberShopService } from './barber-shop.service';
+import { CreateBarberShopUseCase } from '../application/usecases/create-barberShop.usecase';
 
 @Controller('barber-shop')
 export class BarberShopController {
-  constructor(private readonly barberShopService: BarberShopService) {}
+  @Inject(CreateBarberShopUseCase.UseCase)
+  private createBarberShopUseCase: CreateBarberShopUseCase.UseCase;
 
   @Post()
   create(@Body() createBarberShopDto: CreateBarberShopDto) {
-    return this.barberShopService.create(createBarberShopDto);
+    return this.createBarberShopUseCase.execute(createBarberShopDto);
   }
 
   @Get()
-  findAll() {
-    return this.barberShopService.findAll();
-  }
+  findAll() {}
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.barberShopService.findOne(+id);
-  }
+  findOne(@Param('id') id: string) {}
 
   @Patch(':id')
   update(
     @Param('id') id: string,
     @Body() updateBarberShopDto: UpdateBarberShopDto,
-  ) {
-    return this.barberShopService.update(+id, updateBarberShopDto);
-  }
+  ) {}
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.barberShopService.remove(+id);
-  }
+  remove(@Param('id') id: string) {}
 }
