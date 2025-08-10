@@ -92,6 +92,8 @@ export class SearchParams<Filter = string> {
       (typeof value === 'string' && value === '')
     ) {
       this._filter = null;
+    } else if (typeof value !== 'object') {
+      this._filter = `${value}` as any;
     } else {
       this._filter = value;
     }

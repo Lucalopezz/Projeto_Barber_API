@@ -124,14 +124,16 @@ describe('Searchable Repository unit tests', () => {
         { filter: 5.5, expected: '5.5' },
         { filter: true, expected: 'true' },
         { filter: false, expected: 'false' },
-        { filter: {}, expected: '[object Object]' },
+        { filter: {}, expected: {} },
         { filter: 1, expected: '1' },
         { filter: 2, expected: '2' },
         { filter: 25, expected: '25' },
       ];
 
       params.forEach((i) => {
-        expect(new SearchParams({ filter: i.filter }).filter).toBe(i.expected);
+        expect(new SearchParams({ filter: i.filter }).filter).toStrictEqual(
+          i.expected,
+        );
       });
     });
   });
