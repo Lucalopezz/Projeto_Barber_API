@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -27,14 +21,15 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relacionamentos
-  barberShop   BarberShop? @relation(fields: [barberShopId], references: [id])
+  // relação para quem trabalha na shop (barbers)
+  barberShop   BarberShop? @relation("Barbers", fields: [barberShopId], references: [id])
   barberShopId String?
+
+  // relação para a shop que o user possui (owner) — inverso opcional
+  ownedBarberShop BarberShop? @relation("Owner")
 
   appointmentsCreated Appointment[] @relation("ClientAppointments")
   appointmentsTaken   Appointment[] @relation("BarberAppointments")
-
-  // para simplificar, um barber só pode estar em uma barbearia
 }
 
 model BarberShop {
@@ -44,7 +39,10 @@ model BarberShop {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  barbers      User[]
+  ownerId String? @unique
+  owner   User?   @relation("Owner", fields: [ownerId], references: [id])
+
+  barbers      User[]        @relation("Barbers")
   services     Service[]
   appointments Appointment[]
 }
