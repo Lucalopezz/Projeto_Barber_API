@@ -129,16 +129,16 @@ describe('UserEntity integration tests', () => {
   describe('Update method', () => {
     it('Should throw an error when update a user with invalid name', () => {
       const entity = new UserEntity(UserDataBuilder({}));
-      expect(() => entity.update(null, Role.CLIENT)).toThrowError(
+      expect(() => entity.update(null, Role.client)).toThrowError(
         EntityValidationError,
       );
-      expect(() => entity.update('', Role.CLIENT)).toThrowError(
+      expect(() => entity.update('', Role.client)).toThrowError(
         EntityValidationError,
       );
-      expect(() => entity.update(10 as any, Role.CLIENT)).toThrowError(
+      expect(() => entity.update(10 as any, Role.client)).toThrowError(
         EntityValidationError,
       );
-      expect(() => entity.update('a'.repeat(256), Role.CLIENT)).toThrowError(
+      expect(() => entity.update('a'.repeat(256), Role.client)).toThrowError(
         EntityValidationError,
       );
     });
@@ -163,9 +163,9 @@ describe('UserEntity integration tests', () => {
       const entity = new UserEntity(UserDataBuilder({}));
 
       // Teste com nome e role válidos
-      entity.update('new name', Role.BARBER);
+      entity.update('new name', Role.barber);
       expect(entity.name).toBe('new name');
-      expect(entity.role).toBe(Role.BARBER);
+      expect(entity.role).toBe(Role.barber);
 
       // Teste apenas com nome válido (mantendo role existente)
       const originalRole = entity.role;
