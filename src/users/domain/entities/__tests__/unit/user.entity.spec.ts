@@ -26,7 +26,7 @@ describe('User Entity unit tests', () => {
   });
   it('Should update name and role field', () => {
     const newName = 'New Name';
-    const newRole = 'BARBER';
+    const newRole = 'barber';
     sut.update(newName, newRole as any);
     expect(sut.name).toEqual(newName);
     expect(sut.role).toEqual(newRole);
