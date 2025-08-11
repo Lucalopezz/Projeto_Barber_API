@@ -4,6 +4,7 @@ export type BarberShopOutput = {
   id: string;
   name: string;
   address: string;
+  ownerId: string;
   createdAt: Date;
 };
 

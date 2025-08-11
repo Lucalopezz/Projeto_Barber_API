@@ -1,4 +1,10 @@
-import { IsNotEmpty, IsOptional, IsString, Validate } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Validate,
+} from 'class-validator';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
 import { BarberShopProps } from '../entities/barber-shop.entity';
 import { AddressValidator } from './address.validator';
@@ -13,6 +19,9 @@ export class BarberShopRules {
 
   @IsOptional()
   createdAt?: Date;
+
+  @IsUUID()
+  ownerId?: string;
 
   constructor(data: BarberShopProps) {
     Object.assign(this, {

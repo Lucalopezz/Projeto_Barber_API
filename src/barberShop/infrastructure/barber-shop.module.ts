@@ -5,6 +5,8 @@ import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { BarberShopPrismaRepository } from './database/prisma/repositories/barberShop-prisma.repository';
 import { CreateBarberShopUseCase } from '../application/usecases/create-barberShop.usecase';
 import { BarberShopRepository } from '../domain/repositories/barbershop.repository';
+import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
+import { UserRepository } from '@/users/domain/repositories/user.repository';
 
 @Module({
   controllers: [BarberShopController],
@@ -14,18 +16,31 @@ import { BarberShopRepository } from '../domain/repositories/barbershop.reposito
       useClass: PrismaService,
     },
     {
-      provide: 'UserRepository',
+      provide: 'BarberShopRepository',
       useFactory: (prismaService: PrismaService) => {
         return new BarberShopPrismaRepository(prismaService);
       },
       inject: ['PrismaService'],
     },
     {
-      provide: CreateBarberShopUseCase.UseCase,
-      useFactory: (barberShopRepository: BarberShopRepository.Repository) => {
-        return new CreateBarberShopUseCase.UseCase(barberShopRepository);
+      provide: 'UserRepository',
+      useFactory: (prismaService: PrismaService) => {
+        return new UserPrismaRepository(prismaService);
       },
-      inject: ['UserRepository'],
+      inject: ['PrismaService'],
+    },
+    {
+      provide: CreateBarberShopUseCase.UseCase,
+      useFactory: (
+        barberShopRepository: BarberShopRepository.Repository,
+        userRepository: UserRepository.Repository,
+      ) => {
+        return new CreateBarberShopUseCase.UseCase(
+          barberShopRepository,
+          userRepository,
+        );
+      },
+      inject: ['BarberShopRepository', 'UserRepository'],
     },
   ],
 })

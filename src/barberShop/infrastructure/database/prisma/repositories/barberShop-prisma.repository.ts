@@ -54,11 +54,18 @@ export class BarberShopPrismaRepository
     });
   }
   async insert(entity: BarberShopEntity): Promise<void> {
-    await this.prismaService.barberShop.create({
-      data: {
-        ...entity.toJSON(),
-        address: entity.address.toString(),
-      },
+    const data = {
+      name: entity.name,
+      address: entity.address.toString(),
+      ownerId: entity.ownerId,
+    };
+
+    await this.prismaService.$transaction(async (tx) => {
+      const shop = await tx.barberShop.create({ data });
+      await tx.user.update({
+        where: { id: data.ownerId },
+        data: { barberShopId: shop.id },
+      });
     });
   }
   findById(id: string): Promise<BarberShopEntity> {

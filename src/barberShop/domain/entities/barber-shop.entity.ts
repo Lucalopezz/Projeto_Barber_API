@@ -7,6 +7,7 @@ export type BarberShopProps = {
   name: string;
   address: Address;
   createdAt?: Date;
+  ownerId: string;
 };
 
 export class BarberShopEntity extends Entity<BarberShopProps> {
@@ -19,11 +20,12 @@ export class BarberShopEntity extends Entity<BarberShopProps> {
     this.props.createdAt = this.props.createdAt ?? new Date();
   }
 
-  update(name?: string, address?: Address): void {
+  update(name?: string, address?: Address, ownerId?: string): void {
     const updatedProps = {
       ...this.props,
       ...(name !== undefined && { name }),
       ...(address !== undefined && { address }),
+      ...(ownerId !== undefined && { ownerId }),
     };
 
     BarberShopEntity.validate(updatedProps);
@@ -41,6 +43,12 @@ export class BarberShopEntity extends Entity<BarberShopProps> {
   }
   private set name(value: string) {
     this.props.name = value;
+  }
+  get ownerId(): string {
+    return this.props.ownerId;
+  }
+  private set ownerId(value: string) {
+    this.props.ownerId = value;
   }
   get address(): Address {
     return this.props.address;

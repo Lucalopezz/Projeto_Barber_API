@@ -8,6 +8,7 @@ export class BarberShopModelMapper {
     const data = {
       name: model.name,
       address: new Address(model.address),
+      ownerId: model.ownerId,
       createdAt: model.createdAt,
     };
     try {

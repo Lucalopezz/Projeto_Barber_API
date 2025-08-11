@@ -1,6 +1,6 @@
 import { CreateBarberShopUseCase } from '@/barberShop/application/usecases/create-barberShop.usecase';
 import { AddressValidator } from '@/barberShop/domain/validators/address.validator';
-import { IsNotEmpty, IsString, Validate } from 'class-validator';
+import { IsNotEmpty, IsString, IsUUID, Validate } from 'class-validator';
 
 export class CreateBarberShopDto implements CreateBarberShopUseCase.Input {
   @Validate(AddressValidator)
@@ -10,4 +10,8 @@ export class CreateBarberShopDto implements CreateBarberShopUseCase.Input {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  ownerId: string;
 }
