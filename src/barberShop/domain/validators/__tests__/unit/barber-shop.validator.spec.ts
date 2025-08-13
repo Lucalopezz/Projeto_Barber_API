@@ -1,6 +1,7 @@
 import { BarberShopProps } from '@/barberShop/domain/entities/barber-shop.entity';
 import { BarberShopValidatorFactory } from '../../barber-shop.validator';
 import { Address } from '@/barberShop/domain/value-objects/address.vo';
+import { randomUUID } from 'node:crypto';
 
 describe('BarberShopValidator', () => {
   const validator = BarberShopValidatorFactory.create();
@@ -8,6 +9,7 @@ describe('BarberShopValidator', () => {
   const validData: BarberShopProps = {
     name: 'Cut & Shave',
     address: new Address('Rua A, 10, Cidade – ST'),
+    ownerId: randomUUID(),
     createdAt: new Date(),
   };
 
