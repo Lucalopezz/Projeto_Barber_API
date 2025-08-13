@@ -4,6 +4,7 @@ import { BarberShopRepository } from '@/barberShop/domain/repositories/barbersho
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { BarberShopModelMapper } from './models/barberShop-model.mapper';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
+import { en } from '@faker-js/faker/.';
 
 export class BarberShopPrismaRepository
   implements BarberShopRepository.Repository
@@ -76,8 +77,18 @@ export class BarberShopPrismaRepository
     const models = await this.prismaService.barberShop.findMany();
     return models.map((model) => BarberShopModelMapper.toEntity(model));
   }
-  update(entity: BarberShopEntity): Promise<void> {
-    throw new Error('Method not implemented.');
+  async update(entity: BarberShopEntity): Promise<void> {
+    const data = {
+      name: entity.name,
+      address: entity.address.toString(),
+    };
+    await this._get(entity._id);
+    await this.prismaService.barberShop.update({
+      data: data,
+      where: {
+        id: entity._id,
+      },
+    });
   }
   delete(id: string): Promise<void> {
     throw new Error('Method not implemented.');
