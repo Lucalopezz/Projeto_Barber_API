@@ -72,8 +72,9 @@ export class BarberShopPrismaRepository
   findById(id: string): Promise<BarberShopEntity> {
     return this._get(id);
   }
-  findAll(): Promise<BarberShopEntity[]> {
-    throw new Error('Method not implemented.');
+  async findAll(): Promise<BarberShopEntity[]> {
+    const models = await this.prismaService.barberShop.findMany();
+    return models.map((model) => BarberShopModelMapper.toEntity(model));
   }
   update(entity: BarberShopEntity): Promise<void> {
     throw new Error('Method not implemented.');
