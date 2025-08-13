@@ -90,8 +90,13 @@ export class BarberShopPrismaRepository
       },
     });
   }
-  delete(id: string): Promise<void> {
-    throw new Error('Method not implemented.');
+  async delete(id: string): Promise<void> {
+    await this._get(id);
+    await this.prismaService.barberShop.delete({
+      where: {
+        id,
+      },
+    });
   }
   protected async _get(id: string): Promise<BarberShopEntity> {
     try {
