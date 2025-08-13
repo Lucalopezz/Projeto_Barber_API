@@ -3,6 +3,7 @@ import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entit
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { BarberShopModelMapper } from './models/barberShop-model.mapper';
+import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 
 export class BarberShopPrismaRepository
   implements BarberShopRepository.Repository
@@ -69,7 +70,7 @@ export class BarberShopPrismaRepository
     });
   }
   findById(id: string): Promise<BarberShopEntity> {
-    throw new Error('Method not implemented.');
+    return this._get(id);
   }
   findAll(): Promise<BarberShopEntity[]> {
     throw new Error('Method not implemented.');
@@ -79,5 +80,17 @@ export class BarberShopPrismaRepository
   }
   delete(id: string): Promise<void> {
     throw new Error('Method not implemented.');
+  }
+  protected async _get(id: string): Promise<BarberShopEntity> {
+    try {
+      const shop = await this.prismaService.barberShop.findUnique({
+        where: {
+          id,
+        },
+      });
+      return BarberShopModelMapper.toEntity(shop);
+    } catch {
+      throw new NotFoundError(`BarberModel not found using ID ${id}`);
+    }
   }
 }
