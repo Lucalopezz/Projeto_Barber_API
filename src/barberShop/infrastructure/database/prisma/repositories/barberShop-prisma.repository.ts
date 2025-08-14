@@ -4,7 +4,6 @@ import { BarberShopRepository } from '@/barberShop/domain/repositories/barbersho
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { BarberShopModelMapper } from './models/barberShop-model.mapper';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
-import { en } from '@faker-js/faker/.';
 
 export class BarberShopPrismaRepository
   implements BarberShopRepository.Repository
@@ -57,6 +56,7 @@ export class BarberShopPrismaRepository
   }
   async insert(entity: BarberShopEntity): Promise<void> {
     const data = {
+      id: entity._id,
       name: entity.name,
       address: entity.address.toString(),
       ownerId: entity.ownerId,
@@ -107,7 +107,7 @@ export class BarberShopPrismaRepository
       });
       return BarberShopModelMapper.toEntity(shop);
     } catch {
-      throw new NotFoundError(`BarberModel not found using ID ${id}`);
+      throw new NotFoundError(`BarberShop not found using ID ${id}`);
     }
   }
 }

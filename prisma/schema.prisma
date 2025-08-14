@@ -7,79 +7,66 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  barber
-  client
-}
-
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // relação para quem trabalha na shop (barbers)
-  barberShop   BarberShop? @relation("Barbers", fields: [barberShopId], references: [id])
-  barberShopId String?
-
-  // relação para a shop que o user possui (owner) — inverso opcional
-  ownedBarberShop BarberShop? @relation("Owner")
-
-  appointmentsCreated Appointment[] @relation("ClientAppointments")
+  id                  String        @id
+  name                String
+  email               String        @unique
+  password            String
+  role                Role
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  barberShopId        String?
   appointmentsTaken   Appointment[] @relation("BarberAppointments")
+  appointmentsCreated Appointment[] @relation("ClientAppointments")
+  ownedBarberShop     BarberShop?   @relation("Owner")
+  barberShop          BarberShop?   @relation("Barbers", fields: [barberShopId], references: [id])
 }
 
 model BarberShop {
-  id        String   @id @default(uuid())
-  name      String
-  address   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  ownerId String? @unique
-  owner   User?   @relation("Owner", fields: [ownerId], references: [id])
-
-  barbers      User[]        @relation("Barbers")
-  services     Service[]
+  id           String        @id
+  name         String
+  address      String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  ownerId      String?       @unique
   appointments Appointment[]
+  owner        User?         @relation("Owner", fields: [ownerId], references: [id])
+  services     Service[]
+  barbers      User[]        @relation("Barbers")
 }
 
 model Service {
-  id          String   @id @default(uuid())
-  name        String
-  price       Decimal
-  duration    Int // duração em minutos
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  barberShop   BarberShop @relation(fields: [barberShopId], references: [id])
+  id           String        @id
+  name         String
+  price        Decimal
+  duration     Int
+  description  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   barberShopId String
-
   appointments Appointment[]
+  barberShop   BarberShop    @relation(fields: [barberShopId], references: [id])
 }
 
 model Appointment {
-  id        String            @id @default(uuid())
-  date      DateTime
-  status    AppointmentStatus @default(scheduled)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-
-  client   User   @relation("ClientAppointments", fields: [clientId], references: [id])
-  clientId String
-
-  barber   User   @relation("BarberAppointments", fields: [barberId], references: [id])
-  barberId String
-
-  service   Service @relation(fields: [serviceId], references: [id])
-  serviceId String
-
-  barberShop   BarberShop @relation(fields: [barberShopId], references: [id])
+  id           String            @id
+  date         DateTime
+  status       AppointmentStatus @default(scheduled)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  clientId     String
+  barberId     String
+  serviceId    String
   barberShopId String
+  barber       User              @relation("BarberAppointments", fields: [barberId], references: [id])
+  barberShop   BarberShop        @relation(fields: [barberShopId], references: [id])
+  client       User              @relation("ClientAppointments", fields: [clientId], references: [id])
+  service      Service           @relation(fields: [serviceId], references: [id])
+}
+
+enum Role {
+  barber
+  client
 }
 
 enum AppointmentStatus {
