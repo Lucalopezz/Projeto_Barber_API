@@ -253,11 +253,16 @@ describe('UserPrismaRepository integration tests', () => {
       ];
 
       await prismaService.user.createMany({
-        data: testUsers.map((user, index) => ({
-          ...user,
-          email: `user${index}@test.com`,
-          createdAt: new Date(),
-        })),
+        data: testUsers.map((user, index) => {
+          const entity = new UserEntity({
+            ...user,
+            email: `user${index}@test.com`,
+            createdAt: new Date(),
+          });
+
+          // Retorna o objeto plano usado pelo Prisma
+          return entity.toJSON();
+        }),
       });
 
       // Act - Search for barbers
@@ -276,13 +281,25 @@ describe('UserPrismaRepository integration tests', () => {
       });
     });
     it('should not apply role filter for invalid role values', async () => {
+      const testUsers = [
+        { ...UserDataBuilder({ name: 'barber1' }), role: Role.barber },
+        { ...UserDataBuilder({ name: 'client1' }), role: Role.client },
+        { ...UserDataBuilder({ name: 'testuser' }), role: Role.client },
+      ];
+
       await prismaService.user.createMany({
-        data: [
-          { ...UserDataBuilder({ name: 'barber1' }), role: Role.barber },
-          { ...UserDataBuilder({ name: 'client1' }), role: Role.client },
-          { ...UserDataBuilder({ name: 'testuser' }), role: Role.client },
-        ],
+        data: testUsers.map((user, index) => {
+          const entity = new UserEntity({
+            ...user,
+            email: user.email ?? `user${index}@test.com`,
+            createdAt: new Date(),
+          });
+          const raw = entity.toJSON();
+
+          return raw;
+        }),
       });
+
       const result = await sut.search(
         new UserRepository.UserSearchParams({
           filter: { role: 'invalid_role' as Role },
@@ -290,32 +307,44 @@ describe('UserPrismaRepository integration tests', () => {
           sortDir: 'asc',
         }),
       );
+
       expect(result.items.length).toBe(3); // Filter is ignored
     });
     it('should filter STRICTLY by role when searching for valid roles', async () => {
+      const testUsers = [
+        {
+          ...UserDataBuilder({ name: 'John Barber' }),
+          role: Role.barber,
+          email: 'barber1@test.com',
+        },
+        {
+          ...UserDataBuilder({ name: 'Mike Client' }),
+          role: Role.client,
+          email: 'client1@test.com',
+        },
+        {
+          ...UserDataBuilder({ name: 'Anna Barber' }),
+          role: Role.barber,
+          email: 'barber2@test.com',
+        },
+        {
+          ...UserDataBuilder({ name: 'Peter Barber' }),
+          role: Role.client,
+          email: 'client2@test.com',
+        },
+      ];
+
       await prismaService.user.createMany({
-        data: [
-          {
-            ...UserDataBuilder({ name: 'John Barber' }),
-            role: Role.barber,
-            email: 'barber1@test.com',
-          },
-          {
-            ...UserDataBuilder({ name: 'Mike Client' }),
-            role: Role.client,
-            email: 'client1@test.com',
-          },
-          {
-            ...UserDataBuilder({ name: 'Anna Barber' }),
-            role: Role.barber,
-            email: 'barber2@test.com',
-          },
-          {
-            ...UserDataBuilder({ name: 'Peter Barber' }),
-            role: Role.client,
-            email: 'client2@test.com',
-          },
-        ],
+        data: testUsers.map((user, index) => {
+          const entity = new UserEntity({
+            ...user,
+            createdAt: user.createdAt ?? new Date(),
+          });
+
+          const raw = entity.toJSON();
+
+          return raw;
+        }),
       });
 
       // Act: Search a role = 'barber'
