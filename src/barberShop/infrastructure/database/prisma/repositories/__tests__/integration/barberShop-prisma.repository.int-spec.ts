@@ -204,11 +204,12 @@ describe('BarberShopPrismaRepository integration tests', () => {
 
   describe('search method tests', () => {
     it('should apply only pagination when other params are null', async () => {
-      const owner = await createOwner();
       const createdAt = new Date();
       const shops: BarberShopEntity[] = [];
 
       for (let i = 0; i < 16; i++) {
+        const owner = await createOwner();
+
         shops.push(
           new BarberShopEntity(
             BarberShopDataBuilder({
@@ -224,7 +225,7 @@ describe('BarberShopPrismaRepository integration tests', () => {
           name: s.name,
           id: s._id,
           address: s.address.toString(),
-          ownerId: owner.id,
+          ownerId: s.ownerId,
         })),
       });
 
@@ -240,16 +241,17 @@ describe('BarberShopPrismaRepository integration tests', () => {
     });
 
     it('should search using filter, sort and paginate', async () => {
-      const owner = await createOwner();
       const createdAt = new Date();
       const arrange = ['Alpha', 'Beta', 'ALPHA', 'Gamma', 'alpha'];
+
+      const owners = await Promise.all(arrange.map(() => createOwner()));
 
       const shops = arrange.map(
         (name, index) =>
           new BarberShopEntity(
             BarberShopDataBuilder({
               name,
-              ownerId: owner.id,
+              ownerId: owners[index].id,
               createdAt: new Date(createdAt.getTime() + index),
             }),
           ),
@@ -260,7 +262,7 @@ describe('BarberShopPrismaRepository integration tests', () => {
           id: s._id,
           name: s.name,
           address: s.address.toString(),
-          ownerId: owner.id,
+          ownerId: s.ownerId,
         })),
       });
 

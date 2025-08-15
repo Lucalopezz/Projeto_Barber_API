@@ -29,19 +29,22 @@ export class BarberShopPrismaRepository
       }),
     });
     const models = await this.prismaService.barberShop.findMany({
-      ...(props.filter && {
-        where: {
-          name: {
-            contains: props.filter,
-            mode: 'insensitive',
-          },
-        },
-        orderBy: {
-          [orderByField]: orderByDir,
-        },
-        skip: props.page && props.page > 0 ? (props.page - 1) * props.page : 1,
-        take: props.perPage && props.perPage > 0 ? props.perPage : 15,
-      }),
+      where: props.filter
+        ? {
+            name: {
+              contains: props.filter,
+              mode: 'insensitive',
+            },
+          }
+        : {},
+
+      orderBy: {
+        [orderByField]: orderByDir,
+      },
+
+      skip: props.page && props.page > 0 ? (props.page - 1) * props.perPage : 0,
+
+      take: props.perPage && props.perPage > 0 ? props.perPage : 15,
     });
 
     return new BarberShopRepository.BarberShopSearchResult({
