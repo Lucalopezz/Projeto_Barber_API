@@ -7,6 +7,7 @@ import { CreateBarberShopUseCase } from '../application/usecases/create-barberSh
 import { BarberShopRepository } from '../domain/repositories/barbershop.repository';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
+import { ListBarberShopUseCase } from '../application/usecases/list-barberShop.usecase';
 
 @Module({
   controllers: [BarberShopController],
@@ -41,6 +42,13 @@ import { UserRepository } from '@/users/domain/repositories/user.repository';
         );
       },
       inject: ['BarberShopRepository', 'UserRepository'],
+    },
+    {
+      provide: ListBarberShopUseCase.UseCase,
+      useFactory: (barberShopRepository: BarberShopRepository.Repository) => {
+        return new ListBarberShopUseCase.UseCase(barberShopRepository);
+      },
+      inject: ['BarberShopRepository'],
     },
   ],
 })

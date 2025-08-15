@@ -57,8 +57,9 @@ export class UsersController {
   }
 
   @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.createUserUseCase.execute(createUserDto);
+  async create(@Body() createUserDto: CreateUserDto) {
+    const output = await this.createUserUseCase.execute(createUserDto);
+    return UsersController.userToResponse(output);
   }
 
   @Get()
