@@ -16,7 +16,10 @@ import { CreateBarberShopUseCase } from '../application/usecases/create-barberSh
 import { ListBarberShopUseCase } from '../application/usecases/list-barberShop.usecase';
 import { BarberShopOutput } from '../application/dtos/barberShop-output.dto';
 import { ListBarberShopDto } from './dto/list-barberShop.dto';
-import { BarberShopCollectionPresenter, BarberShopPresenter } from './presenters/barberShop.presenter';
+import {
+  BarberShopCollectionPresenter,
+  BarberShopPresenter,
+} from './presenters/barberShop.presenter';
 
 @Controller('barber-shop')
 export class BarberShopController {
@@ -36,7 +39,8 @@ export class BarberShopController {
 
   @Post()
   async create(@Body() createBarberShopDto: CreateBarberShopDto) {
-    const model = this.createBarberShopUseCase.execute(createBarberShopDto);
+    const model =
+      await this.createBarberShopUseCase.execute(createBarberShopDto);
     return BarberShopController.barberShopToResponse(model);
   }
 
