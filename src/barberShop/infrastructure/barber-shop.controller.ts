@@ -20,11 +20,15 @@ import {
   BarberShopCollectionPresenter,
   BarberShopPresenter,
 } from './presenters/barberShop.presenter';
+import { GetBarberShopUseCase } from '../application/usecases/get-barberShop.usecase';
 
 @Controller('barber-shop')
 export class BarberShopController {
   @Inject(ListBarberShopUseCase.UseCase)
   private listBarberShopUseCase: ListBarberShopUseCase.UseCase;
+
+  @Inject(GetBarberShopUseCase.UseCase)
+  private getBarberShopUseCase: GetBarberShopUseCase.UseCase;
 
   @Inject(CreateBarberShopUseCase.UseCase)
   private createBarberShopUseCase: CreateBarberShopUseCase.UseCase;
@@ -45,7 +49,10 @@ export class BarberShopController {
   }
 
   @Get(':id')
-  findOne() {}
+  async findOne(@Param('id') id: string) {
+    const output = await this.getBarberShopUseCase.execute({ id });
+    return BarberShopController.barberShopToResponse(output);
+  }
 
   @Get()
   async search(@Query() searchParams: ListBarberShopDto) {
