@@ -9,7 +9,21 @@ export class BarberShopPrismaRepository
   implements BarberShopRepository.Repository
 {
   constructor(private prismaService: PrismaService) {}
+
   sortableFields: string[] = ['name', 'createdAt'];
+
+  async findByOwnerId(ownerId: string): Promise<BarberShopEntity> {
+    try {
+      const ownerShop = await this.prismaService.barberShop.findUnique({
+        where: {
+          ownerId,
+        },
+      });
+      return BarberShopModelMapper.toEntity(ownerShop);
+    } catch {
+      throw new NotFoundError(`BarberShop not found for owner ID ${ownerId}`);
+    }
+  }
 
   async search(
     props: BarberShopRepository.BarberShopSearchParams,

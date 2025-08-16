@@ -24,5 +24,7 @@ export namespace BarberShopRepository {
       Filter,
       BarberShopSearchParams,
       BarberShopSearchResult
-    > {}
+    > {
+    findByOwnerId(ownerId: string): Promise<BarberShopEntity>;
+  }
 }

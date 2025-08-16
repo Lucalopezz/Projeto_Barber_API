@@ -10,7 +10,6 @@ import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entity';
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
-import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 import { Role } from '@/users/domain/entities/role.enum';
 
@@ -34,8 +33,14 @@ export namespace CreateBarberShopUseCase {
       if (!address || !name || !ownerId) {
         throw new BadRequestError('Input data not provided');
       }
-      const owner = await this.userRepo.findById(ownerId);
-      if (!owner) throw new NotFoundError('Owner user not found');
+      const [owner, alreadyHasBarberShop] = await Promise.all([
+        this.userRepo.findById(ownerId),
+        this.barberShopRepository.findByOwnerId(ownerId),
+      ]);
+
+      if (alreadyHasBarberShop) {
+        throw new BadRequestError('BarberShop already exists for this user');
+      }
 
       if (owner.role !== Role.barber) {
         throw new BadRequestError(

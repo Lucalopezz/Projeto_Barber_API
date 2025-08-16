@@ -44,10 +44,10 @@ export class BarberShopController {
     return BarberShopController.barberShopToResponse(model);
   }
 
-  @Get()
-  findAll() {}
-
   @Get(':id')
+  findOne() {}
+
+  @Get()
   async search(@Query() searchParams: ListBarberShopDto) {
     const output = await this.listBarberShopUseCase.execute(searchParams);
     return BarberShopController.listBarberShopToResponse(output);
