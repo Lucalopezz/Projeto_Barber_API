@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, IsUUID, Validate } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, Validate } from 'class-validator';
 import { AddressValidator } from '@/barberShop/domain/validators/address.validator';
 import { UpdateBarberShopUseCase } from '@/barberShop/application/usecases/update-barberShop.usecase';
 import { Address } from '@/barberShop/domain/value-objects/address.vo';
@@ -6,15 +6,13 @@ import { Address } from '@/barberShop/domain/value-objects/address.vo';
 export class UpdateBarberShopDto
   implements Omit<UpdateBarberShopUseCase.Input, 'id'>
 {
+  @IsOptional()
   @Validate(AddressValidator)
   @IsNotEmpty()
-  address: Address;
+  address?: Address;
 
   @IsString()
   @IsNotEmpty()
-  name: string;
-
-  @IsUUID()
-  @IsNotEmpty()
-  ownerId: string;
+  @IsOptional()
+  name?: string;
 }
