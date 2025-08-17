@@ -10,13 +10,12 @@ import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entity';
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
-import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 import { Role } from '@/users/domain/entities/role.enum';
 
 export namespace CreateBarberShopUseCase {
   export type Input = {
     name: string;
-    address: string;
+    address: Address;
     ownerId: string;
   };
   export type Output = BarberShopOutput;
@@ -48,15 +47,9 @@ export namespace CreateBarberShopUseCase {
         );
       }
 
-      let addressVo: Address;
-      try {
-        addressVo = new Address(address);
-      } catch (err: any) {
-        throw new EntityValidationError({ address: [err.message] });
-      }
       const entity = new BarberShopEntity({
         name,
-        address: addressVo,
+        address,
         ownerId,
       });
 

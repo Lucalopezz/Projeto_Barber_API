@@ -12,17 +12,16 @@ export class BarberShopPrismaRepository
 
   sortableFields: string[] = ['name', 'createdAt'];
 
-  async findByOwnerId(ownerId: string): Promise<BarberShopEntity> {
-    try {
-      const ownerShop = await this.prismaService.barberShop.findUnique({
-        where: {
-          ownerId,
-        },
-      });
-      return BarberShopModelMapper.toEntity(ownerShop);
-    } catch {
-      throw new NotFoundError(`BarberShop not found for owner ID ${ownerId}`);
+  async findByOwnerId(ownerId: string): Promise<BarberShopEntity | null> {
+    const ownerShop = await this.prismaService.barberShop.findUnique({
+      where: { ownerId },
+    });
+
+    if (!ownerShop) {
+      return null;
     }
+
+    return BarberShopModelMapper.toEntity(ownerShop);
   }
 
   async search(
