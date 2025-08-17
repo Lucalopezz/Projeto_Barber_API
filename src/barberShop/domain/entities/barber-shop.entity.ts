@@ -20,12 +20,11 @@ export class BarberShopEntity extends Entity<BarberShopProps> {
     this.props.createdAt = this.props.createdAt ?? new Date();
   }
 
-  update(name?: string, address?: Address, ownerId?: string): void {
+  update(name?: string, address?: Address): void {
     const updatedProps = {
       ...this.props,
       ...(name !== undefined && { name }),
       ...(address !== undefined && { address }),
-      ...(ownerId !== undefined && { ownerId }),
     };
 
     BarberShopEntity.validate(updatedProps);

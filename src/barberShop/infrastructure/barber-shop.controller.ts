@@ -9,6 +9,7 @@ import {
   Delete,
   Inject,
   Query,
+  Put,
 } from '@nestjs/common';
 import { CreateBarberShopDto } from './dto/create-barber-shop.dto';
 import { UpdateBarberShopDto } from './dto/update-barber-shop.dto';
@@ -21,6 +22,7 @@ import {
   BarberShopPresenter,
 } from './presenters/barberShop.presenter';
 import { GetBarberShopUseCase } from '../application/usecases/get-barberShop.usecase';
+import { UpdateBarberShopUseCase } from '../application/usecases/update-barberShop.usecase';
 
 @Controller('barber-shop')
 export class BarberShopController {
@@ -32,6 +34,9 @@ export class BarberShopController {
 
   @Inject(CreateBarberShopUseCase.UseCase)
   private createBarberShopUseCase: CreateBarberShopUseCase.UseCase;
+
+  @Inject(UpdateBarberShopUseCase.UseCase)
+  private updateBarberShopUseCase: UpdateBarberShopUseCase.UseCase;
 
   static barberShopToResponse(output: BarberShopOutput) {
     return new BarberShopPresenter(output);
@@ -60,11 +65,17 @@ export class BarberShopController {
     return BarberShopController.listBarberShopToResponse(output);
   }
 
-  @Patch(':id')
-  update(
+  @Put(':id')
+  async update(
     @Param('id') id: string,
     @Body() updateBarberShopDto: UpdateBarberShopDto,
-  ) {}
+  ) {
+    const model = await this.updateBarberShopUseCase.execute({
+      id,
+      ...updateBarberShopDto,
+    });
+    return BarberShopController.barberShopToResponse(model);
+  }
 
   @Delete(':id')
   remove(@Param('id') id: string) {}
