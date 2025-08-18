@@ -29,9 +29,6 @@ export namespace CreateBarberShopUseCase {
     async execute(input: Input): Promise<BarberShopOutput> {
       const { address, name, ownerId } = input;
 
-      if (!address || !name || !ownerId) {
-        throw new BadRequestError('Input data not provided');
-      }
       const [owner, alreadyHasBarberShop] = await Promise.all([
         this.userRepo.findById(ownerId),
         this.barberShopRepository.findByOwnerId(ownerId),

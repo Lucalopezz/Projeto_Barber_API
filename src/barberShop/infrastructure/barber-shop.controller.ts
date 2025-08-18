@@ -23,6 +23,7 @@ import {
 } from './presenters/barberShop.presenter';
 import { GetBarberShopUseCase } from '../application/usecases/get-barberShop.usecase';
 import { UpdateBarberShopUseCase } from '../application/usecases/update-barberShop.usecase';
+import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberShop.usecase';
 
 @Controller('barber-shop')
 export class BarberShopController {
@@ -37,6 +38,9 @@ export class BarberShopController {
 
   @Inject(UpdateBarberShopUseCase.UseCase)
   private updateBarberShopUseCase: UpdateBarberShopUseCase.UseCase;
+
+  @Inject(DeleteBarberShopUseCase.UseCase)
+  private deleteBarberShopUseCase: DeleteBarberShopUseCase.UseCase;
 
   static barberShopToResponse(output: BarberShopOutput) {
     return new BarberShopPresenter(output);
@@ -78,5 +82,8 @@ export class BarberShopController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {}
+  remove(@Param('id') id: string) {
+    const ownerId = 'e38821fa-c39e-40e6-a268-a401a1d6f1da'; // This should be replaced with the actual ownerId logic, e.g., from the token
+    return this.deleteBarberShopUseCase.execute({ id, ownerId });
+  }
 }
