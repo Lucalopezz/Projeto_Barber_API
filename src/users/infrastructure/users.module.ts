@@ -11,9 +11,12 @@ import { GetUserUseCase } from '../application/usecases/get-user.usecase';
 import { UpdatePasswordUseCase } from '../application/usecases/update-password.usecase';
 import { UpdateUserUseCase } from '../application/usecases/update-user.usecase';
 import { DeleteUserUseCase } from '../application/usecases/delete-user.usecase';
+import { SigninUseCase } from '../application/usecases/signin.usecase';
+import { AuthModule } from '@/auth/auth.module';
 
 @Module({
   controllers: [UsersController],
+  imports: [AuthModule],
   providers: [
     {
       provide: 'PrismaService',
@@ -77,6 +80,16 @@ import { DeleteUserUseCase } from '../application/usecases/delete-user.usecase';
         return new DeleteUserUseCase.UseCase(userRepository);
       },
       inject: ['UserRepository'],
+    },
+    {
+      provide: SigninUseCase.UseCase,
+      useFactory: (
+        userRepository: UserRepository.Repository,
+        hashProvider: HashProvider,
+      ) => {
+        return new SigninUseCase.UseCase(userRepository, hashProvider);
+      },
+      inject: ['UserRepository', 'HashProvider'],
     },
   ],
 })
