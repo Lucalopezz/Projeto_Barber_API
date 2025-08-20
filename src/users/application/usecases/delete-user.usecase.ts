@@ -1,3 +1,4 @@
+import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 
@@ -5,6 +6,7 @@ import { UserRepository } from '@/users/domain/repositories/user.repository';
 export namespace DeleteUserUseCase {
   export type Input = {
     id: string;
+    userId: string;
   };
 
   export type Output = void;
@@ -13,6 +15,12 @@ export namespace DeleteUserUseCase {
     constructor(private userRepository: UserRepository.Repository) {}
 
     async execute(input: Input): Promise<Output> {
+      const entity = await this.userRepository.findById(input.id);
+      if (entity.id !== input.userId) {
+        throw new UnauthorizedError(
+          "You don't have permission to update this user",
+        );
+      }
       await this.userRepository.delete(input.id);
     }
   }

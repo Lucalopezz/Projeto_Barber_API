@@ -103,6 +103,7 @@ export class UsersController {
   ) {
     const output = await this.updateUserUseCase.execute({
       id,
+      userId,
       ...updateUserDto,
     });
     return UsersController.userToResponse(output);
@@ -117,6 +118,7 @@ export class UsersController {
   ) {
     const output = await this.updatePasswordUseCase.execute({
       id,
+      userId,
       ...updatePasswordDto,
     });
     return UsersController.userToResponse(output);
@@ -125,6 +127,6 @@ export class UsersController {
   @Delete(':id')
   @UseGuards(AuthGuard)
   async remove(@Param('id') id: string, @CurrentUserId() userId: string) {
-    await this.deleteUserUseCase.execute({ id });
+    await this.deleteUserUseCase.execute({ id, userId });
   }
 }

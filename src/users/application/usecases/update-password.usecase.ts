@@ -3,11 +3,13 @@ import { UserOutput, UserOutputMapper } from '../dtos/user-output.dto';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { HashProvider } from '@/shared/application/providers/hash-provider';
 import { InvalidPasswordError } from '@/shared/application/errors/invalid-password-error';
+import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace UpdatePasswordUseCase {
   export type Input = {
     id: string;
+    userId: string;
     password: string;
     oldPassword: string;
   };
@@ -22,6 +24,11 @@ export namespace UpdatePasswordUseCase {
 
     async execute(input: Input): Promise<Output> {
       const entity = await this.userRepository.findById(input.id);
+      if (entity.id !== input.userId) {
+        throw new UnauthorizedError(
+          "You don't have permission to update this user",
+        );
+      }
       if (!input.oldPassword || !input.password) {
         throw new InvalidPasswordError(
           'Old password and new password are required',

@@ -34,7 +34,7 @@ describe('UpdateUserUseCase integration tests', () => {
 
   it('should throws error when entity not found', async () => {
     await expect(() =>
-      sut.execute({ id: 'fakeId', name: 'fake name' }),
+      sut.execute({ id: 'fakeId', name: 'fake name', userId: 'fakeId' }),
     ).rejects.toThrow(new NotFoundError('UserModel not found using ID fakeId'));
   });
 
@@ -44,7 +44,11 @@ describe('UpdateUserUseCase integration tests', () => {
       data: entity.toJSON(),
     });
 
-    const output = await sut.execute({ id: entity._id, name: 'new name' });
+    const output = await sut.execute({
+      id: entity._id,
+      name: 'new name',
+      userId: entity._id,
+    });
 
     expect(output.name).toBe('new name');
   });
