@@ -2,7 +2,7 @@ import { UpdatePasswordUseCase } from '@/users/application/usecases/update-passw
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdatePasswordDto
-  implements Omit<UpdatePasswordUseCase.Input, 'id'>
+  implements Omit<UpdatePasswordUseCase.Input, 'id' | 'userId'>
 {
   @IsString()
   @IsNotEmpty()
