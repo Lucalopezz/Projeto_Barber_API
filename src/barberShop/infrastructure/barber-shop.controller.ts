@@ -24,6 +24,7 @@ import {
 import { GetBarberShopUseCase } from '../application/usecases/get-barberShop.usecase';
 import { UpdateBarberShopUseCase } from '../application/usecases/update-barberShop.usecase';
 import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberShop.usecase';
+import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
 
 @Controller('barber-shop')
 export class BarberShopController {
@@ -51,9 +52,14 @@ export class BarberShopController {
   }
 
   @Post()
-  async create(@Body() createBarberShopDto: CreateBarberShopDto) {
-    const model =
-      await this.createBarberShopUseCase.execute(createBarberShopDto);
+  async create(
+    @Body() createBarberShopDto: CreateBarberShopDto,
+    @CurrentUserId() userId: string,
+  ) {
+    const model = await this.createBarberShopUseCase.execute({
+      ownerId: userId,
+      ...createBarberShopDto,
+    });
     return BarberShopController.barberShopToResponse(model);
   }
 

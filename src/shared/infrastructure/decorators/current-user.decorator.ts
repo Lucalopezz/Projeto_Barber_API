@@ -3,6 +3,7 @@ import {
   ExecutionContext,
   UnauthorizedException,
 } from '@nestjs/common';
+import { validate as uuidValidate } from 'uuid';
 
 export const CurrentUser = createParamDecorator(
   (data: string | undefined, ctx: ExecutionContext) => {
@@ -23,7 +24,7 @@ export const CurrentUserId = createParamDecorator(
   (_data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest();
     const user = request.user;
-    if (!user) {
+    if (!user && !uuidValidate(user.id)) {
       throw new UnauthorizedException('User not found in request');
     }
     return user?.id ?? null;
