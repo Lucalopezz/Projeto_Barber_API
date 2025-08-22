@@ -10,6 +10,7 @@ import {
   Inject,
   Query,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { CreateBarberShopDto } from './dto/create-barber-shop.dto';
 import { UpdateBarberShopDto } from './dto/update-barber-shop.dto';
@@ -25,8 +26,10 @@ import { GetBarberShopUseCase } from '../application/usecases/get-barberShop.use
 import { UpdateBarberShopUseCase } from '../application/usecases/update-barberShop.usecase';
 import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberShop.usecase';
 import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
+import { AuthGuard } from '@/auth/auth.guard';
 
 @Controller('barber-shop')
+@UseGuards(AuthGuard)
 export class BarberShopController {
   @Inject(ListBarberShopUseCase.UseCase)
   private listBarberShopUseCase: ListBarberShopUseCase.UseCase;
@@ -79,17 +82,18 @@ export class BarberShopController {
   async update(
     @Param('id') id: string,
     @Body() updateBarberShopDto: UpdateBarberShopDto,
+    @CurrentUserId() userId: string,
   ) {
     const model = await this.updateBarberShopUseCase.execute({
       id,
+      ownerId: userId,
       ...updateBarberShopDto,
     });
     return BarberShopController.barberShopToResponse(model);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    const ownerId = 'e38821fa-c39e-40e6-a268-a401a1d6f1da'; // This should be replaced with the actual ownerId logic, e.g., from the token
+  remove(@Param('id') id: string, @CurrentUserId() ownerId: string) {
     return this.deleteBarberShopUseCase.execute({ id, ownerId });
   }
 }

@@ -4,7 +4,7 @@ import { UpdateBarberShopUseCase } from '@/barberShop/application/usecases/updat
 import { Address } from '@/barberShop/domain/value-objects/address.vo';
 
 export class UpdateBarberShopDto
-  implements Omit<UpdateBarberShopUseCase.Input, 'id'>
+  implements Omit<UpdateBarberShopUseCase.Input, 'id' | 'ownerId'>
 {
   @IsOptional()
   @Validate(AddressValidator)

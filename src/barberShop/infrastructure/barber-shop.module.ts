@@ -11,9 +11,11 @@ import { ListBarberShopUseCase } from '../application/usecases/list-barberShop.u
 import { GetBarberShopUseCase } from '../application/usecases/get-barberShop.usecase';
 import { UpdateBarberShopUseCase } from '../application/usecases/update-barberShop.usecase';
 import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberShop.usecase';
+import { AuthModule } from '@/auth/auth.module';
 
 @Module({
   controllers: [BarberShopController],
+  imports: [AuthModule],
   providers: [
     {
       provide: 'PrismaService',
@@ -69,16 +71,10 @@ import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberSh
     },
     {
       provide: DeleteBarberShopUseCase.UseCase,
-      useFactory: (
-        barberShopRepository: BarberShopRepository.Repository,
-        userRepository: UserRepository.Repository,
-      ) => {
-        return new DeleteBarberShopUseCase.UseCase(
-          barberShopRepository,
-          userRepository,
-        );
+      useFactory: (barberShopRepository: BarberShopRepository.Repository) => {
+        return new DeleteBarberShopUseCase.UseCase(barberShopRepository);
       },
-      inject: ['BarberShopRepository', 'UserRepository'],
+      inject: ['BarberShopRepository'],
     },
   ],
 })

@@ -13,6 +13,7 @@ export namespace UpdateBarberShopUseCase {
     id: string;
     name?: string;
     address?: Address;
+    ownerId: string;
   };
 
   export type Output = BarberShopOutput;
@@ -24,13 +25,19 @@ export namespace UpdateBarberShopUseCase {
 
     async execute(input: Input): Promise<Output> {
       if (!input.name && !input.address) {
-        throw new BadRequestError('Name and Adress not provided');
+        throw new BadRequestError('Name and Address not provided');
       }
-      const entity = await this.barberShopRepository.findById(input.id);
+      const barberShop = await this.barberShopRepository.findByOwnerId(
+        input.ownerId,
+      );
+      if (!barberShop || barberShop.id !== input.id) {
+        throw new BadRequestError('Barber shop not found for the given owner');
+      }
 
-      entity.update(input.name, input.address);
-      await this.barberShopRepository.update(entity);
-      return BarberShopOutputMapper.toOutput(entity);
+      barberShop.update(input.name, input.address);
+      await this.barberShopRepository.update(barberShop);
+
+      return BarberShopOutputMapper.toOutput(barberShop);
     }
   }
 }
