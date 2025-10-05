@@ -27,6 +27,7 @@ The project applies **Clean Architecture**, **Domain-Driven Design (DDD)** princ
 
 The application follows Clean Architecture, dividing the project into layers such as:
 
+````
 src/
 ├── appointments/            ⬅ Módulo de agendamentos
 │   ├── application/
@@ -75,6 +76,7 @@ src/
 ├── app.module.ts
 ├── global-config.ts
 └── main.ts
+````
 
 
 ## 🚧 Status
