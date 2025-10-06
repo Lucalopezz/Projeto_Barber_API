@@ -81,6 +81,9 @@ export class ServiceEntity extends Entity<ServiceProps> {
   set barberShopId(value: string) {
     this.props.barberShopId = value;
   }
+  get createdAt(): Date {
+    return this.props.createdAt;
+  }
 
   static validate(data: ServiceProps) {
     const shopValidator = ServiceValidatorFactory.create();
