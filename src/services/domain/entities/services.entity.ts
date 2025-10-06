@@ -1,4 +1,6 @@
 import { Entity } from '@/shared/domain/entities/entity';
+import { ServiceValidatorFactory } from '../validators/services.validator';
+import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
 export type ServiceProps = {
   name: string;
@@ -14,7 +16,7 @@ export class ServiceEntity extends Entity<ServiceProps> {
     public readonly props: ServiceProps,
     id?: string,
   ) {
-    //ServiceEntity.validate(props);
+    ServiceEntity.validate(props);
     super(props, id);
     this.props.createdAt = this.props.createdAt ?? new Date();
   }
@@ -33,7 +35,7 @@ export class ServiceEntity extends Entity<ServiceProps> {
       ...(duration !== undefined && { duration }),
     };
 
-    //BarberShopEntity.validate(updatedProps);
+    ServiceEntity.validate(updatedProps);
 
     if (name !== undefined) {
       this.name = name;
@@ -80,5 +82,11 @@ export class ServiceEntity extends Entity<ServiceProps> {
     this.props.barberShopId = value;
   }
 
-  // create validate method
+  static validate(data: ServiceProps) {
+    const shopValidator = ServiceValidatorFactory.create();
+    const isValid = shopValidator.validate(data);
+    if (!isValid) {
+      throw new EntityValidationError(shopValidator.errors);
+    }
+  }
 }
