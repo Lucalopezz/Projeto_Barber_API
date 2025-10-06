@@ -1,8 +1,17 @@
-import { IsNotEmpty, IsNumber, IsString, IsUUID } from 'class-validator';
+import {
+  IsDate,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 import { ServiceProps } from '../entities/services.entity';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
 
 export class ServicesRules {
+  @MaxLength(255)
   @IsString()
   @IsNotEmpty()
   name: string;
@@ -11,6 +20,7 @@ export class ServicesRules {
   @IsNumber()
   price: number;
 
+  @MaxLength(500)
   @IsString()
   @IsNotEmpty()
   description: string;
@@ -22,6 +32,10 @@ export class ServicesRules {
   @IsNotEmpty()
   @IsUUID()
   barberShopId: string;
+
+  @IsDate()
+  @IsOptional()
+  createdAt?: Date;
 
   constructor(data: ServiceProps) {
     Object.assign(this, data);
