@@ -7,20 +7,33 @@ import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 export class ServicesPrismaRepository implements ServicesRepository.Repository {
   constructor(private prismaService: PrismaService) {}
 
-  insert(entity: ServiceEntity): Promise<void> {
-    throw new Error('Method not implemented.');
+  async insert(entity: ServiceEntity): Promise<void> {
+    await this.prismaService.service.create({
+      data: entity.toJSON(),
+    });
+    return;
   }
   findById(id: string): Promise<ServiceEntity> {
-    throw new Error('Method not implemented.');
+    return this._get(id);
   }
-  findAll(): Promise<ServiceEntity[]> {
-    throw new Error('Method not implemented.');
+  async findAll(): Promise<ServiceEntity[]> {
+    const services = await this.prismaService.service.findMany();
+    return services.map((service) => ServicesModelMapper.toEntity(service));
   }
-  update(entity: ServiceEntity): Promise<void> {
-    throw new Error('Method not implemented.');
+  async update(entity: ServiceEntity): Promise<void> {
+    await this._get(entity._id);
+    await this.prismaService.service.update({
+      data: entity.toJSON(),
+      where: {
+        id: entity._id,
+      },
+    });
   }
-  delete(id: string): Promise<void> {
-    throw new Error('Method not implemented.');
+  async delete(id: string): Promise<void> {
+    await this._get(id);
+    await this.prismaService.service.delete({
+      where: { id },
+    });
   }
 
   protected async _get(id: string): Promise<ServiceEntity> {
