@@ -38,7 +38,7 @@ model BarberShop {
 model Service {
   id           String        @id
   name         String
-  price        Decimal
+  price        Float
   duration     Int
   description  String?
   createdAt    DateTime      @default(now())
