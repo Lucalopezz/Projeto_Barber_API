@@ -15,12 +15,17 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateServicesUseCase } from '../application/usecases/create-services.usecase';
 import { AuthGuard } from '@/auth/auth.guard';
 import { CurrentUser } from '@/shared/infrastructure/decorators/current-user.decorator';
+import { ServicePresenter } from './presenters/barberShop.presenter';
 
 @Controller('services')
 @UseGuards(AuthGuard)
 export class ServicesController {
   @Inject(CreateServicesUseCase.UseCase)
   private createServicesUseCase: CreateServicesUseCase.UseCase;
+
+  static serviceToResponse(output: CreateServicesUseCase.Output) {
+    return new ServicePresenter(output);
+  }
 
   @Post()
   async create(
@@ -31,7 +36,7 @@ export class ServicesController {
       barberShopOwnerId: userId,
       ...createServiceDto,
     });
-    return model;
+    return ServicesController.serviceToResponse(model);
   }
 
   @Get()
