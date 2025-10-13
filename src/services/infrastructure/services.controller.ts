@@ -14,6 +14,7 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateServicesUseCase } from '../application/usecases/create-services.usecase';
 import { AuthGuard } from '@/auth/auth.guard';
+import { CurrentUser } from '@/shared/infrastructure/decorators/current-user.decorator';
 
 @Controller('services')
 @UseGuards(AuthGuard)
@@ -22,12 +23,12 @@ export class ServicesController {
   private createServicesUseCase: CreateServicesUseCase.UseCase;
 
   @Post()
-  create(
+  async create(
     @Body() createServiceDto: CreateServiceDto,
-    @CurrentUserBarberShopId currentUserBarberShopId: string,
+    @CurrentUser() userId: string,
   ) {
     const model = await this.createServicesUseCase.execute({
-      barberShopId: currentUserBarberShopId,
+      barberShopOwnerId: userId,
       ...createServiceDto,
     });
     return model;

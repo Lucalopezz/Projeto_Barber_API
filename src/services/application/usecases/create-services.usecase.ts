@@ -15,7 +15,7 @@ export namespace CreateServicesUseCase {
     price: number;
     description: string;
     duration: number;
-    barberShopId: string;
+    barberShopOwnerId: string;
   };
   export type Output = ServicesOutput;
 
@@ -25,9 +25,10 @@ export namespace CreateServicesUseCase {
       private barberShopRepository: BarberShopRepository.Repository,
     ) {}
     async execute(input: Input): Promise<ServicesOutput> {
-      const { barberShopId, description, duration, name, price } = input;
+      const { barberShopOwnerId, description, duration, name, price } = input;
 
-      const barberShop = await this.barberShopRepository.findById(barberShopId);
+      const barberShop =
+        await this.barberShopRepository.findByOwnerId(barberShopOwnerId);
 
       if (!barberShop) {
         throw new BadRequestError('BarberShop not found');
@@ -38,7 +39,7 @@ export namespace CreateServicesUseCase {
         price,
         description,
         duration,
-        barberShopId,
+        barberShopId: barberShop.id,
       });
       await this.servicesRepository.insert(entity);
 
