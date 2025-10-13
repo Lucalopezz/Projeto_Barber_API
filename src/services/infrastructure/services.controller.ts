@@ -14,7 +14,7 @@ import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateServicesUseCase } from '../application/usecases/create-services.usecase';
 import { AuthGuard } from '@/auth/auth.guard';
-import { CurrentUser } from '@/shared/infrastructure/decorators/current-user.decorator';
+import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
 import { ServicePresenter } from './presenters/barberShop.presenter';
 
 @Controller('services')
@@ -30,7 +30,7 @@ export class ServicesController {
   @Post()
   async create(
     @Body() createServiceDto: CreateServiceDto,
-    @CurrentUser() userId: string,
+    @CurrentUserId() userId: string,
   ) {
     const model = await this.createServicesUseCase.execute({
       barberShopOwnerId: userId,

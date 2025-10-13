@@ -25,7 +25,8 @@ export namespace CreateServicesUseCase {
       private barberShopRepository: BarberShopRepository.Repository,
     ) {}
     async execute(input: Input): Promise<ServicesOutput> {
-      const { barberShopOwnerId, description, duration, name, price } = input;
+      const { name, description, duration, barberShopOwnerId, price } = input;
+      console.log(barberShopOwnerId);
 
       const barberShop =
         await this.barberShopRepository.findByOwnerId(barberShopOwnerId);
