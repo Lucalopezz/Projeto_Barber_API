@@ -7,6 +7,15 @@ import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 export class ServicesPrismaRepository implements ServicesRepository.Repository {
   constructor(private prismaService: PrismaService) {}
 
+  async findAllForBarberShop(barberShopId: string): Promise<ServiceEntity[]> {
+    const services = await this.prismaService.service.findMany({
+      where: {
+        barberShopId,
+      },
+    });
+    return services.map((service) => ServicesModelMapper.toEntity(service));
+  }
+
   async insert(entity: ServiceEntity): Promise<void> {
     await this.prismaService.service.create({
       data: entity.toJSON(),

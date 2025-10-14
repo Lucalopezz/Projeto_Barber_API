@@ -4,5 +4,7 @@ import { RepositoryInterface } from '@/shared/domain/repositories/repository-con
 /* eslint-disable @typescript-eslint/no-namespace */
 export namespace ServicesRepository {
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  export interface Repository extends RepositoryInterface<ServiceEntity> {}
+  export interface Repository extends RepositoryInterface<ServiceEntity> {
+    findAllForBarberShop(barberShopId: string): Promise<ServiceEntity[]>;
+  }
 }
