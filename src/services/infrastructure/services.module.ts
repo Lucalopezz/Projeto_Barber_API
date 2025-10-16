@@ -8,6 +8,7 @@ import { CreateServicesUseCase } from '../application/usecases/create-services.u
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { ServicesRepository } from '../domain/repositories/services.repository';
 import { ListServicesUseCase } from '../application/usecases/list-services.usecase';
+import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
 
 @Module({
   controllers: [ServicesController],
@@ -56,6 +57,13 @@ import { ListServicesUseCase } from '../application/usecases/list-services.useca
         );
       },
       inject: ['ServicesRepository', 'BarberShopRepository'],
+    },
+    {
+      provide: GetServicesUseCase.UseCase,
+      useFactory: (servicesRepository: ServicesRepository.Repository) => {
+        return new GetServicesUseCase.UseCase(servicesRepository);
+      },
+      inject: ['ServicesRepository'],
     },
   ],
 })

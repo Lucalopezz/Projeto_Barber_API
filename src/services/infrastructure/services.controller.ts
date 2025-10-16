@@ -16,8 +16,8 @@ import { CreateServicesUseCase } from '../application/usecases/create-services.u
 import { AuthGuard } from '@/auth/auth.guard';
 import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
 import { ServicePresenter } from './presenters/barberShop.presenter';
-import { ListBarberShopUseCase } from '@/barberShop/application/usecases/list-barberShop.usecase';
 import { ListServicesUseCase } from '../application/usecases/list-services.usecase';
+import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
 
 @Controller('services')
 @UseGuards(AuthGuard)
@@ -26,6 +26,8 @@ export class ServicesController {
   private createServicesUseCase: CreateServicesUseCase.UseCase;
   @Inject(ListServicesUseCase.UseCase)
   private listServicesUseCase: ListServicesUseCase.UseCase;
+  @Inject(GetServicesUseCase.UseCase)
+  private getServicesUseCase: GetServicesUseCase.UseCase;
 
   static serviceToResponse(output: CreateServicesUseCase.Output) {
     return new ServicePresenter(output);
@@ -50,8 +52,9 @@ export class ServicesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    //return this.servicesService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    const model = await this.getServicesUseCase.execute({ id });
+    return ServicesController.serviceToResponse(model);
   }
 
   @Patch(':id')
