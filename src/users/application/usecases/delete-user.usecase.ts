@@ -18,7 +18,7 @@ export namespace DeleteUserUseCase {
       const entity = await this.userRepository.findById(input.id);
       if (entity.id !== input.userId) {
         throw new UnauthorizedError(
-          "You don't have permission to update this user",
+          "You don't have permission to delete this user",
         );
       }
       await this.userRepository.delete(input.id);

@@ -10,6 +10,7 @@ import { ServicesRepository } from '../domain/repositories/services.repository';
 import { ListServicesUseCase } from '../application/usecases/list-services.usecase';
 import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
 import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
+import { DeleteServicesUseCase } from '../application/usecases/delete-services.usecase';
 
 @Module({
   controllers: [ServicesController],
@@ -66,6 +67,19 @@ import { UpdateServicesUseCase } from '../application/usecases/update-services.u
         barberShopRepository: BarberShopRepository.Repository,
       ) => {
         return new UpdateServicesUseCase.UseCase(
+          servicesRepository,
+          barberShopRepository,
+        );
+      },
+      inject: ['ServicesRepository', 'BarberShopRepository'],
+    },
+    {
+      provide: DeleteServicesUseCase.UseCase,
+      useFactory: (
+        servicesRepository: ServicesRepository.Repository,
+        barberShopRepository: BarberShopRepository.Repository,
+      ) => {
+        return new DeleteServicesUseCase.UseCase(
           servicesRepository,
           barberShopRepository,
         );

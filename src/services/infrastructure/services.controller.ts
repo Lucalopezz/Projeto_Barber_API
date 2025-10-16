@@ -19,6 +19,7 @@ import { ServicePresenter } from './presenters/barberShop.presenter';
 import { ListServicesUseCase } from '../application/usecases/list-services.usecase';
 import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
 import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
+import { DeleteServicesUseCase } from '../application/usecases/delete-services.usecase';
 
 @Controller('services')
 @UseGuards(AuthGuard)
@@ -31,6 +32,8 @@ export class ServicesController {
   private getServicesUseCase: GetServicesUseCase.UseCase;
   @Inject(UpdateServicesUseCase.UseCase)
   private updateServicesUseCase: UpdateServicesUseCase.UseCase;
+  @Inject(DeleteServicesUseCase.UseCase)
+  private deleteServicesUseCase: DeleteServicesUseCase.UseCase;
 
   static serviceToResponse(output: CreateServicesUseCase.Output) {
     return new ServicePresenter(output);
@@ -75,7 +78,10 @@ export class ServicesController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    //return this.servicesService.remove(+id);
+  remove(@Param('id') id: string, @CurrentUserId() userId: string) {
+    return this.deleteServicesUseCase.execute({
+      id,
+      barberShopOwnerId: userId,
+    });
   }
 }
