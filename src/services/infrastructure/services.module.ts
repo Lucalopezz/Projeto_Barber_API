@@ -9,6 +9,7 @@ import { BarberShopRepository } from '@/barberShop/domain/repositories/barbersho
 import { ServicesRepository } from '../domain/repositories/services.repository';
 import { ListServicesUseCase } from '../application/usecases/list-services.usecase';
 import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
+import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
 
 @Module({
   controllers: [ServicesController],
@@ -52,6 +53,19 @@ import { GetServicesUseCase } from '../application/usecases/get-services.usecase
         barberShopRepository: BarberShopRepository.Repository,
       ) => {
         return new ListServicesUseCase.UseCase(
+          servicesRepository,
+          barberShopRepository,
+        );
+      },
+      inject: ['ServicesRepository', 'BarberShopRepository'],
+    },
+    {
+      provide: UpdateServicesUseCase.UseCase,
+      useFactory: (
+        servicesRepository: ServicesRepository.Repository,
+        barberShopRepository: BarberShopRepository.Repository,
+      ) => {
+        return new UpdateServicesUseCase.UseCase(
           servicesRepository,
           barberShopRepository,
         );

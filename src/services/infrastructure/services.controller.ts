@@ -18,6 +18,7 @@ import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.d
 import { ServicePresenter } from './presenters/barberShop.presenter';
 import { ListServicesUseCase } from '../application/usecases/list-services.usecase';
 import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
+import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
 
 @Controller('services')
 @UseGuards(AuthGuard)
@@ -28,6 +29,8 @@ export class ServicesController {
   private listServicesUseCase: ListServicesUseCase.UseCase;
   @Inject(GetServicesUseCase.UseCase)
   private getServicesUseCase: GetServicesUseCase.UseCase;
+  @Inject(UpdateServicesUseCase.UseCase)
+  private updateServicesUseCase: UpdateServicesUseCase.UseCase;
 
   static serviceToResponse(output: CreateServicesUseCase.Output) {
     return new ServicePresenter(output);
@@ -58,8 +61,17 @@ export class ServicesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string) {
-    //return this.servicesService.update(+id, updateServiceDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateServiceDto: UpdateServiceDto,
+    @CurrentUserId() userId: string,
+  ) {
+    const model = await this.updateServicesUseCase.execute({
+      id,
+      barberShopOwnerId: userId,
+      ...updateServiceDto,
+    });
+    return ServicesController.serviceToResponse(model);
   }
 
   @Delete(':id')
