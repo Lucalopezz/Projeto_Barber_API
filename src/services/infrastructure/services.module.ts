@@ -7,6 +7,7 @@ import { ServicesPrismaRepository } from './database/prisma/services-prisma.repo
 import { CreateServicesUseCase } from '../application/usecases/create-services.usecase';
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { ServicesRepository } from '../domain/repositories/services.repository';
+import { ListServicesUseCase } from '../application/usecases/list-services.usecase';
 
 @Module({
   controllers: [ServicesController],
@@ -37,6 +38,19 @@ import { ServicesRepository } from '../domain/repositories/services.repository';
         barberShopRepository: BarberShopRepository.Repository,
       ) => {
         return new CreateServicesUseCase.UseCase(
+          servicesRepository,
+          barberShopRepository,
+        );
+      },
+      inject: ['ServicesRepository', 'BarberShopRepository'],
+    },
+    {
+      provide: ListServicesUseCase.UseCase,
+      useFactory: (
+        servicesRepository: ServicesRepository.Repository,
+        barberShopRepository: BarberShopRepository.Repository,
+      ) => {
+        return new ListServicesUseCase.UseCase(
           servicesRepository,
           barberShopRepository,
         );

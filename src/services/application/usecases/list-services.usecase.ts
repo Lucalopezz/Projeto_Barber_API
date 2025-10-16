@@ -10,7 +10,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ListServicesUseCase {
   export type Input = {
-    barberShopId: string;
+    userId: string;
   };
   export type Output = ServicesOutput[];
 
@@ -19,15 +19,17 @@ export namespace ListServicesUseCase {
       private serviceRepository: ServicesRepository.Repository,
       private barberShopRepository: BarberShopRepository.Repository,
     ) {}
+
     async execute(input: Input): Promise<Output> {
-      const barberShop = await this.barberShopRepository.findById(
-        input.barberShopId,
-      );
+      const { userId } = input;
+      const barberShop = await this.barberShopRepository.findByOwnerId(userId);
+
       if (!barberShop) {
         throw new NotFoundError('BarberShop not found');
       }
+
       const entities = await this.serviceRepository.findAllForBarberShop(
-        input.barberShopId,
+        barberShop.id,
       );
       return entities.map((entity) => ServicesOutputMapper.toOutput(entity));
     }
