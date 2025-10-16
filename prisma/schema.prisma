@@ -45,7 +45,7 @@ model Service {
   updatedAt    DateTime      @updatedAt
   barberShopId String
   appointments Appointment[]
-  barberShop   BarberShop    @relation(fields: [barberShopId], references: [id])
+  barberShop   BarberShop    @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
 }
 
 model Appointment {
