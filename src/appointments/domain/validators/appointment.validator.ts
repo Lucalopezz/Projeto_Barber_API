@@ -6,8 +6,8 @@ import {
   IsUUID,
 } from 'class-validator';
 import { AppointmentStatus } from '../entities/appointmentStatus.enum';
-import { ApointmentProps } from '../entities/appointment.entity';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
+import { AppointmentProps } from '../entities/appointment.entity';
 
 export class AppointmentRules {
   @IsDate()
@@ -46,7 +46,7 @@ export class AppointmentRules {
     barberId,
     barberShopId,
     createdAt,
-  }: ApointmentProps) {
+  }: AppointmentProps) {
     Object.assign(this, {
       date,
       status,
@@ -60,9 +60,9 @@ export class AppointmentRules {
 }
 
 export class AppointmentValidator extends ClassValidatorFields<AppointmentRules> {
-  validate(data: ApointmentProps): boolean {
+  validate(data: AppointmentProps): boolean {
     return super.validate(
-      new AppointmentRules(data ?? ({} as ApointmentProps)),
+      new AppointmentRules(data ?? ({} as AppointmentProps)),
     );
   }
 }

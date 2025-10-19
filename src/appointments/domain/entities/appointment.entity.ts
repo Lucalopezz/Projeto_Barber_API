@@ -3,7 +3,7 @@ import { AppointmentStatus } from './appointmentStatus.enum';
 import { AppointmentValidatorFactory } from '../validators/appointment.validator';
 import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
-export type ApointmentProps = {
+export type AppointmentProps = {
   date: Date;
   status: AppointmentStatus;
   clientId: string;
@@ -13,9 +13,9 @@ export type ApointmentProps = {
   createdAt?: Date;
 };
 
-export class AppointmentEntity extends Entity<ApointmentProps> {
+export class AppointmentEntity extends Entity<AppointmentProps> {
   constructor(
-    public readonly props: ApointmentProps,
+    public readonly props: AppointmentProps,
     id?: string,
   ) {
     AppointmentEntity.validate(props);
@@ -82,7 +82,7 @@ export class AppointmentEntity extends Entity<ApointmentProps> {
     this.props.createdAt = value;
   }
 
-  static validate(props: ApointmentProps) {
+  static validate(props: AppointmentProps) {
     const appointmentValidator = AppointmentValidatorFactory.create();
     const isValid = appointmentValidator.validate(props);
     if (!isValid) {
