@@ -1,5 +1,7 @@
 import { Entity } from '@/shared/domain/entities/entity';
 import { AppointmentStatus } from './appointmentStatus.enum';
+import { AppointmentValidatorFactory } from '../validators/appointment.validator';
+import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
 export type ApointmentProps = {
   date: Date;
@@ -16,11 +18,12 @@ export class AppointmentEntity extends Entity<ApointmentProps> {
     public readonly props: ApointmentProps,
     id?: string,
   ) {
+    AppointmentEntity.validate(props);
     super(props, id);
     this.props.createdAt = this.props.createdAt ?? new Date();
   }
   updateStatus(status: AppointmentStatus): void {
-    // validation need to be added
+    AppointmentEntity.validate({ ...this.props, status });
     this.props.status = status;
   }
   update(date?: Date, serviceId?: string): void {
@@ -31,7 +34,7 @@ export class AppointmentEntity extends Entity<ApointmentProps> {
       ...(serviceId !== undefined && { serviceId }),
     };
 
-    // validation
+    AppointmentEntity.validate(updatedProps);
 
     if (date !== undefined) this.props.date = date;
     if (serviceId !== undefined) this.props.serviceId = serviceId;
@@ -77,5 +80,13 @@ export class AppointmentEntity extends Entity<ApointmentProps> {
   }
   private set createdAt(value: Date) {
     this.props.createdAt = value;
+  }
+
+  static validate(props: ApointmentProps) {
+    const appointmentValidator = AppointmentValidatorFactory.create();
+    const isValid = appointmentValidator.validate(props);
+    if (!isValid) {
+      throw new EntityValidationError(appointmentValidator.errors);
+    }
   }
 }
