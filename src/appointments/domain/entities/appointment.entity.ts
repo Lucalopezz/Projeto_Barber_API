@@ -11,4 +11,71 @@ export type ApointmentProps = {
   createdAt?: Date;
 };
 
-export class AppointmentEntity extends Entity<ApointmentProps> {}
+export class AppointmentEntity extends Entity<ApointmentProps> {
+  constructor(
+    public readonly props: ApointmentProps,
+    id?: string,
+  ) {
+    super(props, id);
+    this.props.createdAt = this.props.createdAt ?? new Date();
+  }
+  updateStatus(status: AppointmentStatus): void {
+    // validation need to be added
+    this.props.status = status;
+  }
+  update(date?: Date, serviceId?: string): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const updatedProps = {
+      ...this.props,
+      ...(date !== undefined && { date }),
+      ...(serviceId !== undefined && { serviceId }),
+    };
+
+    // validation
+
+    if (date !== undefined) this.props.date = date;
+    if (serviceId !== undefined) this.props.serviceId = serviceId;
+  }
+  get date(): Date {
+    return this.props.date;
+  }
+  private set date(value: Date) {
+    this.props.date = value;
+  }
+  get status(): string {
+    return this.props.status;
+  }
+  private set status(value: AppointmentStatus) {
+    this.props.status = value;
+  }
+  get clientId(): string {
+    return this.props.clientId;
+  }
+  private set clientId(value: string) {
+    this.props.clientId = value;
+  }
+  get serviceId(): string {
+    return this.props.serviceId;
+  }
+  private set serviceId(value: string) {
+    this.props.serviceId = value;
+  }
+  get barberId(): string {
+    return this.props.barberId;
+  }
+  private set barberId(value: string) {
+    this.props.barberId = value;
+  }
+  get barberShopId(): string {
+    return this.props.barberShopId;
+  }
+  private set barberShopId(value: string) {
+    this.props.barberShopId = value;
+  }
+  get createdAt(): Date {
+    return this.props.createdAt;
+  }
+  private set createdAt(value: Date) {
+    this.props.createdAt = value;
+  }
+}
