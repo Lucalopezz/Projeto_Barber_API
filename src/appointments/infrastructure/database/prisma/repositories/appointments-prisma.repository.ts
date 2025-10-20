@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { AppointmentEntity } from '@/appointments/domain/entities/appointment.entity';
 import { AppointmentsRepository } from '@/appointments/domain/repositories/appointments.repository';
+import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
+import { AppointmentModelMapper } from './models/appointment-model.mapper';
 
 export class AppointmentsPrismaRepository
   implements AppointmentsRepository.Repository
@@ -28,15 +30,27 @@ export class AppointmentsPrismaRepository
     });
   }
   findById(id: string): Promise<AppointmentEntity> {
-    throw new Error('Method not implemented.');
+    return this._get(id);
   }
-  findAll(): Promise<AppointmentEntity[]> {
-    throw new Error('Method not implemented.');
+  async findAll(): Promise<AppointmentEntity[]> {
+    const models = await this.prismaService.appointment.findMany();
+    return models.map((model) => AppointmentModelMapper.toEntity(model));
   }
   update(entity: AppointmentEntity): Promise<void> {
     throw new Error('Method not implemented.');
   }
   delete(id: string): Promise<void> {
     throw new Error('Method not implemented.');
+  }
+
+  protected async _get(id: string): Promise<AppointmentEntity> {
+    try {
+      const appointment = await this.prismaService.appointment.findUnique({
+        where: { id },
+      });
+      return;
+    } catch {
+      throw new NotFoundError(`AppointmentModel not found using id ${id}`);
+    }
   }
 }
