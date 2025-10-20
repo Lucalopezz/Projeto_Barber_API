@@ -4,6 +4,7 @@ import { AppointmentsRepository } from '@/appointments/domain/repositories/appoi
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { AppointmentModelMapper } from './models/appointment-model.mapper';
+import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
 
 export class AppointmentsPrismaRepository
   implements AppointmentsRepository.Repository
@@ -19,10 +20,49 @@ export class AppointmentsPrismaRepository
     });
     return !isAvailable;
   }
-  search(
+  async search(
     props: AppointmentsRepository.AppointmentsSearchParams,
   ): Promise<AppointmentsRepository.AppointmentsSearchResult> {
-    throw new Error('Method not implemented.');
+    const sortable = this.sortableFields?.includes(props.sort) || false;
+    const orderByField = sortable ? props.sort : 'createdAt';
+    const orderByDir = sortable ? props.sortDir : 'desc';
+
+    const f = props.filter as AppointmentsRepository.Filter;
+    const where: any = {};
+
+    if (f) {
+      const clauses = [];
+      if (f.serviceId) {
+        clauses.push({ serviceId: { equals: f.serviceId } });
+      }
+      if (f.date) {
+        clauses.push({ date: { equals: f.date } });
+      }
+      if (clauses.length > 0) {
+        where.AND = clauses;
+      }
+    }
+
+    const count = await this.prismaService.appointment.count({ where });
+
+    const models = await this.prismaService.appointment.findMany({
+      where,
+      orderBy: {
+        [orderByField]: orderByDir,
+      },
+      skip: props.page && props.page > 0 ? (props.page - 1) * props.perPage : 0,
+      take: props.perPage && props.perPage > 0 ? props.perPage : 10,
+    });
+
+    return new AppointmentsRepository.AppointmentsSearchResult({
+      items: models.map((model) => AppointmentModelMapper.toEntity(model)),
+      total: count,
+      currentPage: props.page,
+      perPage: props.perPage,
+      sort: orderByField,
+      sortDir: orderByDir,
+      filter: props.filter,
+    });
   }
   async insert(entity: AppointmentEntity): Promise<void> {
     await this.prismaService.appointment.create({
