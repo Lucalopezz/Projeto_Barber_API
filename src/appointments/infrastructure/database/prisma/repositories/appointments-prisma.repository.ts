@@ -23,7 +23,9 @@ export class AppointmentsPrismaRepository
     throw new Error('Method not implemented.');
   }
   async insert(entity: AppointmentEntity): Promise<void> {
-    throw new Error('Method not implemented.');
+    await this.prismaService.appointment.create({
+      data: entity.toJSON(),
+    });
   }
   findById(id: string): Promise<AppointmentEntity> {
     throw new Error('Method not implemented.');
