@@ -36,11 +36,18 @@ export class AppointmentsPrismaRepository
     const models = await this.prismaService.appointment.findMany();
     return models.map((model) => AppointmentModelMapper.toEntity(model));
   }
-  update(entity: AppointmentEntity): Promise<void> {
-    throw new Error('Method not implemented.');
+  async update(entity: AppointmentEntity): Promise<void> {
+    await this._get(entity.id);
+    await this.prismaService.appointment.update({
+      data: entity.toJSON(),
+      where: { id: entity.id },
+    });
   }
-  delete(id: string): Promise<void> {
-    throw new Error('Method not implemented.');
+  async delete(id: string): Promise<void> {
+    await this._get(id);
+    await this.prismaService.appointment.delete({
+      where: { id },
+    });
   }
 
   protected async _get(id: string): Promise<AppointmentEntity> {
