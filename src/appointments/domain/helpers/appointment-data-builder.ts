@@ -10,7 +10,6 @@ export function AppointmentDataBuilder(props: Props): AppointmentProps {
     status: props.status ?? AppointmentStatus.scheduled,
     clientId: props.clientId ?? faker.string.uuid(),
     serviceId: props.serviceId ?? faker.string.uuid(),
-    barberId: props.barberId ?? faker.string.uuid(),
     barberShopId: props.barberShopId ?? faker.string.uuid(),
     createdAt: props.createdAt ?? faker.date.past(),
   };
