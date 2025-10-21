@@ -28,10 +28,6 @@ export class AppointmentRules {
 
   @IsNotEmpty()
   @IsUUID()
-  barberId: string;
-
-  @IsNotEmpty()
-  @IsUUID()
   barberShopId: string;
 
   @IsDate()
@@ -43,7 +39,6 @@ export class AppointmentRules {
     status,
     clientId,
     serviceId,
-    barberId,
     barberShopId,
     createdAt,
   }: AppointmentProps) {
@@ -52,7 +47,6 @@ export class AppointmentRules {
       status,
       clientId,
       serviceId,
-      barberId,
       barberShopId,
       createdAt,
     });

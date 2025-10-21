@@ -16,7 +16,6 @@ model User {
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
   barberShopId        String?
-  appointmentsTaken   Appointment[] @relation("BarberAppointments")
   appointmentsCreated Appointment[] @relation("ClientAppointments")
   ownedBarberShop     BarberShop?   @relation("Owner")
   barberShop          BarberShop?   @relation("Barbers", fields: [barberShopId], references: [id])
@@ -55,10 +54,8 @@ model Appointment {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
   clientId     String
-  barberId     String
   serviceId    String
   barberShopId String
-  barber       User              @relation("BarberAppointments", fields: [barberId], references: [id])
   barberShop   BarberShop        @relation(fields: [barberShopId], references: [id])
   client       User              @relation("ClientAppointments", fields: [clientId], references: [id])
   service      Service           @relation(fields: [serviceId], references: [id])

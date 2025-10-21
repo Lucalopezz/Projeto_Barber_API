@@ -4,7 +4,6 @@ import { AppointmentsRepository } from '@/appointments/domain/repositories/appoi
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { AppointmentModelMapper } from './models/appointment-model.mapper';
-import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
 
 export class AppointmentsPrismaRepository
   implements AppointmentsRepository.Repository
