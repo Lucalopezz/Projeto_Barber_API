@@ -94,7 +94,7 @@ export class AppointmentsPrismaRepository
       const appointment = await this.prismaService.appointment.findUnique({
         where: { id },
       });
-      return;
+      return AppointmentModelMapper.toEntity(appointment);
     } catch {
       throw new NotFoundError(`AppointmentModel not found using id ${id}`);
     }
