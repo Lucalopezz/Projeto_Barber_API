@@ -16,12 +16,15 @@ import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.d
 import { AppointmentOutput } from '../application/dto/appointments-output.dto';
 import { AppointmentPresenter } from './presenters/appointment.presenter';
 import { AuthGuard } from '@/auth/auth.guard';
+import { UpdateStatusUseCase } from '../application/usecases/update-status.usecase';
 
 @Controller('appointments')
 @UseGuards(AuthGuard)
 export class AppointmentsController {
   @Inject(CreateAppointmentsUseCase.UseCase)
   private createAppointmentsUseCase: CreateAppointmentsUseCase.UseCase;
+  @Inject(UpdateStatusUseCase.UseCase)
+  private updateStatusUseCase: UpdateStatusUseCase.UseCase;
 
   static appointmentToResponse(output: AppointmentOutput) {
     return new AppointmentPresenter(output);
@@ -50,11 +53,17 @@ export class AppointmentsController {
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateAppointmentDto,
+    @CurrentUserId() userId: string,
   ) {
-    //return this.appointmentsService.update(+id, updateAppointmentDto);
+    const model = await this.updateStatusUseCase.execute({
+      id,
+      ...updateAppointmentDto,
+      barberId: userId,
+    });
+    return AppointmentsController.appointmentToResponse(model);
   }
 
   @Delete(':id')

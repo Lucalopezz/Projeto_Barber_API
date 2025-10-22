@@ -1,7 +1,7 @@
 import { CreateAppointmentsUseCase } from '@/appointments/application/usecases/create-appointment.usecase';
 import { Type } from 'class-transformer';
-import { IsDate, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 
+import { IsNotEmpty, IsString, IsUUID } from 'class-validator';
 export class CreateAppointmentDto
   implements Omit<CreateAppointmentsUseCase.Input, 'clientId'>
 {
