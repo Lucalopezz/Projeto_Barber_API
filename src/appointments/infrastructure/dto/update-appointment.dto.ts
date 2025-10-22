@@ -1,12 +1,16 @@
-import { UpdateStatusUseCase } from '@/appointments/application/usecases/update-status.usecase';
-import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
+import { UpdateAppointmentUseCase } from '@/appointments/application/usecases/update-appointment.usecase';
+import { Type } from 'class-transformer';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class UpdateAppointmentDto
-  implements Omit<UpdateStatusUseCase.Input, 'id' | 'barberId'>
+  implements Omit<UpdateAppointmentUseCase.Input, 'id' | 'barberId'>
 {
+  @IsOptional()
+  @Type(() => Date)
+  date: Date;
+
   @IsString()
-  @IsNotEmpty()
-  @IsEnum(AppointmentStatus)
-  newStatus: AppointmentStatus;
+  @IsUUID()
+  @IsOptional()
+  serviceId: string;
 }

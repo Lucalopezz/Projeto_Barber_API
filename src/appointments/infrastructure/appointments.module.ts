@@ -10,6 +10,7 @@ import { AppointmentsRepository } from '../domain/repositories/appointments.repo
 import { UpdateStatusUseCase } from '../application/usecases/update-status.usecase';
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
+import { UpdateAppointmentUseCase } from '../application/usecases/update-appointment.usecase';
 
 @Module({
   controllers: [AppointmentsController],
@@ -60,6 +61,19 @@ import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database
         barberShopRepository: BarberShopRepository.Repository,
       ) => {
         return new UpdateStatusUseCase.UseCase(
+          appointmentRepository,
+          barberShopRepository,
+        );
+      },
+      inject: ['AppointmentRepository', 'BarberShopRepository'],
+    },
+    {
+      provide: UpdateAppointmentUseCase.UseCase,
+      useFactory: (
+        appointmentRepository: AppointmentsRepository.Repository,
+        barberShopRepository: BarberShopRepository.Repository,
+      ) => {
+        return new UpdateAppointmentUseCase.UseCase(
           appointmentRepository,
           barberShopRepository,
         );
