@@ -37,6 +37,11 @@ export class AppointmentsPrismaRepository
       if (f.date) {
         clauses.push({ date: { equals: f.date } });
       }
+      if (f.barberShopId) {
+        clauses.push({ barberShopId: { equals: f.barberShopId } });
+      } else {
+        clauses.push({ customerId: { equals: f.customerId } });
+      }
       if (clauses.length > 0) {
         where.AND = clauses;
       }

@@ -11,6 +11,8 @@ export namespace AppointmentsRepository {
   export type Filter = {
     date?: Date;
     serviceId?: string;
+    barberShopId?: string;
+    customerId?: string;
   };
 
   export class AppointmentsSearchParams extends SearchParams<Filter> {}
