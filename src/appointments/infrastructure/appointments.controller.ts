@@ -21,6 +21,7 @@ import { UpdateStatusUseCase } from '../application/usecases/update-status.useca
 import { UpdateAppointmentUseCase } from '../application/usecases/update-appointment.usecase';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { DeleteAppointmentUseCase } from '../application/usecases/delete-appointment.usecase';
+import { GetAppointmentUseCase } from '../application/usecases/get-appointment.usecase';
 
 @Controller('appointments')
 @UseGuards(AuthGuard)
@@ -33,6 +34,8 @@ export class AppointmentsController {
   private updateAppointmentUseCase: UpdateAppointmentUseCase.UseCase;
   @Inject(DeleteAppointmentUseCase.UseCase)
   private deleteAppointmentUseCase: DeleteAppointmentUseCase.UseCase;
+  @Inject(GetAppointmentUseCase.UseCase)
+  private getAppointmentUseCase: GetAppointmentUseCase.UseCase;
 
   static appointmentToResponse(output: AppointmentOutput) {
     return new AppointmentPresenter(output);
@@ -56,8 +59,12 @@ export class AppointmentsController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    //return this.appointmentsService.findOne(+id);
+  async findOne(@Param('id') id: string, @CurrentUserId() userId: string) {
+    const model = await this.getAppointmentUseCase.execute({
+      id,
+      userId,
+    });
+    return AppointmentsController.appointmentToResponse(model);
   }
 
   @Patch(':id')
