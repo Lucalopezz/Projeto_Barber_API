@@ -65,8 +65,14 @@ export class AppointmentsController {
   }
 
   @Get()
-  async search(@Query() searchParams: ListAppointmentsDto) {
-    const output = await this.listAppointmentsUseCase.execute(searchParams);
+  async search(
+    @Query() searchParams: ListAppointmentsDto,
+    @CurrentUserId() userId: string,
+  ) {
+    const output = await this.listAppointmentsUseCase.execute({
+      ...searchParams,
+      userId,
+    });
     return AppointmentsController.listAppointmentsToResponse(output);
   }
 

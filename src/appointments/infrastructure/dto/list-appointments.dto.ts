@@ -1,9 +1,11 @@
 import { ListAppointmentsUseCase } from '@/appointments/application/usecases/list-appointments.usecase';
 import { SortDirection } from '@/shared/domain/repositories/searchable.repository';
 import { Type } from 'class-transformer';
-import { IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 
-export class ListAppointmentsDto implements ListAppointmentsUseCase.Input {
+export class ListAppointmentsDto
+  implements Omit<ListAppointmentsUseCase.Input, 'userId'>
+{
   @IsOptional()
   page?: number;
 
@@ -24,9 +26,4 @@ export class ListAppointmentsDto implements ListAppointmentsUseCase.Input {
   @IsOptional()
   @Type(() => Date)
   date?: Date;
-
-  @IsString()
-  @IsUUID()
-  @IsNotEmpty()
-  userId: string;
 }
