@@ -9,19 +9,25 @@ import {
   Inject,
   UseGuards,
   Put,
+  Query,
 } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { CreateAppointmentsUseCase } from '../application/usecases/create-appointment.usecase';
 import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
 import { AppointmentOutput } from '../application/dto/appointments-output.dto';
-import { AppointmentPresenter } from './presenters/appointment.presenter';
+import {
+  AppointmentCollectionPresenter,
+  AppointmentPresenter,
+} from './presenters/appointment.presenter';
 import { AuthGuard } from '@/auth/auth.guard';
 import { UpdateStatusUseCase } from '../application/usecases/update-status.usecase';
 import { UpdateAppointmentUseCase } from '../application/usecases/update-appointment.usecase';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { DeleteAppointmentUseCase } from '../application/usecases/delete-appointment.usecase';
 import { GetAppointmentUseCase } from '../application/usecases/get-appointment.usecase';
+import { ListAppointmentsUseCase } from '../application/usecases/list-appointments.usecase';
+import { ListAppointmentsDto } from './dto/list-appointments.dto';
 
 @Controller('appointments')
 @UseGuards(AuthGuard)
@@ -36,9 +42,14 @@ export class AppointmentsController {
   private deleteAppointmentUseCase: DeleteAppointmentUseCase.UseCase;
   @Inject(GetAppointmentUseCase.UseCase)
   private getAppointmentUseCase: GetAppointmentUseCase.UseCase;
+  @Inject(ListAppointmentsUseCase.UseCase)
+  private listAppointmentsUseCase: ListAppointmentsUseCase.UseCase;
 
   static appointmentToResponse(output: AppointmentOutput) {
     return new AppointmentPresenter(output);
+  }
+  static listAppointmentsToResponse(output: ListAppointmentsUseCase.Output) {
+    return new AppointmentCollectionPresenter(output);
   }
 
   @Post()
@@ -54,8 +65,9 @@ export class AppointmentsController {
   }
 
   @Get()
-  findAll() {
-    //return this.appointmentsService.findAll();
+  async search(@Query() searchParams: ListAppointmentsDto) {
+    const output = await this.listAppointmentsUseCase.execute(searchParams);
+    return AppointmentsController.listAppointmentsToResponse(output);
   }
 
   @Get(':id')

@@ -1,5 +1,7 @@
 import { AppointmentOutput } from '@/appointments/application/dto/appointments-output.dto';
+import { ListAppointmentsUseCase } from '@/appointments/application/usecases/list-appointments.usecase';
 import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
+import { CollectionPresenter } from '@/shared/infrastructure/presenters/collection.presenter';
 import { Transform } from 'class-transformer';
 
 export class AppointmentPresenter {
@@ -29,4 +31,11 @@ export class AppointmentPresenter {
   }
 }
 
-// create a collection presenter for seach method
+export class AppointmentCollectionPresenter extends CollectionPresenter {
+  data: AppointmentPresenter[];
+  constructor(output: ListAppointmentsUseCase.Output) {
+    const { items, ...paginationProps } = output;
+    super(paginationProps);
+    this.data = items.map((item) => new AppointmentPresenter(item));
+  }
+}
