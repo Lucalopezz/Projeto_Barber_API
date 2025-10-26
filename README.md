@@ -81,12 +81,10 @@ src/
 
 ## 🚧 Status
 
-**This project is still in early development.**
+**This project is still in development.**
 
 Code structure, features, and technologies may change as I refine and expand the design.
 
 ---
-
-Feel free to follow this repository to check progress, suggest improvements, or collaborate in the future!
 
 
