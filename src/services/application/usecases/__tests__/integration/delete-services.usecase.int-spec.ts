@@ -172,7 +172,7 @@ describe('DeleteServicesUseCase integration tests', () => {
     // Act & Assert
     await expect(sut.execute(deleteInput)).rejects.toThrow(
       new BadRequestError(
-        'UserModel not found using ID non-existent-service-id',
+        'ServiceModel not found using ID non-existent-service-id',
       ),
     );
   });

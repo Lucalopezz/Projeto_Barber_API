@@ -389,7 +389,7 @@ describe('UpdateServicesUseCase integration tests', () => {
     // Act & Assert
     await expect(sut.execute(updateInput)).rejects.toThrow(
       new BadRequestError(
-        'UserModel not found using ID non-existent-service-id',
+        'ServiceModel not found using ID non-existent-service-id',
       ),
     );
   });

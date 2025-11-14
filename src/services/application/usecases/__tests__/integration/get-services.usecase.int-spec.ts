@@ -118,7 +118,7 @@ describe('GetServicesUseCase integration tests', () => {
     };
 
     await expect(sut.execute(input)).rejects.toThrow(
-      new NotFoundError('UserModel not found using ID non-existent-id'),
+      new NotFoundError('ServiceModel not found using ID non-existent-id'),
     );
   });
 

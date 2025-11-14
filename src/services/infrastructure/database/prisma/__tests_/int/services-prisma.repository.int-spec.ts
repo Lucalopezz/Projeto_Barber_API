@@ -59,7 +59,7 @@ describe('ServicesPrismaRepository integration tests', () => {
 
   it('should throw error when entity not found', async () => {
     await expect(() => sut.findById('fake-id')).rejects.toThrow(
-      new NotFoundError('UserModel not found using ID fake-id'),
+      new NotFoundError('ServiceModel not found using ID fake-id'),
     );
   });
 
@@ -159,7 +159,7 @@ describe('ServicesPrismaRepository integration tests', () => {
     );
 
     await expect(() => sut.update(entity)).rejects.toThrow(
-      new NotFoundError(`UserModel not found using ID ${entity._id}`),
+      new NotFoundError(`ServiceModel not found using ID ${entity._id}`),
     );
   });
 
@@ -201,7 +201,7 @@ describe('ServicesPrismaRepository integration tests', () => {
     );
 
     await expect(() => sut.delete(entity._id)).rejects.toThrow(
-      new NotFoundError(`UserModel not found using ID ${entity._id}`),
+      new NotFoundError(`ServiceModel not found using ID ${entity._id}`),
     );
   });
 
