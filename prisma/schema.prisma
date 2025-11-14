@@ -18,7 +18,7 @@ model User {
   barberShopId        String?
   appointmentsCreated Appointment[] @relation("ClientAppointments")
   ownedBarberShop     BarberShop?   @relation("Owner")
-  barberShop          BarberShop?   @relation("Barbers", fields: [barberShopId], references: [id])
+  barberShop          BarberShop?   @relation("Barbers", fields: [barberShopId], references: [id], onDelete: Cascade)
 }
 
 model BarberShop {
@@ -29,7 +29,7 @@ model BarberShop {
   updatedAt    DateTime      @updatedAt
   ownerId      String?       @unique
   appointments Appointment[]
-  owner        User?         @relation("Owner", fields: [ownerId], references: [id])
+  owner        User?         @relation("Owner", fields: [ownerId], references: [id], onDelete: Cascade)
   services     Service[]
   barbers      User[]        @relation("Barbers")
 }
@@ -56,9 +56,9 @@ model Appointment {
   clientId     String
   serviceId    String
   barberShopId String
-  barberShop   BarberShop        @relation(fields: [barberShopId], references: [id])
-  client       User              @relation("ClientAppointments", fields: [clientId], references: [id])
-  service      Service           @relation(fields: [serviceId], references: [id])
+  barberShop   BarberShop        @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
+  client       User              @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Cascade)
+  service      Service           @relation(fields: [serviceId], references: [id], onDelete: Cascade)
 }
 
 enum Role {
