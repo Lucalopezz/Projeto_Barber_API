@@ -54,7 +54,7 @@ export class ServicesPrismaRepository implements ServicesRepository.Repository {
       });
       return ServicesModelMapper.toEntity(service);
     } catch {
-      throw new NotFoundError(`UserModel not found using ID ${id}`);
+      throw new NotFoundError(`ServiceModel not found using ID ${id}`);
     }
   }
 }
