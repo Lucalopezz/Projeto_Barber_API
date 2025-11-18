@@ -19,6 +19,11 @@ export function applyGlobalConfig(app: INestApplication) {
       transform: true,
     }),
   );
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Authorization',
+  });
   app.useGlobalInterceptors(
     new WrapperDataInterceptor(),
     new ClassSerializerInterceptor(app.get(Reflector)),
