@@ -87,9 +87,9 @@ export class UsersController {
     return UsersController.listUsersToResponse(output);
   }
 
-  @Get(':id')
+  @Get('get-one')
   @UseGuards(AuthGuard)
-  async findOne(@Param('id') id: string) {
+  async findOne(@CurrentUserId() id: string) {
     const output = await this.getUserUsecase.execute({ id });
     return UsersController.userToResponse(output);
   }
