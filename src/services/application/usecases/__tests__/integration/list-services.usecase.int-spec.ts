@@ -1,11 +1,12 @@
-import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barbershop-prisma.repository';
+import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { ListServicesUseCase } from '../../list-services.usecase';
+import { ListServicesByBarberShopUseCase } from '../../list-services-by-barberShop.usecase';
 import { CreateServicesUseCase } from '../../create-services.usecase';
-import { CreateBarberShopUseCase } from '@/barberShop/application/usecases/create-barbershop.usecase';
+import { CreateBarberShopUseCase } from '@/barberShop/application/usecases/create-barberShop.usecase';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
 import { Role } from '@/users/domain/entities/role.enum';
 import { UserEntity } from '@/users/domain/entities/user.entity';
@@ -18,6 +19,7 @@ import { ServicesPrismaRepository } from '@/services/infrastructure/database/pri
 describe('ListServicesUseCase integration tests', () => {
   const prismaService = new PrismaClient();
   let sut: ListServicesUseCase.UseCase;
+  let listServicesByBarberShopSut: ListServicesByBarberShopUseCase.UseCase;
   let createServiceSut: CreateServicesUseCase.UseCase;
   let createBarberShopSut: CreateBarberShopUseCase.UseCase;
   let servicesRepository: ServicesPrismaRepository;
@@ -40,6 +42,11 @@ describe('ListServicesUseCase integration tests', () => {
       servicesRepository,
       barberShopRepository,
     );
+    listServicesByBarberShopSut =
+      new ListServicesByBarberShopUseCase.UseCase(
+        servicesRepository,
+        barberShopRepository,
+      );
     createServiceSut = new CreateServicesUseCase.UseCase(
       servicesRepository,
       barberShopRepository,
@@ -342,5 +349,40 @@ describe('ListServicesUseCase integration tests', () => {
     expect(result[0].duration).toBe(30);
     expect(result[0].barberShopId).toBe(createdBarberShop.id);
     expect(result[0].createdAt).toBeInstanceOf(Date);
+  });
+
+  it('should list services publicly by barber shop id', async () => {
+    const userData = UserDataBuilder({
+      role: Role.barber,
+      email: 'public-barber@test.com',
+    });
+    const userEntity = new UserEntity(userData);
+    await userRepository.insert(userEntity);
+
+    const barberShop = await createBarberShopSut.execute({
+      name: 'Public Barber Shop',
+      address: BarberShopDataBuilder({}).address,
+      ownerId: userEntity.id,
+    });
+
+    await createServiceSut.execute({
+      name: 'Corte público',
+      price: 55,
+      description: 'Serviço exibido na vitrine',
+      duration: 30,
+      barberShopOwnerId: userEntity.id,
+    });
+
+    const result = await listServicesByBarberShopSut.execute({
+      barberShopId: barberShop.id,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toEqual(
+      expect.objectContaining({
+        name: 'Corte público',
+        barberShopId: barberShop.id,
+      }),
+    );
   });
 });

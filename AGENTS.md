@@ -84,3 +84,4 @@ Use o alias `@/` para imports a partir de `src` (por exemplo, `@/shared/domain/e
 - Existem incompatibilidades conhecidas que devem ser preservadas até uma tarefa específica: `ServicePresenter.barberShopOwnerId` contém o `barberShopId`, e o filtro de agendamentos usa `serviceID` no contrato HTTP. Consulte `docs/todos.md` antes de normalizá-las.
 - Não exponha senha, hash ou modelos Prisma diretamente.
 - Não misture refatorações amplas com uma alteração de produto pontual. Mantenha o estilo do módulo vizinho, inclusive o padrão de namespaces e injeção de dependência.
+- Não altere a documetacão de to-dos a nao ser para marcar um como concluído. Ela é a fonte de verdade do backlog e das prioridades, e não deve ser usada para anotar decisões de implementação.

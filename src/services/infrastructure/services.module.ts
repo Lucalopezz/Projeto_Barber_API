@@ -11,6 +11,7 @@ import { ListServicesUseCase } from '../application/usecases/list-services.useca
 import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
 import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
 import { DeleteServicesUseCase } from '../application/usecases/delete-services.usecase';
+import { ListServicesByBarberShopUseCase } from '../application/usecases/list-services-by-barberShop.usecase';
 
 @Module({
   controllers: [ServicesController],
@@ -92,6 +93,19 @@ import { DeleteServicesUseCase } from '../application/usecases/delete-services.u
         return new GetServicesUseCase.UseCase(servicesRepository);
       },
       inject: ['ServicesRepository'],
+    },
+    {
+      provide: ListServicesByBarberShopUseCase.UseCase,
+      useFactory: (
+        servicesRepository: ServicesRepository.Repository,
+        barberShopRepository: BarberShopRepository.Repository,
+      ) => {
+        return new ListServicesByBarberShopUseCase.UseCase(
+          servicesRepository,
+          barberShopRepository,
+        );
+      },
+      inject: ['ServicesRepository', 'BarberShopRepository'],
     },
   ],
 })

@@ -15,7 +15,7 @@ O domínio atual possui quatro recursos principais:
 
 | Papel | Necessidade de produto | Estado atual da API |
 | --- | --- | --- |
-| Cliente (`client`) | Explorar barbearias e seus serviços, escolher horário e criar/consultar/cancelar os próprios agendamentos. | Cria e consulta os próprios agendamentos, mas não há rota para listar serviços da barbearia escolhida. |
+| Cliente (`client`) | Explorar barbearias e seus serviços, escolher horário e criar/consultar/cancelar os próprios agendamentos. | Pode explorar barbearias e listar os serviços da barbearia escolhida pelas rotas públicas da vitrine. |
 | Barbeiro (`barber`) | Cadastrar sua barbearia, administrar seus serviços e consultar/atualizar os agendamentos dela. Também deve conseguir explorar outras barbearias como um cliente. | Cadastra uma única barbearia e administra seus serviços. A listagem de agendamentos usa a barbearia da qual é proprietário. |
 
 O modelo atual considera o **proprietário** da barbearia como `barber`. Apesar de existir a relação `barberShopId` no usuário, ainda não há fluxo ou rota para vincular outros barbeiros à barbearia. Por isso, "barbeiro" hoje significa, na prática, o dono da barbearia.
@@ -36,8 +36,8 @@ Service (id) ────────────> Appointment.serviceId
 
 IDs são UUIDs gerados no domínio. No front, mantenha ao menos estes identificadores no estado da jornada:
 
-1. da resposta de `GET /barber-shop`, guarde `barberShop.id` da barbearia escolhida;
-2. da lista de serviços dessa barbearia (rota a ser criada), guarde `service.id`;
+1. da resposta de `GET /barber-shop/catalog`, guarde `barberShop.id` da barbearia escolhida;
+2. da resposta de `GET /services/catalog/:barberShopId`, guarde `service.id`;
 3. ao criar o agendamento, envie `serviceId`; a API resolve internamente `barberShopId` e `clientId`;
 4. da resposta do agendamento, guarde `appointment.id` para consultar, alterar ou cancelar.
 

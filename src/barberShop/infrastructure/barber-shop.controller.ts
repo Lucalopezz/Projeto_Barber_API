@@ -28,7 +28,6 @@ import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.d
 import { AuthGuard } from '@/auth/auth.guard';
 
 @Controller('barber-shop')
-@UseGuards(AuthGuard)
 export class BarberShopController {
   @Inject(ListBarberShopUseCase.UseCase)
   private listBarberShopUseCase: ListBarberShopUseCase.UseCase;
@@ -54,6 +53,7 @@ export class BarberShopController {
   }
 
   @Post()
+  @UseGuards(AuthGuard)
   async create(
     @Body() createBarberShopDto: CreateBarberShopDto,
     @CurrentUserId() userId: string,
@@ -65,19 +65,20 @@ export class BarberShopController {
     return BarberShopController.barberShopToResponse(model);
   }
 
-  @Get(':id')
+  @Get('catalog/:id')
   async findOne(@Param('id') id: string) {
     const output = await this.getBarberShopUseCase.execute({ id });
     return BarberShopController.barberShopToResponse(output);
   }
 
-  @Get()
+  @Get('catalog')
   async search(@Query() searchParams: ListBarberShopDto) {
     const output = await this.listBarberShopUseCase.execute(searchParams);
     return BarberShopController.listBarberShopToResponse(output);
   }
 
   @Put(':id')
+  @UseGuards(AuthGuard)
   async update(
     @Param('id') id: string,
     @Body() updateBarberShopDto: UpdateBarberShopDto,
@@ -92,6 +93,7 @@ export class BarberShopController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard)
   remove(@Param('id') id: string, @CurrentUserId() ownerId: string) {
     return this.deleteBarberShopUseCase.execute({ id, ownerId });
   }

@@ -58,15 +58,15 @@ Query opcional: `page`, `perPage`, `sort`, `sortDir`, `name`, `role`. Exemplo: `
 
 ## Barbearias
 
-> Todas as rotas deste grupo exigem autenticação hoje, inclusive leitura. Isso conflita com a exploração pública/por cliente desejada e deve mudar.
+As operações de escrita exigem autenticação. As rotas de leitura são públicas para permitir que clientes explorem os estabelecimentos.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `POST` | `/barber-shop` | Cria a barbearia do barbeiro autenticado. Cada dono pode ter somente uma. |
-| `GET` | `/barber-shop` | Lista barbearias paginadas. |
-| `GET` | `/barber-shop/:id` | Busca uma barbearia por ID. |
-| `PUT` | `/barber-shop/:id` | Atualiza a própria barbearia. |
-| `DELETE` | `/barber-shop/:id` | Exclui a própria barbearia. |
+| `POST` | `/barber-shop` | 🔒 Cria a barbearia do barbeiro autenticado. Cada dono pode ter somente uma. |
+| `GET` | `/barber-shop/catalog` | 🌐 Lista barbearias paginadas para a vitrine. |
+| `GET` | `/barber-shop/catalog/:id` | 🌐 Busca uma barbearia da vitrine por ID. |
+| `PUT` | `/barber-shop/:id` | 🔒 Atualiza a própria barbearia. |
+| `DELETE` | `/barber-shop/:id` | 🔒 Exclui a própria barbearia. |
 
 ### Criar/atualizar — `POST /barber-shop` e `PUT /barber-shop/:id`
 
@@ -81,7 +81,7 @@ Query opcional: `page`, `perPage`, `sort`, `sortDir`, `name`, `role`. Exemplo: `
 
 ## Serviços
 
-> Todas as rotas de serviços exigem token. `GET /services` lista **somente** os serviços da barbearia de propriedade do usuário autenticado; não recebe `barberShopId` e não serve para a vitrine do cliente.
+> As operações de gestão de serviços exigem token. `GET /services` lista **somente** os serviços da barbearia de propriedade do usuário autenticado; a rota pública da vitrine fica em `/services/catalog/:barberShopId`.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
@@ -90,6 +90,7 @@ Query opcional: `page`, `perPage`, `sort`, `sortDir`, `name`, `role`. Exemplo: `
 | `GET` | `/services/:id` | Busca serviço por ID. |
 | `PATCH` | `/services/:id` | Atualiza serviço da própria barbearia. |
 | `DELETE` | `/services/:id` | Exclui serviço da própria barbearia. |
+| `GET` | `/services/catalog/:barberShopId` | 🌐 Lista os serviços da barbearia escolhida para a vitrine. |
 
 ### Criar/atualizar — `POST /services` e `PATCH /services/:id`
 

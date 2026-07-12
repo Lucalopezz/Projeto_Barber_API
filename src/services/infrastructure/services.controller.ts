@@ -20,9 +20,9 @@ import { ListServicesUseCase } from '../application/usecases/list-services.useca
 import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
 import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
 import { DeleteServicesUseCase } from '../application/usecases/delete-services.usecase';
+import { ListServicesByBarberShopUseCase } from '../application/usecases/list-services-by-barberShop.usecase';
 
 @Controller('services')
-@UseGuards(AuthGuard)
 export class ServicesController {
   @Inject(CreateServicesUseCase.UseCase)
   private createServicesUseCase: CreateServicesUseCase.UseCase;
@@ -34,12 +34,15 @@ export class ServicesController {
   private updateServicesUseCase: UpdateServicesUseCase.UseCase;
   @Inject(DeleteServicesUseCase.UseCase)
   private deleteServicesUseCase: DeleteServicesUseCase.UseCase;
+  @Inject(ListServicesByBarberShopUseCase.UseCase)
+  private listServicesByBarberShopUseCase: ListServicesByBarberShopUseCase.UseCase;
 
   static serviceToResponse(output: CreateServicesUseCase.Output) {
     return new ServicePresenter(output);
   }
 
   @Post()
+  @UseGuards(AuthGuard)
   async create(
     @Body() createServiceDto: CreateServiceDto,
     @CurrentUserId() userId: string,
@@ -52,18 +55,21 @@ export class ServicesController {
   }
 
   @Get()
+  @UseGuards(AuthGuard)
   async findAll(@CurrentUserId() userId: string) {
     const models = await this.listServicesUseCase.execute({ userId });
     return models.map((model) => ServicesController.serviceToResponse(model));
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard)
   async findOne(@Param('id') id: string) {
     const model = await this.getServicesUseCase.execute({ id });
     return ServicesController.serviceToResponse(model);
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard)
   async update(
     @Param('id') id: string,
     @Body() updateServiceDto: UpdateServiceDto,
@@ -78,10 +84,19 @@ export class ServicesController {
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard)
   remove(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.deleteServicesUseCase.execute({
       id,
       barberShopOwnerId: userId,
     });
+  }
+
+  @Get('catalog/:barberShopId')
+  async findAllByBarberShop(@Param('barberShopId') barberShopId: string) {
+    const models = await this.listServicesByBarberShopUseCase.execute({
+      barberShopId,
+    });
+    return models.map((model) => ServicesController.serviceToResponse(model));
   }
 }
