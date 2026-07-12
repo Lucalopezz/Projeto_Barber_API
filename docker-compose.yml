@@ -3,7 +3,7 @@ services:
   db:
     image: postgres:15
     container_name: api-barber-db
-    restart: always
+    restart: no
     ports:
       - '5450:5432'
     volumes:
