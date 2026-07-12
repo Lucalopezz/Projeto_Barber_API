@@ -1,90 +1,31 @@
-# ✂️ Barber Shop API - Clean Architecture & DDD
+# Barber Shop API
 
-This is a backend project currently under development, aiming to build a robust, scalable, and maintainable RESTful API for managing a barber shop business.
+API REST para uma plataforma de barbearias, construída com NestJS, TypeScript, Prisma e PostgreSQL. O projeto organiza as regras de negócio com princípios de Clean Architecture e DDD.
 
-The project applies **Clean Architecture**, **Domain-Driven Design (DDD)** principles, and is built with **NestJS**, **TypeScript**, and **Prisma**. It also includes **automated testing** at various levels (unit, integration, and e2e) and follows modern development practices such as **SOLID principles**, **design patterns**, and **API documentation with Swagger**.
+## Documentação
 
-## 📦 Tech Stack
+- [Visão geral e execução local](./docs/visao-geral.md)
+- [Rotas e contratos HTTP](./docs/rotas.md)
+- [Backlog técnico e de produto](./docs/todos.md)
 
-- Node.js / TypeScript
-- NestJS Framework
-- Prisma ORM
-- PostgreSQL (local or Docker)
-- Swagger (API documentation)
-- Vitest (Testing framework)
+## Início rápido
 
-## 📚 Main Features (planned)
+```bash
+npm install
+docker compose up -d
+npx dotenv-cli -e .env.development -- npx prisma migrate deploy
+npm run start:dev
+```
 
-- User and authentication system
-- Barber and client management
-- Service scheduling
-- Daily/weekly availability for barbers
-- Role-based access control (RBAC)
-- Notifications and service reminders
-- Admin dashboard endpoints
+A API inicia em `http://localhost:3001` por padrão. Configure `APP_PORT`, `DATABASE_URL`, `JWT_SECRET` e `JWT_EXPIRES_IN` em `.env.development`; há um exemplo completo na [visão geral](./docs/visao-geral.md#execução-local).
 
-## 🛠️ Project Structure
+## Scripts úteis
 
-The application follows Clean Architecture, dividing the project into layers such as:
+```bash
+npm run start:dev  # desenvolvimento com recarga
+npm run build      # build de produção
+npm test           # testes
+npm run test:int   # testes de integração
+```
 
-````
-src/
-├── appointments/            ⬅ Módulo de agendamentos
-│   ├── application/
-│   │   ├── dtos/
-│   │   ├── use-cases/
-│   │   └── interfaces/
-│   │
-│   ├── domain/
-│   │   ├── entities/         ⬅ Ex: Appointment.ts
-│   │   └── value-objects/    ⬅ Ex: DateRange.ts
-│   │
-│   └── infrastructure/
-│       ├── controllers/
-│       ├── repositories/
-│       ├── mappers/
-│       └── appointment.module.ts
-│
-├── users/                   ⬅ Módulo de usuários (clientes e barbearia)
-│   ├── application/
-│   ├── domain/
-│   └── infrastructure/
-│
-├── services/                ⬅ Serviços oferecidos (corte, barba, combo etc)
-│   ├── application/
-│   ├── domain/
-│   └── infrastructure/
-│
-├── auth/                    ⬅ Autenticação e autorização
-│   ├── application/
-│   ├── domain/
-│   └── infrastructure/
-│
-├── shared/                  ⬅ Código reutilizável e utilitários
-│   ├── application/
-│   │   └── interfaces/
-│   ├── domain/
-│   │   └── value-objects/     ⬅ Ex: Email.ts, UUID.ts
-│   └── infrastructure/
-│       ├── database/
-│       ├── exceptions/
-│       ├── middlewares/
-│       ├── guards/
-│       ├── interceptors/
-│       └── utils/
-│
-├── app.module.ts
-├── global-config.ts
-└── main.ts
-````
-
-
-## 🚧 Status
-
-**This project is still in development.**
-
-Code structure, features, and technologies may change as I refine and expand the design.
-
----
-
-
+Para detalhes de recursos, papéis, respostas e limitações conhecidas, use os documentos acima como fonte de referência.
