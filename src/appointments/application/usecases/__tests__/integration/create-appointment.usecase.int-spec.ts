@@ -44,6 +44,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
     sut = new CreateAppointmentsUseCase.UseCase(
       appointmentRepository,
       serviceRepository,
+      barberShopRepository,
     );
     await prismaService.appointment.deleteMany();
     await prismaService.service.deleteMany();
@@ -59,7 +60,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
   const createBarberShopWithOwner = async () => {
     const barber = new UserEntity(
       UserDataBuilder({
-        role: Role.barber,
+        role: Role.owner,
         email: 'barber@test.com',
       }),
     );
@@ -124,7 +125,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
 
   it('should create an appointment successfully', async () => {
     // Arrange
-    const { barberShop } = await createBarberShopWithOwner();
+    const { barber, barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
     const client = await createClient();
     const appointmentDate = new Date('2025-12-15T10:00:00Z');
@@ -142,7 +143,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
     expect(output.id).toBeDefined();
     expect(output.clientId).toBe(client.id);
     expect(output.serviceId).toBe(service._id);
-    expect(output.barberShopId).toBe(barberShop._id);
+    expect(output.barberId).toBe(barber.id);
     expect(output.status).toBe(AppointmentStatus.scheduled);
     expect(output.date).toEqual(appointmentDate);
     expect(output.createdAt).toBeInstanceOf(Date);
@@ -199,7 +200,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
 
   it('should create appointment and verify it is persisted in database', async () => {
     // Arrange
-    const { barberShop } = await createBarberShopWithOwner();
+    const { barber, barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
     const client = await createClient();
     const appointmentDate = new Date('2025-12-20T14:30:00Z');
@@ -221,7 +222,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
     expect(appointmentInDb).toBeDefined();
     expect(appointmentInDb.clientId).toBe(client.id);
     expect(appointmentInDb.serviceId).toBe(service._id);
-    expect(appointmentInDb.barberShopId).toBe(barberShop._id);
+    expect(appointmentInDb.barberId).toBe(barber.id);
     expect(appointmentInDb.status).toBe(AppointmentStatus.scheduled);
     expect(appointmentInDb.date.toISOString()).toBe(
       appointmentDate.toISOString(),
@@ -263,9 +264,9 @@ describe('CreateAppointmentsUseCase integration tests', () => {
     expect(appointments).toHaveLength(2);
   });
 
-  it('should associate appointment with correct barber shop', async () => {
+  it('should associate appointment with the barbershop owner', async () => {
     // Arrange
-    const { barberShop } = await createBarberShopWithOwner();
+    const { barber, barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
     const client = await createClient();
     const appointmentDate = new Date('2025-12-25T09:00:00Z');
@@ -280,6 +281,6 @@ describe('CreateAppointmentsUseCase integration tests', () => {
     const output = await sut.execute(input);
 
     // Assert
-    expect(output.barberShopId).toBe(barberShop._id);
+    expect(output.barberId).toBe(barber.id);
   });
 });

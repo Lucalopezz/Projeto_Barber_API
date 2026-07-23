@@ -49,13 +49,19 @@ import { ListAppointmentsUseCase } from '../application/usecases/list-appointmen
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
         servicesRepository: ServicesRepository.Repository,
+        barberShopRepository: BarberShopRepository.Repository,
       ) => {
         return new CreateAppointmentsUseCase.UseCase(
           appointmentRepository,
           servicesRepository,
+          barberShopRepository,
         );
       },
-      inject: ['AppointmentRepository', 'ServicesRepository'],
+      inject: [
+        'AppointmentRepository',
+        'ServicesRepository',
+        'BarberShopRepository',
+      ],
     },
     {
       provide: DeleteAppointmentUseCase.UseCase,

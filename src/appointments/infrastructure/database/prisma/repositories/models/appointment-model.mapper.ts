@@ -9,7 +9,7 @@ export class AppointmentModelMapper {
       date: model.date,
       serviceId: model.serviceId,
       clientId: model.clientId,
-      barberShopId: model.barberShopId,
+      barberId: model.barberId,
       status: model.status as AppointmentStatus,
       createdAt: model.createdAt,
     };

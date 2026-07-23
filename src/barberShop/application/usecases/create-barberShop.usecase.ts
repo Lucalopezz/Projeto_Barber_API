@@ -38,9 +38,9 @@ export namespace CreateBarberShopUseCase {
         throw new BadRequestError('BarberShop already exists for this user');
       }
 
-      if (owner.role !== Role.barber) {
+      if (owner.role !== Role.owner) {
         throw new BadRequestError(
-          'Only users with role barber can create a BarberShop',
+          'Only users with role owner can create a BarberShop',
         );
       }
 

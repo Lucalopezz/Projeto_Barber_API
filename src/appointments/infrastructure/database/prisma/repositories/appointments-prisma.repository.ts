@@ -10,11 +10,11 @@ export class AppointmentsPrismaRepository
 {
   constructor(private prismaService: PrismaService) {}
   sortableFields: string[] = ['date', 'createdAt', 'serviceId'];
-  async verifyAvailability(date: Date, serviceId: string): Promise<boolean> {
+  async verifyAvailability(date: Date, barberId: string): Promise<boolean> {
     const isAvailable = await this.prismaService.appointment.findFirst({
       where: {
         date,
-        serviceId,
+        barberId,
       },
     });
     return !isAvailable;
@@ -37,8 +37,12 @@ export class AppointmentsPrismaRepository
       if (f.date) {
         clauses.push({ date: { equals: f.date } });
       }
-      if (f.barberShopId) {
-        clauses.push({ barberShopId: { equals: f.barberShopId } });
+      if (f.barberShopOwnerId) {
+        clauses.push({
+          service: { barberShop: { ownerId: { equals: f.barberShopOwnerId } } },
+        });
+      } else if (f.barberId) {
+        clauses.push({ barberId: { equals: f.barberId } });
       } else {
         clauses.push({ clientId: { equals: f.customerId } });
       }

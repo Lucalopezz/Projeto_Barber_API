@@ -6,30 +6,32 @@ Esta API REST dá suporte a uma plataforma de barbearias. Ela foi organizada com
 
 O domínio atual possui quatro recursos principais:
 
-- **usuários**: contas de clientes e barbeiros;
-- **barbearias**: uma barbearia pertence a um usuário com papel `barber`;
+- **usuários**: contas de clientes, proprietários e barbeiros;
+- **barbearias**: uma barbearia pertence a um usuário com papel `owner` e pode ter barbeiros vinculados;
 - **serviços**: corte, barba e outros serviços pertencentes a uma barbearia;
-- **agendamentos**: ligam cliente, serviço e barbearia em uma data e possuem status.
+- **agendamentos**: ligam cliente, barbeiro e serviço em uma data e possuem status.
 
 ## Papéis e fluxo esperado
 
 | Papel | Necessidade de produto | Estado atual da API |
 | --- | --- | --- |
 | Cliente (`client`) | Explorar barbearias e seus serviços, escolher horário e criar/consultar/cancelar os próprios agendamentos. | Pode explorar barbearias e listar os serviços da barbearia escolhida pelas rotas públicas da vitrine. |
-| Barbeiro (`barber`) | Cadastrar sua barbearia, administrar seus serviços e consultar/atualizar os agendamentos dela. Também deve conseguir explorar outras barbearias como um cliente. | Cadastra uma única barbearia e administra seus serviços. A listagem de agendamentos usa a barbearia da qual é proprietário. |
+| Proprietário (`owner`) | Cadastrar sua barbearia, administrar seus serviços e consultar/atualizar os agendamentos dela. | Cadastra uma única barbearia e administra seus serviços. A listagem de agendamentos usa as barbearias de sua propriedade. |
+| Barbeiro (`barber`) | Trabalhar em uma barbearia e atender agendamentos atribuídos a ele. | O vínculo persistido existe, mas ainda não há fluxo ou rota para adicionar/remover barbeiros. |
 
-O modelo atual considera o **proprietário** da barbearia como `barber`. Apesar de existir a relação `barberShopId` no usuário, ainda não há fluxo ou rota para vincular outros barbeiros à barbearia. Por isso, "barbeiro" hoje significa, na prática, o dono da barbearia.
+Embora o esquema comporte proprietários, barbeiros e múltiplas barbearias por proprietário, a API de gestão atual continua limitada a uma barbearia por proprietário e não oferece fluxo para vincular outros barbeiros. Essas limitações precisam ser removidas junto com as rotas de gestão correspondentes.
 
 ## Modelo de dados e identificadores
 
 ```text
 User (id, role)
  ├── ownerId ────────────> BarberShop (id)
- └── clientId ───────────> Appointment (id)
+ ├── barberShopId ───────> BarberShop (id)
+ ├── clientId ───────────> Appointment (id)
+ └── barberId ───────────> Appointment (id)
 
 BarberShop (id)
- ├── barberShopId ───────> Service (id)
- └── barberShopId ───────> Appointment (id)
+ └── barberShopId ───────> Service (id)
 
 Service (id) ────────────> Appointment.serviceId
 ```
@@ -38,7 +40,7 @@ IDs são UUIDs gerados no domínio. No front, mantenha ao menos estes identifica
 
 1. da resposta de `GET /barber-shop/catalog`, guarde `barberShop.id` da barbearia escolhida;
 2. da resposta de `GET /services/catalog/:barberShopId`, guarde `service.id`;
-3. ao criar o agendamento, envie `serviceId`; a API resolve internamente `barberShopId` e `clientId`;
+3. ao criar o agendamento, envie `serviceId`; a API resolve internamente `clientId` e o `barberId` do proprietário da barbearia do serviço;
 4. da resposta do agendamento, guarde `appointment.id` para consultar, alterar ou cancelar.
 
 O contrato de serviço expõe `barberShopId`, que é o ID da barbearia do serviço.

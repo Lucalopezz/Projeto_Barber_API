@@ -43,7 +43,7 @@ export namespace UpdateAppointmentUseCase {
       }
       const isAvailable = await this.appointmentRepository.verifyAvailability(
         date,
-        serviceId,
+        appointment.barberId,
       );
       if (!isAvailable) {
         throw new BadRequestError('Appointment not available');

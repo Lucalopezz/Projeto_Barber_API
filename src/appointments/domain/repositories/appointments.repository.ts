@@ -11,7 +11,8 @@ export namespace AppointmentsRepository {
   export type Filter = {
     date?: Date;
     serviceId?: string;
-    barberShopId?: string;
+    barberShopOwnerId?: string;
+    barberId?: string;
     customerId?: string;
   };
 
@@ -29,6 +30,6 @@ export namespace AppointmentsRepository {
       AppointmentsSearchParams,
       AppointmentsSearchResult
     > {
-    verifyAvailability(date: Date, serviceId: string): Promise<boolean>;
+    verifyAvailability(date: Date, barberId: string): Promise<boolean>;
   }
 }

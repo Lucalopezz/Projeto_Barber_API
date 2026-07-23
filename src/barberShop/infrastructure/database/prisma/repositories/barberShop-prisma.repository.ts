@@ -13,7 +13,7 @@ export class BarberShopPrismaRepository
   sortableFields: string[] = ['name', 'createdAt'];
 
   async findByOwnerId(ownerId: string): Promise<BarberShopEntity | null> {
-    const ownerShop = await this.prismaService.barberShop.findUnique({
+    const ownerShop = await this.prismaService.barberShop.findFirst({
       where: { ownerId },
     });
 

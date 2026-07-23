@@ -28,7 +28,7 @@ export class AppointmentRules {
 
   @IsNotEmpty()
   @IsUUID()
-  barberShopId: string;
+  barberId: string;
 
   @IsDate()
   @IsOptional()
@@ -39,7 +39,7 @@ export class AppointmentRules {
     status,
     clientId,
     serviceId,
-    barberShopId,
+    barberId,
     createdAt,
   }: AppointmentProps) {
     Object.assign(this, {
@@ -47,7 +47,7 @@ export class AppointmentRules {
       status,
       clientId,
       serviceId,
-      barberShopId,
+      barberId,
       createdAt,
     });
   }

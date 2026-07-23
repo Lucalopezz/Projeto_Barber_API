@@ -6,8 +6,8 @@ export type AppointmentOutput = {
   date: Date;
   status: AppointmentStatus;
   clientId: string;
+  barberId: string;
   serviceId: string;
-  barberShopId: string;
   createdAt?: Date;
 };
 

@@ -114,25 +114,25 @@ describe('AppointmentValidator unit tests', () => {
     expect(sut.errors['serviceId']).toStrictEqual(['serviceId must be a UUID']);
   });
 
-  it('Invalidation cases for barberShopId field', () => {
+  it('Invalidation cases for barberId field', () => {
     let isValid = sut.validate(null as any);
     expect(isValid).toBeFalsy();
-    expect(sut.errors['barberShopId']).toStrictEqual([
-      'barberShopId must be a UUID',
-      'barberShopId should not be empty',
+    expect(sut.errors['barberId']).toStrictEqual([
+      'barberId must be a UUID',
+      'barberId should not be empty',
     ]);
 
-    isValid = sut.validate({ ...props, barberShopId: '' });
+    isValid = sut.validate({ ...props, barberId: '' });
     expect(isValid).toBeFalsy();
-    expect(sut.errors['barberShopId']).toStrictEqual([
-      'barberShopId must be a UUID',
-      'barberShopId should not be empty',
+    expect(sut.errors['barberId']).toStrictEqual([
+      'barberId must be a UUID',
+      'barberId should not be empty',
     ]);
 
-    isValid = sut.validate({ ...props, barberShopId: 10 as any });
+    isValid = sut.validate({ ...props, barberId: 10 as any });
     expect(isValid).toBeFalsy();
-    expect(sut.errors['barberShopId']).toStrictEqual([
-      'barberShopId must be a UUID',
+    expect(sut.errors['barberId']).toStrictEqual([
+      'barberId must be a UUID',
     ]);
   });
 

@@ -9,8 +9,8 @@ export class AppointmentPresenter {
   date: Date;
 
   clientId: string;
+  barberId: string;
   serviceId: string;
-  barberShopId: string;
 
   @Transform(({ value }: { value: AppointmentStatus }) =>
     value.toString().toLowerCase(),
@@ -24,8 +24,8 @@ export class AppointmentPresenter {
     this.id = output.id;
     this.date = output.date;
     this.clientId = output.clientId;
+    this.barberId = output.barberId;
     this.serviceId = output.serviceId;
-    this.barberShopId = output.barberShopId;
     this.status = output.status;
     this.createdAt = output.createdAt;
   }

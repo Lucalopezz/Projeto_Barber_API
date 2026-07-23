@@ -37,7 +37,7 @@ export namespace ListAppointmentsUseCase {
         input.userId,
       );
       if (barberShop) {
-        filter.barberShopId = barberShop.id;
+        filter.barberShopOwnerId = input.userId;
       } else {
         filter.customerId = input.userId;
       }

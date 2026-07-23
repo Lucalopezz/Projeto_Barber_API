@@ -35,7 +35,7 @@ Base URL local: `http://localhost:3001`. Não há prefixo como `/api` ou version
 }
 ```
 
-`role` aceita `client` ou `barber`. A resposta expõe `id`, `name`, `email`, `role` e `createdAt`; a senha nunca é devolvida.
+`role` aceita `client`, `owner` ou `barber`. A resposta expõe `id`, `name`, `email`, `role` e `createdAt`; a senha nunca é devolvida.
 
 ### Login — `POST /users/login`
 
@@ -62,7 +62,7 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `POST` | `/barber-shop` | 🔒 Cria a barbearia do barbeiro autenticado. Cada dono pode ter somente uma. |
+| `POST` | `/barber-shop` | 🔒 Cria a barbearia do proprietário autenticado. A API de gestão atual aceita uma por proprietário. |
 | `GET` | `/barber-shop/catalog` | 🌐 Lista barbearias paginadas para a vitrine. |
 | `GET` | `/barber-shop/catalog/:id` | 🌐 Busca uma barbearia da vitrine por ID. |
 | `PUT` | `/barber-shop/:id` | 🔒 Atualiza a própria barbearia. |
@@ -107,7 +107,7 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 
 ## Agendamentos
 
-Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vira o cliente e a API infere a barbearia a partir do serviço. Status válidos: `scheduled`, `completed` e `cancelled`.
+Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vira o cliente e a API atribui o proprietário da barbearia do serviço como profissional responsável. Status válidos: `scheduled`, `completed` e `cancelled`.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
@@ -127,7 +127,7 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 }
 ```
 
-A resposta contém `id`, `date`, `status`, `clientId`, `serviceId`, `barberShopId` e `createdAt`. Use `serviceId` para referenciar o serviço escolhido, `barberShopId` para o contexto da barbearia e `id` nas ações posteriores.
+A resposta contém `id`, `date`, `status`, `clientId`, `barberId`, `serviceId` e `createdAt`. Use `serviceId` para referenciar o serviço escolhido, `barberId` para identificar o profissional responsável e `id` nas ações posteriores.
 
 ### Filtrar lista — `GET /appointments`
 

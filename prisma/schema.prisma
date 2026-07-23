@@ -8,60 +8,66 @@ datasource db {
 }
 
 model User {
-  id                  String        @id
-  name                String
-  email               String        @unique
-  password            String
-  role                Role
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-  barberShopId        String?
-  appointmentsCreated Appointment[] @relation("ClientAppointments")
-  ownedBarberShop     BarberShop?   @relation("Owner")
-  barberShop          BarberShop?   @relation("Barbers", fields: [barberShopId], references: [id], onDelete: Cascade)
+  id                   String        @id @default(uuid())
+  name                 String
+  email                String        @unique
+  password             String
+  role                 Role
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  ownedBarberShops     BarberShop[]  @relation("Owner")
+  barberShopId         String?
+  barberShop           BarberShop?   @relation("Barbers", fields: [barberShopId], references: [id], onDelete: SetNull)
+  appointmentsAsClient Appointment[] @relation("ClientAppointments")
+  appointmentsAsBarber Appointment[] @relation("BarberAppointments")
 }
 
 model BarberShop {
-  id           String        @id
-  name         String
-  address      String
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  ownerId      String?       @unique
-  appointments Appointment[]
-  owner        User?         @relation("Owner", fields: [ownerId], references: [id], onDelete: Cascade)
-  services     Service[]
-  barbers      User[]        @relation("Barbers")
+  id        String    @id @default(uuid())
+  name      String
+  address   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  ownerId   String
+  owner     User      @relation("Owner", fields: [ownerId], references: [id], onDelete: Restrict)
+  services  Service[]
+  barbers   User[]    @relation("Barbers")
 }
 
 model Service {
-  id           String        @id
+  id           String        @id @default(uuid())
   name         String
-  price        Float
+  price        Decimal       @db.Decimal(10, 2)
   duration     Int
   description  String?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   barberShopId String
-  appointments Appointment[]
   barberShop   BarberShop    @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
 }
 
 model Appointment {
-  id           String            @id
-  date         DateTime
-  status       AppointmentStatus @default(scheduled)
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  clientId     String
-  serviceId    String
-  barberShopId String
-  barberShop   BarberShop        @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
-  client       User              @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Cascade)
-  service      Service           @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  id        String            @id @default(uuid())
+  date      DateTime
+  status    AppointmentStatus @default(scheduled)
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+  clientId  String
+  client    User              @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Restrict)
+  barberId  String
+  barber    User              @relation("BarberAppointments", fields: [barberId], references: [id], onDelete: Restrict)
+  serviceId String
+  service   Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+
+  @@index([clientId])
+  @@index([barberId])
+  @@index([serviceId])
+  @@index([barberId, date])
 }
 
 enum Role {
+  owner
   barber
   client
 }
