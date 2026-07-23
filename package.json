@@ -19,7 +19,9 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "prisma:studio": "npx dotenv-cli -e .env.development -- npx prisma studio"
+    "prisma:studio": "npx dotenv-cli -e .env.development -- npx prisma studio",
+    "prisma:generate": "npx dotenv-cli -e .env.development -- npx prisma generate",
+    "prisma:migrate:dev": "npx dotenv-cli -e .env.development -- npx prisma migrate dev"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",
