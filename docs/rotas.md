@@ -103,7 +103,7 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 }
 ```
 
-`price` é numérico e `duration` representa minutos. A resposta contém `id`, `name`, `price`, `description`, `duration`, `createdAt` e, atualmente, `barberShopOwnerId` — campo que na verdade carrega o ID da barbearia.
+`price` é numérico e `duration` representa minutos. A resposta contém `id`, `name`, `price`, `description`, `duration`, `barberShopId` e `createdAt`. `barberShopId` é o ID da barbearia à qual o serviço pertence e permite navegar da barbearia selecionada para o serviço escolhido.
 
 ## Agendamentos
 
@@ -127,7 +127,7 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 }
 ```
 
-A resposta contém `id`, `date`, `status`, `clientId`, `serviceId`, `barberShopId` e `createdAt`. Use o `id` retornado nas ações posteriores.
+A resposta contém `id`, `date`, `status`, `clientId`, `serviceId`, `barberShopId` e `createdAt`. Use `serviceId` para referenciar o serviço escolhido, `barberShopId` para o contexto da barbearia e `id` nas ações posteriores.
 
 ### Filtrar lista — `GET /appointments`
 

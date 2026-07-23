@@ -7,7 +7,7 @@ export class ServicePresenter {
   price: number;
   description: string;
   duration: number;
-  barberShopOwnerId: string;
+  barberShopId: string;
 
   @Transform(({ value }: { value: Date }) => value.toISOString())
   createdAt: Date;
@@ -18,7 +18,7 @@ export class ServicePresenter {
     this.price = output.price;
     this.description = output.description;
     this.duration = output.duration;
-    this.barberShopOwnerId = output.barberShopId;
+    this.barberShopId = output.barberShopId;
     this.createdAt = output.createdAt;
   }
 }

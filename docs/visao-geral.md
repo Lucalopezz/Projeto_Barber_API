@@ -41,7 +41,7 @@ IDs são UUIDs gerados no domínio. No front, mantenha ao menos estes identifica
 3. ao criar o agendamento, envie `serviceId`; a API resolve internamente `barberShopId` e `clientId`;
 4. da resposta do agendamento, guarde `appointment.id` para consultar, alterar ou cancelar.
 
-No contrato atual, `ServicePresenter` expõe o ID da barbearia com o nome incorreto `barberShopOwnerId`, embora seu valor seja `barberShopId`. Isso deve ser tratado como incompatibilidade de contrato e corrigido antes de o front depender dele; veja o [backlog](./todos.md).
+O contrato de serviço expõe `barberShopId`, que é o ID da barbearia do serviço.
 
 ## Autenticação e formato HTTP
 

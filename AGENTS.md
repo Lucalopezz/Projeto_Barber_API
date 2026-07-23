@@ -81,7 +81,8 @@ Use o alias `@/` para imports a partir de `src` (por exemplo, `@/shared/domain/e
 ## Compatibilidade e cuidados
 
 - Não altere contratos públicos, nomes de rotas, métodos HTTP, envelopes, campos ou regras de autorização sem solicitação explícita e atualização de `docs/rotas.md`.
-- Existem incompatibilidades conhecidas que devem ser preservadas até uma tarefa específica: `ServicePresenter.barberShopOwnerId` contém o `barberShopId`, e o filtro de agendamentos usa `serviceID` no contrato HTTP. Consulte `docs/todos.md` antes de normalizá-las.
+- Enquanto o front consumidor não estiver em produção, correções de contrato ainda podem ser aplicadas diretamente: exponha apenas o campo canônico, sem aliases legados ou marcações de depreciação. Atualize a documentação e os testes afetados. Após haver consumidores em produção ou integrações externas, defina uma estratégia explícita de compatibilidade antes de remover ou renomear campos.
+- Existe uma incompatibilidade conhecida que deve ser preservada até uma tarefa específica: o filtro de agendamentos usa `serviceID` no contrato HTTP. Consulte `docs/todos.md` antes de normalizá-la.
 - Não exponha senha, hash ou modelos Prisma diretamente.
 - Não misture refatorações amplas com uma alteração de produto pontual. Mantenha o estilo do módulo vizinho, inclusive o padrão de namespaces e injeção de dependência.
 - Não altere a documetacão de to-dos a nao ser para marcar um como concluído. Ela é a fonte de verdade do backlog e das prioridades, e não deve ser usada para anotar decisões de implementação.
