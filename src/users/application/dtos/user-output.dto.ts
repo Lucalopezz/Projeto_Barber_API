@@ -12,6 +12,13 @@ export type UserOutput = {
 
 export class UserOutputMapper {
   static toOutput(user: UserEntity): UserOutput {
-    return user.toJSON();
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      password: user.password,
+      createdAt: user.createdAt,
+    };
   }
 }

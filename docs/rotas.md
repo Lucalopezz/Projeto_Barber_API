@@ -19,7 +19,7 @@ Base URL local: `http://localhost:3001`. Não há prefixo como `/api` ou version
 | `POST` | `/users` | 🌐 | Cria uma conta. |
 | `POST` | `/users/login` | 🌐 | Autentica e gera token JWT. |
 | `GET` | `/users` | 🔒 | Lista usuários com paginação. |
-| `GET` | `/users/get-one` | 🔒 | Retorna o usuário do token. |
+| `GET` | `/users/me` | 🔒 | Retorna o usuário do token e seu contexto de barbearia, quando houver. |
 | `PUT` | `/users/:id` | 🔒 | Atualiza nome e/ou papel do próprio usuário. |
 | `PATCH` | `/users/:id` | 🔒 | Atualiza a senha do próprio usuário. |
 | `DELETE` | `/users/:id` | 🔒 | Exclui o próprio usuário. |
@@ -35,7 +35,7 @@ Base URL local: `http://localhost:3001`. Não há prefixo como `/api` ou version
 }
 ```
 
-`role` aceita `client`, `owner` ou `barber`. A resposta expõe `id`, `name`, `email`, `role` e `createdAt`; a senha nunca é devolvida.
+`role` aceita `client` ou `barber`. O papel `owner` não pode ser escolhido diretamente no cadastro: ele é atribuído quando um barbeiro cria uma barbearia. A resposta expõe `id`, `name`, `email`, `role` e `createdAt`; a senha nunca é devolvida.
 
 ### Login — `POST /users/login`
 
@@ -56,13 +56,37 @@ Resposta:
 
 Query opcional: `page`, `perPage`, `sort`, `sortDir`, `name`, `role`. Exemplo: `/users?role=barber&page=1&perPage=10`.
 
+### Contexto do usuário — `GET /users/me`
+
+Retorna os dados básicos do usuário autenticado e sua relação atual com uma barbearia. `barberShop` é `null` para clientes e barbeiros ainda não vinculados. Quando preenchido, `relationship` é `owner` para o dono ou `barber` para um barbeiro vinculado.
+
+```json
+{
+  "data": {
+    "id": "UUID_DO_USUARIO",
+    "name": "Ana Souza",
+    "email": "ana@example.com",
+    "role": "owner",
+    "createdAt": "2026-07-23T12:00:00.000Z",
+    "barberShop": {
+      "id": "UUID_DA_BARBEARIA",
+      "name": "Navalha Fina",
+      "address": "Rua das Flores, 123, Sao Paulo - SP",
+      "ownerId": "UUID_DO_USUARIO",
+      "createdAt": "2026-07-23T12:10:00.000Z",
+      "relationship": "owner"
+    }
+  }
+}
+```
+
 ## Barbearias
 
 As operações de escrita exigem autenticação. As rotas de leitura são públicas para permitir que clientes explorem os estabelecimentos.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `POST` | `/barber-shop` | 🔒 Cria a barbearia do proprietário autenticado. A API de gestão atual aceita uma por proprietário. |
+| `POST` | `/barber-shop` | 🔒 Cria a barbearia do barbeiro autenticado e promove sua conta para `owner`. A API de gestão atual aceita uma por proprietário. |
 | `GET` | `/barber-shop/catalog` | 🌐 Lista barbearias paginadas para a vitrine. |
 | `GET` | `/barber-shop/catalog/:id` | 🌐 Busca uma barbearia da vitrine por ID. |
 | `PUT` | `/barber-shop/:id` | 🔒 Atualiza a própria barbearia. |

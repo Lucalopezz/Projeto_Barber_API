@@ -116,6 +116,15 @@ describe('UserEntity integration tests', () => {
       expect(() => new UserEntity(props)).toThrowError(EntityValidationError);
     });
 
+    it('Should throw an error when creating a user with invalid barberShopId', () => {
+      const props: UserProps = {
+        ...UserDataBuilder({}),
+        barberShopId: 'invalid-id',
+      };
+
+      expect(() => new UserEntity(props)).toThrowError(EntityValidationError);
+    });
+
     it('Should a valid user', () => {
       expect.assertions(0);
 
@@ -166,6 +175,9 @@ describe('UserEntity integration tests', () => {
       entity.update('new name', Role.barber);
       expect(entity.name).toBe('new name');
       expect(entity.role).toBe(Role.barber);
+
+      entity.update(undefined, Role.owner);
+      expect(entity.role).toBe(Role.owner);
 
       // Teste apenas com nome válido (mantendo role existente)
       const originalRole = entity.role;

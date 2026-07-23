@@ -7,6 +7,7 @@ import { BcryptjsHashProvider } from '@/shared/application/providers/bcryptjs-ha
 import { CreateUserUseCase } from '../../create-user.usecase';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
 import { Role } from '@/users/domain/entities/role.enum';
+import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 
 describe('SignupUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -26,6 +27,9 @@ describe('SignupUseCase integration tests', () => {
 
   beforeEach(async () => {
     sut = new CreateUserUseCase.UseCase(repository, hashProvider);
+    await prismaService.appointment.deleteMany();
+    await prismaService.service.deleteMany();
+    await prismaService.barberShop.deleteMany();
     await prismaService.user.deleteMany();
   });
 
@@ -43,5 +47,20 @@ describe('SignupUseCase integration tests', () => {
     const output = await sut.execute(props);
     expect(output.id).toBeDefined();
     expect(output.createdAt).toBeInstanceOf(Date);
+  });
+
+  it('should not allow direct signup as owner', async () => {
+    await expect(
+      sut.execute({
+        name: 'test owner',
+        email: 'owner@test.com',
+        role: Role.owner,
+        password: 'TestPassword123',
+      }),
+    ).rejects.toThrow(
+      new BadRequestError(
+        'Owner role is assigned when a barber creates a BarberShop',
+      ),
+    );
   });
 });

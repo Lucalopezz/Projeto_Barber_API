@@ -39,6 +39,9 @@ describe('User Entity unit tests', () => {
     expect(sut.password).toBeDefined();
     expect(sut.password).toEqual(props.password);
   });
+  it('Getter of barberShopId field', () => {
+    expect(sut.barberShopId).toEqual(props.barberShopId);
+  });
   it('Should update password field', () => {
     const newPassword = 'New Password';
     sut.updatePassword(newPassword);

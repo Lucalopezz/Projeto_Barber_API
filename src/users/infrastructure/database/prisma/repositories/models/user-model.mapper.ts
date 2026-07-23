@@ -10,6 +10,7 @@ export class UserModelMapper {
       email: model.email,
       role: model.role as Role,
       password: model.password,
+      barberShopId: model.barberShopId,
       createdAt: model.createdAt,
     };
     try {

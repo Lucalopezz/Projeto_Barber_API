@@ -13,6 +13,8 @@ import { UpdateUserUseCase } from '../application/usecases/update-user.usecase';
 import { DeleteUserUseCase } from '../application/usecases/delete-user.usecase';
 import { SigninUseCase } from '../application/usecases/signin.usecase';
 import { AuthModule } from '@/auth/auth.module';
+import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
+import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 
 @Module({
   controllers: [UsersController],
@@ -26,6 +28,13 @@ import { AuthModule } from '@/auth/auth.module';
       provide: 'UserRepository',
       useFactory: (prismaService: PrismaService) => {
         return new UserPrismaRepository(prismaService);
+      },
+      inject: ['PrismaService'],
+    },
+    {
+      provide: 'BarberShopRepository',
+      useFactory: (prismaService: PrismaService) => {
+        return new BarberShopPrismaRepository(prismaService);
       },
       inject: ['PrismaService'],
     },
@@ -62,10 +71,13 @@ import { AuthModule } from '@/auth/auth.module';
     },
     {
       provide: GetUserUseCase.UseCase,
-      useFactory: (userRepository: UserRepository.Repository) => {
-        return new GetUserUseCase.UseCase(userRepository);
+      useFactory: (
+        userRepository: UserRepository.Repository,
+        barberShopRepository: BarberShopRepository.Repository,
+      ) => {
+        return new GetUserUseCase.UseCase(userRepository, barberShopRepository);
       },
-      inject: ['UserRepository'],
+      inject: ['UserRepository', 'BarberShopRepository'],
     },
     {
       provide: UpdateUserUseCase.UseCase,

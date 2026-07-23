@@ -19,6 +19,8 @@ O domínio atual possui quatro recursos principais:
 | Proprietário (`owner`) | Cadastrar sua barbearia, administrar seus serviços e consultar/atualizar os agendamentos dela. | Cadastra uma única barbearia e administra seus serviços. A listagem de agendamentos usa as barbearias de sua propriedade. |
 | Barbeiro (`barber`) | Trabalhar em uma barbearia e atender agendamentos atribuídos a ele. | O vínculo persistido existe, mas ainda não há fluxo ou rota para adicionar/remover barbeiros. |
 
+Uma conta pode ser criada como `client` ou `barber`. O barbeiro que cria uma barbearia passa a ter papel `owner`; a propriedade é representada por `BarberShop.ownerId`. Um barbeiro convidado mantém o papel `barber` e seu vínculo de trabalho é representado por `User.barberShopId`. O endpoint autenticado `GET /users/me` expõe esse contexto sem substituir as verificações de autorização dos casos de uso.
+
 Embora o esquema comporte proprietários, barbeiros e múltiplas barbearias por proprietário, a API de gestão atual continua limitada a uma barbearia por proprietário e não oferece fluxo para vincular outros barbeiros. Essas limitações precisam ser removidas junto com as rotas de gestão correspondentes.
 
 ## Modelo de dados e identificadores

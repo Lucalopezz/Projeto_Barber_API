@@ -1,9 +1,9 @@
-import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barbershop-prisma.repository';
+import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
-import { CreateBarberShopUseCase } from '../../create-barbershop.usecase';
+import { CreateBarberShopUseCase } from '../../create-barberShop.usecase';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
 import { Role } from '@/users/domain/entities/role.enum';
 import { Address } from '@/barberShop/domain/value-objects/address.vo';
@@ -33,6 +33,8 @@ describe('CreateBarberShopUseCase integration tests', () => {
       barberShopRepository,
       userRepository,
     );
+    await prismaService.appointment.deleteMany();
+    await prismaService.service.deleteMany();
     await prismaService.barberShop.deleteMany();
     await prismaService.user.deleteMany();
   });
@@ -169,7 +171,7 @@ describe('CreateBarberShopUseCase integration tests', () => {
     expect(output.createdAt).toBeInstanceOf(Date);
   });
 
-  it('should create barber shop and update user with barberShopId', async () => {
+  it('should create barber shop and promote user to owner', async () => {
     // Arrange - Create a barber user
     const userData = UserDataBuilder({
       role: Role.barber,
@@ -190,13 +192,14 @@ describe('CreateBarberShopUseCase integration tests', () => {
     };
 
     // Act
-    const output = await sut.execute(input);
+    await sut.execute(input);
 
     // Assert
     const updatedUser = await prismaService.user.findUnique({
       where: { id: userEntity.id },
     });
 
-    expect(updatedUser.barberShopId).toBe(output.id);
+    expect(updatedUser.role).toBe(Role.owner);
+    expect(updatedUser.barberShopId).toBeNull();
   });
 });

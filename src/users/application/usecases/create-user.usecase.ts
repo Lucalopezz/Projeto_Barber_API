@@ -27,6 +27,11 @@ export namespace CreateUserUseCase {
       if (!email || !password || !name || !role) {
         throw new BadRequestError('Input data not provided');
       }
+      if (role === Role.owner) {
+        throw new BadRequestError(
+          'Owner role is assigned when a barber creates a BarberShop',
+        );
+      }
       await this.userRepository.emailExists(email);
       const hashPass = await this.hashProvider.generateHash(password);
 

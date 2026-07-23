@@ -8,6 +8,7 @@ export type UserProps = {
   email: string;
   role: Role;
   password: string;
+  barberShopId?: string | null;
   createdAt?: Date;
 };
 
@@ -18,6 +19,7 @@ export class UserEntity extends Entity<UserProps> {
   ) {
     UserEntity.validade(props);
     super(props, id);
+    this.props.barberShopId = this.props.barberShopId ?? null;
     this.props.createdAt = this.props.createdAt ?? new Date();
   }
   update(name?: string, role?: Role): void {
@@ -47,7 +49,7 @@ export class UserEntity extends Entity<UserProps> {
   private set name(value: string) {
     this.props.name = value;
   }
-  get role(): string {
+  get role(): Role {
     return this.props.role;
   }
   private set role(value: Role) {
@@ -64,6 +66,9 @@ export class UserEntity extends Entity<UserProps> {
   }
   get createdAt(): Date {
     return this.props.createdAt;
+  }
+  get barberShopId(): string | null {
+    return this.props.barberShopId;
   }
 
   static validade(data: UserProps) {

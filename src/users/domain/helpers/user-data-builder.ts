@@ -10,6 +10,7 @@ export function UserDataBuilder(props: Props): UserProps {
     email: props.email ?? faker.internet.email(),
     role: props.role ?? faker.helpers.arrayElement(Object.values(Role)),
     password: props.password ?? faker.internet.password(),
+    barberShopId: props.barberShopId ?? null,
     createdAt: props.createdAt ?? new Date(),
   };
 }

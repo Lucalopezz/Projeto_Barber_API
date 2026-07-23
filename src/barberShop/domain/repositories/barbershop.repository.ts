@@ -25,6 +25,6 @@ export namespace BarberShopRepository {
       BarberShopSearchParams,
       BarberShopSearchResult
     > {
-    findByOwnerId(ownerId: string): Promise<BarberShopEntity>;
+    findByOwnerId(ownerId: string): Promise<BarberShopEntity | null>;
   }
 }

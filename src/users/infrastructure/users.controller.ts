@@ -19,6 +19,7 @@ import { ListUsersUseCase } from '../application/usecases/list-users.usecase';
 import { ListUsersDto } from './dto/list-users.dto';
 import {
   UserCollectionPresenter,
+  UserContextPresenter,
   UserPresenter,
 } from './presenters/user.presenter';
 import { GetUserUseCase } from '../application/usecases/get-user.usecase';
@@ -68,6 +69,10 @@ export class UsersController {
     return new UserCollectionPresenter(output);
   }
 
+  static userContextToResponse(output: GetUserUseCase.Output) {
+    return new UserContextPresenter(output);
+  }
+
   @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     const output = await this.createUserUseCase.execute(createUserDto);
@@ -87,11 +92,11 @@ export class UsersController {
     return UsersController.listUsersToResponse(output);
   }
 
-  @Get('get-one')
+  @Get('me')
   @UseGuards(AuthGuard)
   async findOne(@CurrentUserId() id: string) {
     const output = await this.getUserUsecase.execute({ id });
-    return UsersController.userToResponse(output);
+    return UsersController.userContextToResponse(output);
   }
 
   @Put(':id')

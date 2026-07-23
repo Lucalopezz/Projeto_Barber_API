@@ -15,6 +15,9 @@ describe('UserModelMapper integration tests', () => {
   });
 
   beforeEach(async () => {
+    await prismaService.appointment.deleteMany();
+    await prismaService.service.deleteMany();
+    await prismaService.barberShop.deleteMany();
     await prismaService.user.deleteMany();
     props = {
       id: 'd4255494-f981-4d26-a2a1-35d3f5b8d36a',
@@ -22,6 +25,7 @@ describe('UserModelMapper integration tests', () => {
       role: 'barber',
       email: 'a@a.com',
       password: 'TestPassword123',
+      barberShopId: null,
       createdAt: new Date(),
     };
   });

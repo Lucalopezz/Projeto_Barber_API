@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
 } from 'class-validator';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
@@ -32,12 +33,30 @@ export class UserRules {
   @IsEnum(Role)
   role: Role;
 
+  @IsUUID()
+  @IsOptional()
+  barberShopId?: string | null;
+
   @IsDate()
   @IsOptional()
   createdAt?: Date;
 
-  constructor({ email, name, password, role, createdAt }: UserProps) {
-    Object.assign(this, { email, name, password, role, createdAt });
+  constructor({
+    email,
+    name,
+    password,
+    role,
+    barberShopId,
+    createdAt,
+  }: UserProps) {
+    Object.assign(this, {
+      email,
+      name,
+      password,
+      role,
+      barberShopId,
+      createdAt,
+    });
   }
 }
 

@@ -4,6 +4,7 @@ import { BarberShopRepository } from '@/barberShop/domain/repositories/barbersho
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { BarberShopModelMapper } from './models/barberShop-model.mapper';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
+import { Role } from '@prisma/client';
 
 export class BarberShopPrismaRepository
   implements BarberShopRepository.Repository
@@ -79,10 +80,14 @@ export class BarberShopPrismaRepository
     };
 
     await this.prismaService.$transaction(async (tx) => {
-      const shop = await tx.barberShop.create({ data });
+      await tx.barberShop.create({ data });
+      // Update the user's role to 'owner' and set barberShopId to null -> indicating they are now an owner of a shop
       await tx.user.update({
         where: { id: data.ownerId },
-        data: { barberShopId: shop.id },
+        data: {
+          role: Role.owner,
+          barberShopId: null,
+        },
       });
     });
   }

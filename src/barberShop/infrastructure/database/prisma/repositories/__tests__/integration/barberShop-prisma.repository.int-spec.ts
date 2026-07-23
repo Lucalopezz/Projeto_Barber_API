@@ -26,6 +26,8 @@ describe('BarberShopPrismaRepository integration tests', () => {
 
   beforeEach(async () => {
     sut = new BarberShopPrismaRepository(prismaService as any);
+    await prismaService.appointment.deleteMany();
+    await prismaService.service.deleteMany();
     await prismaService.barberShop.deleteMany();
     await prismaService.user.deleteMany();
   });
@@ -72,7 +74,7 @@ describe('BarberShopPrismaRepository integration tests', () => {
     );
   });
 
-  it('should insert a new entity and link to owner', async () => {
+  it('should insert a new entity and promote the barber to owner', async () => {
     const owner = await createOwner();
     const entity = new BarberShopEntity(
       BarberShopDataBuilder({
@@ -93,7 +95,8 @@ describe('BarberShopPrismaRepository integration tests', () => {
     const updatedUser = await prismaService.user.findUnique({
       where: { id: owner.id },
     });
-    expect(updatedUser?.barberShopId).toBe(shop?.id);
+    expect(updatedUser?.role).toBe(Role.owner);
+    expect(updatedUser?.barberShopId).toBeNull();
   });
 
   it('should return all barber shops', async () => {
