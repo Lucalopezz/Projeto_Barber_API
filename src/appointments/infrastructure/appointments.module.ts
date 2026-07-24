@@ -11,9 +11,10 @@ import { UpdateStatusUseCase } from '../application/usecases/update-status.useca
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
 import { UpdateAppointmentUseCase } from '../application/usecases/update-appointment.usecase';
-import { DeleteAppointmentUseCase } from '../application/usecases/delete-appointment.usecase';
 import { GetAppointmentUseCase } from '../application/usecases/get-appointment.usecase';
 import { ListAppointmentsUseCase } from '../application/usecases/list-appointments.usecase';
+import { UserRepository } from '@/users/domain/repositories/user.repository';
+import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 
 @Module({
   controllers: [AppointmentsController],
@@ -45,6 +46,13 @@ import { ListAppointmentsUseCase } from '../application/usecases/list-appointmen
       inject: ['PrismaService'],
     },
     {
+      provide: 'UserRepository',
+      useFactory: (prismaService: PrismaService) => {
+        return new UserPrismaRepository(prismaService);
+      },
+      inject: ['PrismaService'],
+    },
+    {
       provide: CreateAppointmentsUseCase.UseCase,
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
@@ -64,15 +72,6 @@ import { ListAppointmentsUseCase } from '../application/usecases/list-appointmen
       ],
     },
     {
-      provide: DeleteAppointmentUseCase.UseCase,
-      useFactory: (
-        appointmentRepository: AppointmentsRepository.Repository,
-      ) => {
-        return new DeleteAppointmentUseCase.UseCase(appointmentRepository);
-      },
-      inject: ['AppointmentRepository'],
-    },
-    {
       provide: GetAppointmentUseCase.UseCase,
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
@@ -86,13 +85,19 @@ import { ListAppointmentsUseCase } from '../application/usecases/list-appointmen
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
         barberShopRepository: BarberShopRepository.Repository,
+        userRepository: UserRepository.Repository,
       ) => {
         return new UpdateStatusUseCase.UseCase(
           appointmentRepository,
           barberShopRepository,
+          userRepository,
         );
       },
-      inject: ['AppointmentRepository', 'BarberShopRepository'],
+      inject: [
+        'AppointmentRepository',
+        'BarberShopRepository',
+        'UserRepository',
+      ],
     },
     {
       provide: ListAppointmentsUseCase.UseCase,
@@ -112,13 +117,19 @@ import { ListAppointmentsUseCase } from '../application/usecases/list-appointmen
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
         barberShopRepository: BarberShopRepository.Repository,
+        userRepository: UserRepository.Repository,
       ) => {
         return new UpdateAppointmentUseCase.UseCase(
           appointmentRepository,
           barberShopRepository,
+          userRepository,
         );
       },
-      inject: ['AppointmentRepository', 'BarberShopRepository'],
+      inject: [
+        'AppointmentRepository',
+        'BarberShopRepository',
+        'UserRepository',
+      ],
     },
   ],
 })

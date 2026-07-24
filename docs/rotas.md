@@ -138,9 +138,8 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 | `POST` | `/appointments` | Cria agendamento para o usuário autenticado. |
 | `GET` | `/appointments` | Lista agendamentos do cliente ou, para o dono de uma barbearia, da sua barbearia. |
 | `GET` | `/appointments/:id` | Busca um agendamento próprio do cliente. |
-| `PATCH` | `/appointments/:id` | Altera o status; pensado para o dono da barbearia. |
-| `PUT` | `/appointments/:id` | Altera data e/ou serviço; pensado para o dono da barbearia. |
-| `DELETE` | `/appointments/:id` | Cancela/exclui um agendamento próprio do cliente. |
+| `PATCH` | `/appointments/:id` | Cancela ou conclui um agendamento sem excluí-lo. |
+| `PUT` | `/appointments/:id` | Altera data e/ou serviço de um agendamento em aberto. |
 
 ### Criar — `POST /appointments`
 
@@ -159,11 +158,26 @@ Query opcional: `page`, `perPage`, `sort`, `sortDir`, `serviceID` e `date`. Note
 
 ### Alterar status — `PATCH /appointments/:id`
 
+O cliente pode cancelar o próprio agendamento. O proprietário ou barbeiro
+atribuído ao agendamento pode cancelá-lo ou concluí-lo, desde que esteja
+vinculado à mesma barbearia. Agendamentos concluídos ou cancelados não podem
+ter o status alterado. Não há rota para excluir agendamentos.
+
+```json
+{ "newStatus": "cancelled" }
+```
+
+Para concluir, o profissional atribuído envia:
+
 ```json
 { "newStatus": "completed" }
 ```
 
 ### Alterar data/serviço — `PUT /appointments/:id`
+
+Somente o proprietário ou barbeiro atribuído ao agendamento, vinculado à mesma
+barbearia, pode editar. Agendamentos concluídos ou cancelados não podem ser
+editados.
 
 ```json
 {

@@ -5,7 +5,6 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   Inject,
   UseGuards,
   Put,
@@ -24,7 +23,6 @@ import { AuthGuard } from '@/auth/auth.guard';
 import { UpdateStatusUseCase } from '../application/usecases/update-status.usecase';
 import { UpdateAppointmentUseCase } from '../application/usecases/update-appointment.usecase';
 import { UpdateStatusDto } from './dto/update-status.dto';
-import { DeleteAppointmentUseCase } from '../application/usecases/delete-appointment.usecase';
 import { GetAppointmentUseCase } from '../application/usecases/get-appointment.usecase';
 import { ListAppointmentsUseCase } from '../application/usecases/list-appointments.usecase';
 import { ListAppointmentsDto } from './dto/list-appointments.dto';
@@ -38,8 +36,6 @@ export class AppointmentsController {
   private updateStatusUseCase: UpdateStatusUseCase.UseCase;
   @Inject(UpdateAppointmentUseCase.UseCase)
   private updateAppointmentUseCase: UpdateAppointmentUseCase.UseCase;
-  @Inject(DeleteAppointmentUseCase.UseCase)
-  private deleteAppointmentUseCase: DeleteAppointmentUseCase.UseCase;
   @Inject(GetAppointmentUseCase.UseCase)
   private getAppointmentUseCase: GetAppointmentUseCase.UseCase;
   @Inject(ListAppointmentsUseCase.UseCase)
@@ -94,7 +90,7 @@ export class AppointmentsController {
     const model = await this.updateStatusUseCase.execute({
       id,
       ...updateAppointmentDto,
-      barberId: userId,
+      userId,
     });
     return AppointmentsController.appointmentToResponse(model);
   }
@@ -107,13 +103,8 @@ export class AppointmentsController {
     const model = await this.updateAppointmentUseCase.execute({
       id,
       ...updateAppointmentDto,
-      barberId: userId,
+      userId,
     });
     return AppointmentsController.appointmentToResponse(model);
-  }
-
-  @Delete(':id')
-  async remove(@Param('id') id: string, @CurrentUserId() userId: string) {
-    await this.deleteAppointmentUseCase.execute({ id, userId });
   }
 }

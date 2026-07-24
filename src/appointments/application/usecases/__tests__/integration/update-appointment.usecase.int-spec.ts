@@ -21,6 +21,7 @@ import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entit
 import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { AppointmentEntity } from '@/appointments/domain/entities/appointment.entity';
 import { Role } from '@/users/domain/entities/role.enum';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
 
 describe('UpdateAppointmentUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -48,6 +49,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
     sut = new UpdateAppointmentUseCase.UseCase(
       appointmentRepository,
       barberShopRepository,
+      userRepository,
     );
     await prismaService.appointment.deleteMany();
     await prismaService.service.deleteMany();
@@ -63,7 +65,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
   const createBarberShopWithOwner = async (email = 'barber@test.com') => {
     const barber = new UserEntity(
       UserDataBuilder({
-        role: Role.barber,
+        role: Role.owner,
         email,
       }),
     );
@@ -129,6 +131,18 @@ describe('UpdateAppointmentUseCase integration tests', () => {
     return client;
   };
 
+  const createBarber = async (barberShopId: string) => {
+    const barber = new UserEntity(
+      UserDataBuilder({
+        role: Role.barber,
+        barberShopId,
+        email: `assigned-barber-${Date.now()}@test.com`,
+      }),
+    );
+    await userRepository.insert(barber);
+    return barber;
+  };
+
   // Helper to create appointment
   const createAppointment = async (
     clientId: string,
@@ -136,6 +150,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
     barberShopId: string,
     date = new Date('2025-12-15T10:00:00Z'),
     assignedBarberId?: string,
+    status = AppointmentStatus.scheduled,
   ) => {
     const barberShop = await prismaService.barberShop.findUniqueOrThrow({
       where: { id: barberShopId },
@@ -147,6 +162,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
         barberId: assignedBarberId ?? barberShop.ownerId,
         barberShopId,
         date,
+        status,
       }),
     );
 
@@ -175,7 +191,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     const input: UpdateAppointmentUseCase.Input = {
       id: appointment._id,
-      barberId: barber.id,
+      userId: barber.id,
       date: newDate,
       serviceId: service._id,
     };
@@ -204,7 +220,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     const input: UpdateAppointmentUseCase.Input = {
       id: appointment._id,
-      barberId: barber.id,
+      userId: barber.id,
       date: new Date('2025-12-20T14:00:00Z'),
       serviceId: service2._id,
     };
@@ -222,7 +238,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     const input: UpdateAppointmentUseCase.Input = {
       id: 'non-existent-id',
-      barberId: barber.id,
+      userId: barber.id,
       date: new Date('2025-12-20T14:00:00Z'),
       serviceId: 'some-service-id',
     };
@@ -248,7 +264,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     const input: UpdateAppointmentUseCase.Input = {
       id: appointment._id,
-      barberId: unauthorizedBarber.id,
+      userId: unauthorizedBarber.id,
       date: new Date('2025-12-20T14:00:00Z'),
       serviceId: service._id,
     };
@@ -276,7 +292,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
     await expect(
       sut.execute({
         id: appointment._id,
-        barberId: unauthorizedBarber.id,
+        userId: unauthorizedBarber.id,
         date: new Date('2025-12-20T14:00:00Z'),
         serviceId: service._id,
       }),
@@ -313,7 +329,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     const input: UpdateAppointmentUseCase.Input = {
       id: appointment._id,
-      barberId: barber.id,
+      userId: barber.id,
       date: occupiedDate,
       serviceId: service._id,
     };
@@ -341,7 +357,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     const input: UpdateAppointmentUseCase.Input = {
       id: appointment._id,
-      barberId: barber.id,
+      userId: barber.id,
       date: newDate,
       serviceId: service._id,
     };
@@ -377,7 +393,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     const input: UpdateAppointmentUseCase.Input = {
       id: appointment._id,
-      barberId: barber.id,
+      userId: barber.id,
       date: availableDate,
       serviceId: service._id,
     };
@@ -387,5 +403,54 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     // Assert
     expect(output.date.toISOString()).toBe(availableDate.toISOString());
+  });
+
+  it('should allow the assigned barber to update an appointment', async () => {
+    const { barberShop } = await createBarberShopWithOwner();
+    const barber = await createBarber(barberShop.id);
+    const service = await createService(barberShop.id);
+    const client = await createClient();
+    const appointment = await createAppointment(
+      client.id,
+      service.id,
+      barberShop.id,
+      new Date('2025-12-15T10:00:00Z'),
+      barber.id,
+    );
+    const newDate = new Date('2025-12-26T14:00:00Z');
+
+    const output = await sut.execute({
+      id: appointment.id,
+      userId: barber.id,
+      date: newDate,
+      serviceId: service.id,
+    });
+
+    expect(output.date).toEqual(newDate);
+  });
+
+  it('should not update a completed appointment', async () => {
+    const { barber, barberShop } = await createBarberShopWithOwner();
+    const service = await createService(barberShop.id);
+    const client = await createClient();
+    const appointment = await createAppointment(
+      client.id,
+      service.id,
+      barberShop.id,
+      new Date('2025-12-15T10:00:00Z'),
+      barber.id,
+      AppointmentStatus.completed,
+    );
+
+    await expect(
+      sut.execute({
+        id: appointment.id,
+        userId: barber.id,
+        date: new Date('2025-12-26T14:00:00Z'),
+        serviceId: service.id,
+      }),
+    ).rejects.toThrow(
+      new ConflictError('Only scheduled appointments can be updated'),
+    );
   });
 });

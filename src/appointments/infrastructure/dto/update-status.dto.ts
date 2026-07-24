@@ -3,7 +3,7 @@ import { AppointmentStatus } from '@/appointments/domain/entities/appointmentSta
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdateStatusDto
-  implements Omit<UpdateStatusUseCase.Input, 'id' | 'barberId'>
+  implements Omit<UpdateStatusUseCase.Input, 'id' | 'userId'>
 {
   @IsString()
   @IsNotEmpty()

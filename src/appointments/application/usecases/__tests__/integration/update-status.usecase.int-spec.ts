@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
 import { UpdateStatusUseCase } from '../../update-status.usecase';
 import { AppointmentsPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/appointments-prisma.repository';
 import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
@@ -47,6 +47,7 @@ describe('UpdateStatusUseCase integration tests', () => {
     sut = new UpdateStatusUseCase.UseCase(
       appointmentRepository,
       barberShopRepository,
+      userRepository,
     );
     await prismaService.appointment.deleteMany();
     await prismaService.service.deleteMany();
@@ -58,36 +59,61 @@ describe('UpdateStatusUseCase integration tests', () => {
     await module.close();
   });
 
-  // Helper to create barber shop with owner
-  const createBarberShopWithOwner = async (email = 'barber@test.com') => {
+  const createOwnerWithBarberShop = async (
+    email = 'owner@test.com',
+  ): Promise<{ owner: UserEntity; barberShop: BarberShopEntity }> => {
+    const owner = new UserEntity(
+      UserDataBuilder({
+        role: Role.owner,
+        email,
+      }),
+    );
+    await userRepository.insert(owner);
+
+    const barberShop = new BarberShopEntity(
+      BarberShopDataBuilder({
+        ownerId: owner.id,
+        name: 'Test Barber Shop',
+      }),
+    );
+    await prismaService.barberShop.create({
+      data: {
+        id: barberShop.id,
+        name: barberShop.name,
+        address: barberShop.address.toString(),
+        ownerId: owner.id,
+      },
+    });
+
+    return { owner, barberShop };
+  };
+
+  const createBarber = async (
+    barberShopId: string,
+    email = 'barber@test.com',
+  ): Promise<UserEntity> => {
     const barber = new UserEntity(
       UserDataBuilder({
         role: Role.barber,
+        barberShopId,
         email,
       }),
     );
     await userRepository.insert(barber);
-
-    const barberShop = new BarberShopEntity(
-      BarberShopDataBuilder({
-        ownerId: barber.id,
-        name: 'Test Barber Shop',
-      }),
-    );
-
-    await prismaService.barberShop.create({
-      data: {
-        id: barberShop._id,
-        name: barberShop.name,
-        address: barberShop.address.toString(),
-        ownerId: barber.id,
-      },
-    });
-
-    return { barber, barberShop };
+    return barber;
   };
 
-  // Helper to create service
+  const createClient = async (email = 'client@test.com') => {
+    const client = new UserEntity(
+      UserDataBuilder({
+        role: Role.client,
+        email,
+      }),
+    );
+    await userRepository.insert(client);
+    return client;
+  };
+
   const createService = async (barberShopId: string) => {
     const service = new ServiceEntity(
       ServiceDataBuilder({
@@ -97,175 +123,129 @@ describe('UpdateStatusUseCase integration tests', () => {
         duration: 30,
       }),
     );
-
-    await prismaService.service.create({
-      data: {
-        id: service._id,
-        name: service.name,
-        description: service.description,
-        price: service.price,
-        duration: service.duration,
-        createdAt: service.createdAt,
-        barberShopId,
-      },
-    });
-
+    await serviceRepository.insert(service);
     return service;
   };
 
-  // Helper to create client
-  const createClient = async (index = 0) => {
-    const client = new UserEntity(
-      UserDataBuilder({
-        role: Role.client,
-        email: `client${index}${Date.now()}@test.com`,
-      }),
-    );
-    await userRepository.insert(client);
-    return client;
-  };
-
-  // Helper to create appointment
-  const createAppointment = async (
-    clientId: string,
-    serviceId: string,
-    barberShopId: string,
-    status = AppointmentStatus.scheduled,
-    assignedBarberId?: string,
-  ) => {
-    const barberShop = await prismaService.barberShop.findUniqueOrThrow({
-      where: { id: barberShopId },
-    });
+  const createAppointment = async (input: {
+    clientId: string;
+    barberId: string;
+    barberShopId: string;
+    serviceId: string;
+    status?: AppointmentStatus;
+  }) => {
     const appointment = new AppointmentEntity(
       AppointmentDataBuilder({
-        clientId,
-        serviceId,
-        barberId: assignedBarberId ?? barberShop.ownerId,
-        barberShopId,
-        status,
+        ...input,
+        status: input.status ?? AppointmentStatus.scheduled,
       }),
     );
-
-    await prismaService.appointment.create({
-      data: appointment.toJSON(),
-    });
-
+    await appointmentRepository.insert(appointment);
     return appointment;
   };
 
-  it('should update appointment status from scheduled to completed', async () => {
-    // Arrange
-    const { barber, barberShop } = await createBarberShopWithOwner();
-    const service = await createService(barberShop._id);
+  it('should allow the assigned owner to complete an appointment', async () => {
+    const { owner, barberShop } = await createOwnerWithBarberShop();
     const client = await createClient();
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
+      barberId: owner.id,
+      barberShopId: barberShop.id,
+      serviceId: service.id,
+    });
 
-    const appointment = await createAppointment(
-      client.id,
-      service._id,
-      barberShop._id,
-      AppointmentStatus.scheduled,
-    );
-
-    const input: UpdateStatusUseCase.Input = {
-      id: appointment._id,
+    const output = await sut.execute({
+      id: appointment.id,
       newStatus: AppointmentStatus.completed,
-      barberId: barber.id,
-    };
+      userId: owner.id,
+    });
 
-    // Act
-    const output = await sut.execute(input);
-
-    // Assert
-    expect(output.id).toBe(appointment._id);
     expect(output.status).toBe(AppointmentStatus.completed);
   });
 
-  it('should update appointment status from scheduled to cancelled', async () => {
-    // Arrange
-    const { barber, barberShop } = await createBarberShopWithOwner();
-    const service = await createService(barberShop._id);
+  it('should allow the assigned barber to complete an appointment', async () => {
+    const { barberShop } = await createOwnerWithBarberShop();
+    const barber = await createBarber(barberShop.id);
     const client = await createClient();
-
-    const appointment = await createAppointment(
-      client.id,
-      service._id,
-      barberShop._id,
-      AppointmentStatus.scheduled,
-    );
-
-    const input: UpdateStatusUseCase.Input = {
-      id: appointment._id,
-      newStatus: AppointmentStatus.cancelled,
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
       barberId: barber.id,
-    };
+      barberShopId: barberShop.id,
+      serviceId: service.id,
+    });
 
-    // Act
-    const output = await sut.execute(input);
+    const output = await sut.execute({
+      id: appointment.id,
+      newStatus: AppointmentStatus.completed,
+      userId: barber.id,
+    });
 
-    // Assert
+    expect(output.status).toBe(AppointmentStatus.completed);
+  });
+
+  it('should allow the client to cancel their own appointment without deleting it', async () => {
+    const { owner, barberShop } = await createOwnerWithBarberShop();
+    const client = await createClient();
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
+      barberId: owner.id,
+      barberShopId: barberShop.id,
+      serviceId: service.id,
+    });
+
+    const output = await sut.execute({
+      id: appointment.id,
+      newStatus: AppointmentStatus.cancelled,
+      userId: client.id,
+    });
+    const persistedAppointment =
+      await prismaService.appointment.findUniqueOrThrow({
+        where: { id: appointment.id },
+      });
+
+    expect(output.status).toBe(AppointmentStatus.cancelled);
+    expect(persistedAppointment.status).toBe(AppointmentStatus.cancelled);
+  });
+
+  it('should allow the assigned professional to cancel an appointment', async () => {
+    const { owner, barberShop } = await createOwnerWithBarberShop();
+    const client = await createClient();
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
+      barberId: owner.id,
+      barberShopId: barberShop.id,
+      serviceId: service.id,
+    });
+
+    const output = await sut.execute({
+      id: appointment.id,
+      newStatus: AppointmentStatus.cancelled,
+      userId: owner.id,
+    });
+
     expect(output.status).toBe(AppointmentStatus.cancelled);
   });
 
-  it('should throw NotFoundError when appointment does not exist', async () => {
-    // Arrange
-    const { barber } = await createBarberShopWithOwner();
-
-    const input: UpdateStatusUseCase.Input = {
-      id: 'non-existent-id',
-      newStatus: AppointmentStatus.completed,
-      barberId: barber.id,
-    };
-
-    // Act & Assert
-    await expect(sut.execute(input)).rejects.toThrow(
-      new NotFoundError('AppointmentModel not found using id non-existent-id'),
-    );
-  });
-
-  it('should throw UnauthorizedError when barber has no barber shop', async () => {
-    // Arrange
-    const { barberShop } = await createBarberShopWithOwner();
-    const service = await createService(barberShop._id);
-    const client = await createClient(1);
-    const unauthorizedBarber = await createClient(2);
-
-    const appointment = await createAppointment(
-      client.id,
-      service._id,
-      barberShop._id,
-    );
-
-    const input: UpdateStatusUseCase.Input = {
-      id: appointment._id,
-      newStatus: AppointmentStatus.completed,
-      barberId: unauthorizedBarber.id,
-    };
-
-    // Act & Assert
-    await expect(sut.execute(input)).rejects.toThrow(UnauthorizedError);
-  });
-
-  it('should not update status for an appointment from another barber shop', async () => {
-    const { barberShop: appointmentBarberShop } =
-      await createBarberShopWithOwner('appointment-owner@test.com');
-    const { barber: unauthorizedBarber } = await createBarberShopWithOwner(
-      'unauthorized-owner@test.com',
-    );
-    const service = await createService(appointmentBarberShop._id);
+  it('should not allow the client to complete an appointment', async () => {
+    const { owner, barberShop } = await createOwnerWithBarberShop();
     const client = await createClient();
-    const appointment = await createAppointment(
-      client.id,
-      service._id,
-      appointmentBarberShop._id,
-      AppointmentStatus.scheduled,
-      unauthorizedBarber.id,
-    );
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
+      barberId: owner.id,
+      barberShopId: barberShop.id,
+      serviceId: service.id,
+    });
 
     await expect(
       sut.execute({
-        id: appointment._id,
+        id: appointment.id,
         newStatus: AppointmentStatus.completed,
-        barberId: unauthorizedBarber.id,
+        userId: client.id,
       }),
     ).rejects.toThrow(
       new UnauthorizedError(
@@ -274,141 +254,131 @@ describe('UpdateStatusUseCase integration tests', () => {
     );
   });
 
-  it('should update status and verify in database', async () => {
-    // Arrange
-    const { barber, barberShop } = await createBarberShopWithOwner();
-    const service = await createService(barberShop._id);
+  it('should not allow another client to cancel the appointment', async () => {
+    const { owner, barberShop } = await createOwnerWithBarberShop();
     const client = await createClient();
-
-    const appointment = await createAppointment(
-      client.id,
-      service._id,
-      barberShop._id,
-      AppointmentStatus.scheduled,
-    );
-
-    const input: UpdateStatusUseCase.Input = {
-      id: appointment._id,
-      newStatus: AppointmentStatus.completed,
-      barberId: barber.id,
-    };
-
-    // Act
-    const output = await sut.execute(input);
-
-    // Assert - Verify in database
-    const appointmentInDb = await prismaService.appointment.findUnique({
-      where: { id: output.id },
+    const otherClient = await createClient('other-client@test.com');
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
+      barberId: owner.id,
+      barberShopId: barberShop.id,
+      serviceId: service.id,
     });
 
-    expect(appointmentInDb).toBeDefined();
-    expect(appointmentInDb.status).toBe(AppointmentStatus.completed);
+    await expect(
+      sut.execute({
+        id: appointment.id,
+        newStatus: AppointmentStatus.cancelled,
+        userId: otherClient.id,
+      }),
+    ).rejects.toThrow(UnauthorizedError);
   });
 
-  it('should handle status transition from scheduled to any valid status', async () => {
-    // Arrange
-    const { barber, barberShop } = await createBarberShopWithOwner();
-    const service = await createService(barberShop._id);
+  it('should not allow an unassigned barber from the same barber shop', async () => {
+    const { owner, barberShop } = await createOwnerWithBarberShop();
+    const barber = await createBarber(barberShop.id);
     const client = await createClient();
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
+      barberId: owner.id,
+      barberShopId: barberShop.id,
+      serviceId: service.id,
+    });
 
-    const appointment = await createAppointment(
-      client.id,
-      service._id,
-      barberShop._id,
-      AppointmentStatus.scheduled,
-    );
-
-    const statusesToTest = [
-      AppointmentStatus.completed,
-      AppointmentStatus.cancelled,
-    ];
-
-    for (const status of statusesToTest) {
-      // Need to create a new appointment for each transition test
-      const newAppointment = await createAppointment(
-        client.id,
-        service._id,
-        barberShop._id,
-        AppointmentStatus.scheduled,
-      );
-
-      const input: UpdateStatusUseCase.Input = {
-        id: newAppointment._id,
-        newStatus: status,
-        barberId: barber.id,
-      };
-
-      // Act
-      const output = await sut.execute(input);
-
-      // Assert
-      expect(output.status).toBe(status);
-    }
+    await expect(
+      sut.execute({
+        id: appointment.id,
+        newStatus: AppointmentStatus.completed,
+        userId: barber.id,
+      }),
+    ).rejects.toThrow(UnauthorizedError);
   });
 
-  it('should maintain other appointment fields after status update', async () => {
-    // Arrange
-    const { barber, barberShop } = await createBarberShopWithOwner();
-    const service = await createService(barberShop._id);
-    const client = await createClient();
-
-    const appointment = await createAppointment(
-      client.id,
-      service._id,
-      barberShop._id,
-      AppointmentStatus.scheduled,
+  it('should not allow a barber from another barber shop', async () => {
+    const { barberShop } = await createOwnerWithBarberShop();
+    const { barberShop: otherBarberShop } = await createOwnerWithBarberShop(
+      'other-owner@test.com',
     );
+    const otherBarber = await createBarber(
+      otherBarberShop.id,
+      'other-barber@test.com',
+    );
+    const client = await createClient();
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
+      barberId: otherBarber.id,
+      barberShopId: barberShop.id,
+      serviceId: service.id,
+    });
 
-    const originalDate = appointment.date.toISOString();
-    const originalServiceId = appointment.serviceId;
-    const originalClientId = appointment.clientId;
-
-    const input: UpdateStatusUseCase.Input = {
-      id: appointment._id,
-      newStatus: AppointmentStatus.completed,
-      barberId: barber.id,
-    };
-
-    // Act
-    const output = await sut.execute(input);
-
-    // Assert
-    expect(output.date.toISOString()).toBe(originalDate);
-    expect(output.serviceId).toBe(originalServiceId);
-    expect(output.clientId).toBe(originalClientId);
-    expect(output.barberShopId).toBe(barberShop._id);
+    await expect(
+      sut.execute({
+        id: appointment.id,
+        newStatus: AppointmentStatus.completed,
+        userId: otherBarber.id,
+      }),
+    ).rejects.toThrow(UnauthorizedError);
   });
 
-  it('should allow multiple status updates on same appointment', async () => {
-    // Arrange
-    const { barber, barberShop } = await createBarberShopWithOwner();
-    const service = await createService(barberShop._id);
+  it('should not allow setting an appointment back to scheduled', async () => {
+    const { owner, barberShop } = await createOwnerWithBarberShop();
     const client = await createClient();
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
+      barberId: owner.id,
+      barberShopId: barberShop.id,
+      serviceId: service.id,
+    });
 
-    const appointment = await createAppointment(
-      client.id,
-      service._id,
-      barberShop._id,
-      AppointmentStatus.scheduled,
+    await expect(
+      sut.execute({
+        id: appointment.id,
+        newStatus: AppointmentStatus.scheduled,
+        userId: owner.id,
+      }),
+    ).rejects.toThrow(UnauthorizedError);
+  });
+
+  it('should not change a completed appointment status', async () => {
+    const { owner, barberShop } = await createOwnerWithBarberShop();
+    const client = await createClient();
+    const service = await createService(barberShop.id);
+    const appointment = await createAppointment({
+      clientId: client.id,
+      barberId: owner.id,
+      barberShopId: barberShop.id,
+      serviceId: service.id,
+      status: AppointmentStatus.completed,
+    });
+
+    await expect(
+      sut.execute({
+        id: appointment.id,
+        newStatus: AppointmentStatus.cancelled,
+        userId: owner.id,
+      }),
+    ).rejects.toThrow(
+      new ConflictError(
+        'Only scheduled appointments can have their status updated',
+      ),
     );
+  });
 
-    // First update: scheduled -> completed
-    const firstInput: UpdateStatusUseCase.Input = {
-      id: appointment._id,
-      newStatus: AppointmentStatus.completed,
-      barberId: barber.id,
-    };
+  it('should throw NotFoundError when the appointment does not exist', async () => {
+    const { owner } = await createOwnerWithBarberShop();
 
-    const firstOutput = await sut.execute(firstInput);
-    expect(firstOutput.status).toBe(AppointmentStatus.completed);
-
-    // Verify it persisted
-    const appointmentAfterFirstUpdate =
-      await prismaService.appointment.findUnique({
-        where: { id: appointment._id },
-      });
-    expect(appointmentAfterFirstUpdate.status).toBe(
-      AppointmentStatus.completed,
+    await expect(
+      sut.execute({
+        id: 'non-existent-id',
+        newStatus: AppointmentStatus.completed,
+        userId: owner.id,
+      }),
+    ).rejects.toThrow(
+      new NotFoundError('AppointmentModel not found using id non-existent-id'),
     );
   });
 });

@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class UpdateAppointmentDto
-  implements Omit<UpdateAppointmentUseCase.Input, 'id' | 'barberId'>
+  implements Omit<UpdateAppointmentUseCase.Input, 'id' | 'userId'>
 {
   @IsOptional()
   @Type(() => Date)
