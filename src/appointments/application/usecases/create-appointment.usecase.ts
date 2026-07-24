@@ -48,6 +48,7 @@ export namespace CreateAppointmentsUseCase {
         clientId,
         serviceId,
         barberId: barberShop.ownerId,
+        barberShopId: barberShop.id,
         date,
         status: AppointmentStatus.scheduled,
       });

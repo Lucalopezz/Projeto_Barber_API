@@ -23,15 +23,16 @@ model User {
 }
 
 model BarberShop {
-  id        String    @id @default(uuid())
-  name      String
-  address   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  ownerId   String
-  owner     User      @relation("Owner", fields: [ownerId], references: [id], onDelete: Restrict)
-  services  Service[]
-  barbers   User[]    @relation("Barbers")
+  id           String        @id @default(uuid())
+  name         String
+  address      String
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  ownerId      String
+  owner        User          @relation("Owner", fields: [ownerId], references: [id], onDelete: Restrict)
+  services     Service[]
+  barbers      User[]        @relation("Barbers")
+  appointments Appointment[]
 }
 
 model Service {
@@ -48,20 +49,23 @@ model Service {
 }
 
 model Appointment {
-  id        String            @id @default(uuid())
-  date      DateTime
-  status    AppointmentStatus @default(scheduled)
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  clientId  String
-  client    User              @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Restrict)
-  barberId  String
-  barber    User              @relation("BarberAppointments", fields: [barberId], references: [id], onDelete: Restrict)
-  serviceId String
-  service   Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  id           String            @id @default(uuid())
+  date         DateTime
+  status       AppointmentStatus @default(scheduled)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  clientId     String
+  client       User              @relation("ClientAppointments", fields: [clientId], references: [id], onDelete: Restrict)
+  barberId     String
+  barber       User              @relation("BarberAppointments", fields: [barberId], references: [id], onDelete: Restrict)
+  barberShopId String
+  barberShop   BarberShop        @relation(fields: [barberShopId], references: [id], onDelete: Restrict)
+  serviceId    String
+  service      Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
 
   @@index([clientId])
   @@index([barberId])
+  @@index([barberShopId])
   @@index([serviceId])
   @@index([barberId, date])
 }

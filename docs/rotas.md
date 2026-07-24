@@ -151,7 +151,7 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 }
 ```
 
-A resposta contém `id`, `date`, `status`, `clientId`, `barberId`, `serviceId` e `createdAt`. Use `serviceId` para referenciar o serviço escolhido, `barberId` para identificar o profissional responsável e `id` nas ações posteriores.
+A resposta contém `id`, `date`, `status`, `clientId`, `barberId`, `barberShopId`, `serviceId` e `createdAt`. Use `serviceId` para referenciar o serviço escolhido, `barberId` para identificar o profissional responsável, `barberShopId` para identificar a barbearia e `id` nas ações posteriores.
 
 ### Filtrar lista — `GET /appointments`
 

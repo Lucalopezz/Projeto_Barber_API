@@ -8,6 +8,7 @@ export type AppointmentProps = {
   status: AppointmentStatus;
   clientId: string;
   barberId: string;
+  barberShopId: string;
   serviceId: string;
   createdAt?: Date;
 };
@@ -67,6 +68,12 @@ export class AppointmentEntity extends Entity<AppointmentProps> {
   }
   private set barberId(value: string) {
     this.props.barberId = value;
+  }
+  get barberShopId(): string {
+    return this.props.barberShopId;
+  }
+  private set barberShopId(value: string) {
+    this.props.barberShopId = value;
   }
   get createdAt(): Date {
     return this.props.createdAt;

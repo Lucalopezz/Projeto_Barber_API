@@ -95,12 +95,14 @@ describe('AppointmentsPrismaRepository integration tests', () => {
   });
 
   it('should find an entity by id', async () => {
-    const { barberShopId, serviceId } = await createBarberShopWithService();
+    const { barberShopId, ownerId, serviceId } =
+      await createBarberShopWithService();
     const client = await createClient();
 
     const entity = new AppointmentEntity(
       AppointmentDataBuilder({
         barberShopId,
+        barberId: ownerId,
         serviceId,
         clientId: client.id,
         date: new Date('2025-10-31T10:00:00Z'),
@@ -115,12 +117,14 @@ describe('AppointmentsPrismaRepository integration tests', () => {
   });
 
   it('should insert a new entity', async () => {
-    const { barberShopId, serviceId } = await createBarberShopWithService();
+    const { barberShopId, ownerId, serviceId } =
+      await createBarberShopWithService();
     const client = await createClient();
 
     const entity = new AppointmentEntity(
       AppointmentDataBuilder({
         barberShopId,
+        barberId: ownerId,
         serviceId,
         clientId: client.id,
       }),
@@ -139,12 +143,14 @@ describe('AppointmentsPrismaRepository integration tests', () => {
   });
 
   it('should return all appointments', async () => {
-    const { barberShopId, serviceId } = await createBarberShopWithService();
+    const { barberShopId, ownerId, serviceId } =
+      await createBarberShopWithService();
     const client = await createClient();
 
     const entity = new AppointmentEntity(
       AppointmentDataBuilder({
         barberShopId,
+        barberId: ownerId,
         serviceId,
         clientId: client.id,
       }),
@@ -173,12 +179,14 @@ describe('AppointmentsPrismaRepository integration tests', () => {
   });
 
   it('should update an entity', async () => {
-    const { barberShopId, serviceId } = await createBarberShopWithService();
+    const { barberShopId, ownerId, serviceId } =
+      await createBarberShopWithService();
     const client = await createClient();
 
     const entity = new AppointmentEntity(
       AppointmentDataBuilder({
         barberShopId,
+        barberId: ownerId,
         serviceId,
         clientId: client.id,
         date: new Date('2025-11-01T09:00:00Z'),
@@ -205,12 +213,14 @@ describe('AppointmentsPrismaRepository integration tests', () => {
   });
 
   it('should delete an entity', async () => {
-    const { barberShopId, serviceId } = await createBarberShopWithService();
+    const { barberShopId, ownerId, serviceId } =
+      await createBarberShopWithService();
     const client = await createClient();
 
     const entity = new AppointmentEntity(
       AppointmentDataBuilder({
         barberShopId,
+        barberId: ownerId,
         serviceId,
         clientId: client.id,
       }),
@@ -229,7 +239,8 @@ describe('AppointmentsPrismaRepository integration tests', () => {
     it('should apply only pagination when other params are null', async () => {
       const createdAt = new Date();
       const appointments: AppointmentEntity[] = [];
-      const { barberShopId, serviceId } = await createBarberShopWithService();
+      const { barberShopId, ownerId, serviceId } =
+        await createBarberShopWithService();
 
       for (let i = 0; i < 16; i++) {
         const client = await createClient({});
@@ -237,6 +248,7 @@ describe('AppointmentsPrismaRepository integration tests', () => {
           new AppointmentEntity(
             AppointmentDataBuilder({
               barberShopId,
+              barberId: ownerId,
               serviceId,
               clientId: client.id,
               createdAt: new Date(createdAt.getTime() + i),
@@ -262,7 +274,8 @@ describe('AppointmentsPrismaRepository integration tests', () => {
 
     it('should search using filter, sort and paginate', async () => {
       const baseDate = new Date('2025-12-01T08:00:00Z');
-      const { barberShopId, serviceId } = await createBarberShopWithService();
+      const { barberShopId, ownerId, serviceId } =
+        await createBarberShopWithService();
       const clients = [
         await createClient(),
         await createClient(),
@@ -272,18 +285,21 @@ describe('AppointmentsPrismaRepository integration tests', () => {
       const arrange = [
         AppointmentDataBuilder({
           barberShopId,
+          barberId: ownerId,
           serviceId,
           clientId: clients[0].id,
           date: new Date(baseDate.getTime() + 1),
         }),
         AppointmentDataBuilder({
           barberShopId,
+          barberId: ownerId,
           serviceId,
           clientId: clients[1].id,
           date: new Date(baseDate.getTime() + 2),
         }),
         AppointmentDataBuilder({
           barberShopId,
+          barberId: ownerId,
           serviceId,
           clientId: clients[2].id,
           date: new Date(baseDate.getTime() + 3),

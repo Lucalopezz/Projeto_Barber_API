@@ -7,9 +7,9 @@ import { Transform } from 'class-transformer';
 export class AppointmentPresenter {
   id: string;
   date: Date;
-
   clientId: string;
   barberId: string;
+  barberShopId: string;
   serviceId: string;
 
   @Transform(({ value }: { value: AppointmentStatus }) =>
@@ -25,6 +25,7 @@ export class AppointmentPresenter {
     this.date = output.date;
     this.clientId = output.clientId;
     this.barberId = output.barberId;
+    this.barberShopId = output.barberShopId;
     this.serviceId = output.serviceId;
     this.status = output.status;
     this.createdAt = output.createdAt;

@@ -9,7 +9,7 @@ O domínio atual possui quatro recursos principais:
 - **usuários**: contas de clientes, proprietários e barbeiros;
 - **barbearias**: uma barbearia pertence a um usuário com papel `owner` e pode ter barbeiros vinculados;
 - **serviços**: corte, barba e outros serviços pertencentes a uma barbearia;
-- **agendamentos**: ligam cliente, barbeiro e serviço em uma data e possuem status.
+- **agendamentos**: ligam cliente, barbeiro, barbearia e serviço em uma data e possuem status.
 
 ## Papéis e fluxo esperado
 
@@ -33,7 +33,8 @@ User (id, role)
  └── barberId ───────────> Appointment (id)
 
 BarberShop (id)
- └── barberShopId ───────> Service (id)
+ ├── barberShopId ───────> Service (id)
+ └── barberShopId ───────> Appointment (id)
 
 Service (id) ────────────> Appointment.serviceId
 ```
@@ -42,7 +43,7 @@ IDs são UUIDs gerados no domínio. No front, mantenha ao menos estes identifica
 
 1. da resposta de `GET /barber-shop/catalog`, guarde `barberShop.id` da barbearia escolhida;
 2. da resposta de `GET /services/catalog/:barberShopId`, guarde `service.id`;
-3. ao criar o agendamento, envie `serviceId`; a API resolve internamente `clientId` e o `barberId` do proprietário da barbearia do serviço;
+3. ao criar o agendamento, envie `serviceId`; a API resolve internamente `clientId`, `barberShopId` e o `barberId` do proprietário da barbearia do serviço;
 4. da resposta do agendamento, guarde `appointment.id` para consultar, alterar ou cancelar.
 
 O contrato de serviço expõe `barberShopId`, que é o ID da barbearia do serviço.

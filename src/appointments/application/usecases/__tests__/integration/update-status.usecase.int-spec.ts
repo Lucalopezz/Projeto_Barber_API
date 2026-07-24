@@ -131,11 +131,16 @@ describe('UpdateStatusUseCase integration tests', () => {
     serviceId: string,
     barberShopId: string,
     status = AppointmentStatus.scheduled,
+    assignedBarberId?: string,
   ) => {
+    const barberShop = await prismaService.barberShop.findUniqueOrThrow({
+      where: { id: barberShopId },
+    });
     const appointment = new AppointmentEntity(
       AppointmentDataBuilder({
         clientId,
         serviceId,
+        barberId: assignedBarberId ?? barberShop.ownerId,
         barberShopId,
         status,
       }),
@@ -238,6 +243,35 @@ describe('UpdateStatusUseCase integration tests', () => {
 
     // Act & Assert
     await expect(sut.execute(input)).rejects.toThrow(UnauthorizedError);
+  });
+
+  it('should not update status for an appointment from another barber shop', async () => {
+    const { barberShop: appointmentBarberShop } =
+      await createBarberShopWithOwner('appointment-owner@test.com');
+    const { barber: unauthorizedBarber } = await createBarberShopWithOwner(
+      'unauthorized-owner@test.com',
+    );
+    const service = await createService(appointmentBarberShop._id);
+    const client = await createClient();
+    const appointment = await createAppointment(
+      client.id,
+      service._id,
+      appointmentBarberShop._id,
+      AppointmentStatus.scheduled,
+      unauthorizedBarber.id,
+    );
+
+    await expect(
+      sut.execute({
+        id: appointment._id,
+        newStatus: AppointmentStatus.completed,
+        barberId: unauthorizedBarber.id,
+      }),
+    ).rejects.toThrow(
+      new UnauthorizedError(
+        'You are not authorized to update this appointment',
+      ),
+    );
   });
 
   it('should update status and verify in database', async () => {

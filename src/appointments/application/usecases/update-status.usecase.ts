@@ -36,7 +36,7 @@ export namespace UpdateStatusUseCase {
       if (!appointment) {
         throw new NotFoundError('Appointment not found');
       }
-      if (!barberShop) {
+      if (!barberShop || appointment.barberShopId !== barberShop.id) {
         throw new UnauthorizedError(
           'You are not authorized to update this appointment',
         );
