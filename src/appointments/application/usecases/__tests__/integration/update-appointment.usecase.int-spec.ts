@@ -8,7 +8,6 @@ import { UnauthorizedError } from '@/shared/application/errors/unauthorized-erro
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { UpdateAppointmentUseCase } from '../../update-appointment.usecase';
 import { AppointmentsPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/appointments-prisma.repository';
-import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
 import { ServicesPrismaRepository } from '@/services/infrastructure/database/prisma/services-prisma.repository';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
@@ -27,7 +26,6 @@ describe('UpdateAppointmentUseCase integration tests', () => {
   const prismaService = new PrismaClient();
   let sut: UpdateAppointmentUseCase.UseCase;
   let appointmentRepository: AppointmentsPrismaRepository;
-  let barberShopRepository: BarberShopPrismaRepository;
   let serviceRepository: ServicesPrismaRepository;
   let userRepository: UserPrismaRepository;
   let module: TestingModule;
@@ -40,7 +38,6 @@ describe('UpdateAppointmentUseCase integration tests', () => {
     appointmentRepository = new AppointmentsPrismaRepository(
       prismaService as any,
     );
-    barberShopRepository = new BarberShopPrismaRepository(prismaService as any);
     serviceRepository = new ServicesPrismaRepository(prismaService as any);
     userRepository = new UserPrismaRepository(prismaService as any);
   });
@@ -48,7 +45,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
   beforeEach(async () => {
     sut = new UpdateAppointmentUseCase.UseCase(
       appointmentRepository,
-      barberShopRepository,
+      serviceRepository,
       userRepository,
     );
     await prismaService.appointment.deleteMany();
@@ -85,6 +82,10 @@ describe('UpdateAppointmentUseCase integration tests', () => {
         address: barberShop.address.toString(),
         ownerId: barber.id,
       },
+    });
+    await prismaService.user.update({
+      where: { id: barber.id },
+      data: { barberShopId: barberShop.id },
     });
 
     return { barber, barberShop };
@@ -230,6 +231,33 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     // Assert
     expect(output.serviceId).toBe(service2._id);
+  });
+
+  it('should reject a service from another barber shop', async () => {
+    const { barber, barberShop } = await createBarberShopWithOwner();
+    const { barberShop: otherBarberShop } =
+      await createBarberShopWithOwner('other-owner@test.com');
+    const currentService = await createService(barberShop.id, 'Corte');
+    const otherService = await createService(otherBarberShop.id, 'Barba');
+    const client = await createClient();
+    const appointment = await createAppointment(
+      client.id,
+      currentService.id,
+      barberShop.id,
+    );
+
+    await expect(
+      sut.execute({
+        id: appointment.id,
+        userId: barber.id,
+        date: new Date('2025-12-20T14:00:00Z'),
+        serviceId: otherService.id,
+      }),
+    ).rejects.toThrow(
+      new BadRequestError(
+        'Service does not belong to the same barber shop as the appointment',
+      ),
+    );
   });
 
   it('should throw NotFoundError when appointment does not exist', async () => {

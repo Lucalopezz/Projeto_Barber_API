@@ -81,12 +81,12 @@ export class BarberShopPrismaRepository
 
     await this.prismaService.$transaction(async (tx) => {
       await tx.barberShop.create({ data });
-      // Update the user's role to 'owner' and set barberShopId to null -> indicating they are now an owner of a shop
+      // Promote the barber and keep its shop context in the same transaction.
       await tx.user.update({
         where: { id: data.ownerId },
         data: {
           role: Role.owner,
-          barberShopId: null,
+          barberShopId: data.id,
         },
       });
     });

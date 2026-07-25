@@ -96,7 +96,7 @@ describe('BarberShopPrismaRepository integration tests', () => {
       where: { id: owner.id },
     });
     expect(updatedUser?.role).toBe(Role.owner);
-    expect(updatedUser?.barberShopId).toBeNull();
+    expect(updatedUser?.barberShopId).toBe(entity.id);
   });
 
   it('should return all barber shops', async () => {

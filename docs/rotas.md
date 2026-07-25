@@ -177,7 +177,8 @@ Para concluir, o profissional atribuído envia:
 
 Somente o proprietário ou barbeiro atribuído ao agendamento, vinculado à mesma
 barbearia, pode editar. Agendamentos concluídos ou cancelados não podem ser
-editados.
+editados. Ao trocar o serviço, o novo serviço deve pertencer à mesma barbearia
+do agendamento.
 
 ```json
 {

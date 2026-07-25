@@ -84,6 +84,10 @@ describe('UpdateStatusUseCase integration tests', () => {
         ownerId: owner.id,
       },
     });
+    await prismaService.user.update({
+      where: { id: owner.id },
+      data: { barberShopId: barberShop.id },
+    });
 
     return { owner, barberShop };
   };

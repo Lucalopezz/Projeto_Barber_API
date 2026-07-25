@@ -192,7 +192,7 @@ describe('CreateBarberShopUseCase integration tests', () => {
     };
 
     // Act
-    await sut.execute(input);
+    const output = await sut.execute(input);
 
     // Assert
     const updatedUser = await prismaService.user.findUnique({
@@ -200,6 +200,6 @@ describe('CreateBarberShopUseCase integration tests', () => {
     });
 
     expect(updatedUser.role).toBe(Role.owner);
-    expect(updatedUser.barberShopId).toBeNull();
+    expect(updatedUser.barberShopId).toBe(output.id);
   });
 });
