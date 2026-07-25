@@ -9,7 +9,6 @@ import { BarberShopRepository } from '@/barberShop/domain/repositories/barbersho
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
-import { Role } from '@/users/domain/entities/role.enum';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 import { ConflictError } from '@/shared/domain/errors/conflict-error';
 
@@ -75,17 +74,9 @@ export namespace UpdateStatusUseCase {
     private async getProfessionalBarberShopId(
       user: UserEntity,
     ): Promise<string | null> {
-      if (user.role === Role.owner) {
-        const barberShop = await this.barberShopRepository.findByOwnerId(
-          user.id,
-        );
-        return barberShop?.id ?? null;
-      }
-
-      if (user.role === Role.barber) {
+      if (user.barberShopId) {
         return user.barberShopId;
       }
-
       return null;
     }
   }

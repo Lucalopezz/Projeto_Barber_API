@@ -116,20 +116,16 @@ import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/rep
       provide: UpdateAppointmentUseCase.UseCase,
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
-        barberShopRepository: BarberShopRepository.Repository,
+        serviceRepository: ServicesRepository.Repository,
         userRepository: UserRepository.Repository,
       ) => {
         return new UpdateAppointmentUseCase.UseCase(
           appointmentRepository,
-          barberShopRepository,
+          serviceRepository,
           userRepository,
         );
       },
-      inject: [
-        'AppointmentRepository',
-        'BarberShopRepository',
-        'UserRepository',
-      ],
+      inject: ['AppointmentRepository', 'ServicesRepository', 'UserRepository'],
     },
   ],
 })
