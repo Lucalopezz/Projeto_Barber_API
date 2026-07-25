@@ -39,6 +39,9 @@ export namespace UpdateStatusUseCase {
       if (!appointment) {
         throw new NotFoundError('Appointment not found');
       }
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
 
       const professionalBarberShopId = user.barberShopId ?? null;
       const isClient = appointment.clientId === user.id;

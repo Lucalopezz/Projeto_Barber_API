@@ -21,7 +21,7 @@ export namespace GetAppointmentUseCase {
     ) {}
     async execute(input: Input): Promise<AppointmentOutput> {
       const appointment = await this.appointmentRepository.findById(input.id);
-      if (appointment.clientId !== input.userId) {
+      if (!appointment || appointment.clientId !== input.userId) {
         throw new NotFoundError('Appointment not found');
       }
       return AppointmentOutputMapper.toOutput(appointment);

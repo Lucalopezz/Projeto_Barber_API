@@ -30,6 +30,6 @@ export namespace AppointmentsRepository {
       AppointmentsSearchParams,
       AppointmentsSearchResult
     > {
-    verifyAvailability(date: Date, barberId: string): Promise<boolean>;
+    existsByDateAndBarberId(date: Date, barberId: string): Promise<boolean>;
   }
 }

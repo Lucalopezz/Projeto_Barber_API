@@ -40,6 +40,9 @@ export namespace UpdateAppointmentUseCase {
       if (!appointment) {
         throw new NotFoundError('Appointment not found');
       }
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
 
       const service = await this.serviceRepository.findById(serviceId);
       if (!service) {
@@ -67,11 +70,12 @@ export namespace UpdateAppointmentUseCase {
         throw new ConflictError('Only scheduled appointments can be updated');
       }
 
-      const isAvailable = await this.appointmentRepository.verifyAvailability(
-        date,
-        appointment.barberId,
-      );
-      if (!isAvailable) {
+      const appointmentExists =
+        await this.appointmentRepository.existsByDateAndBarberId(
+          date,
+          appointment.barberId,
+        );
+      if (appointmentExists && appointment.date.getTime() !== date.getTime()) {
         throw new BadRequestError('Appointment not available');
       }
 

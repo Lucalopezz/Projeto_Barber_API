@@ -37,11 +37,15 @@ export namespace CreateAppointmentsUseCase {
       const barberShop = await this.barberShopRepository.findById(
         service.barberShopId,
       );
-      const isAvailable = await this.appointmentRepository.verifyAvailability(
-        date,
-        barberShop.ownerId,
-      );
-      if (!isAvailable) {
+      if (!barberShop) {
+        throw new BadRequestError('BarberShop not found');
+      }
+      const appointmentExists =
+        await this.appointmentRepository.existsByDateAndBarberId(
+          date,
+          barberShop.ownerId,
+        );
+      if (appointmentExists) {
         throw new BadRequestError('Appointment not available');
       }
       const entity = new AppointmentEntity({
