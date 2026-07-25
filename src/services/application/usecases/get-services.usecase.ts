@@ -4,6 +4,7 @@ import {
   ServicesOutputMapper,
 } from '../dtos/services-output.dto';
 import { ServicesRepository } from '@/services/domain/repositories/services.repository';
+import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace GetServicesUseCase {
@@ -17,6 +18,9 @@ export namespace GetServicesUseCase {
 
     async execute(input: Input): Promise<ServicesOutput> {
       const entity = await this.servicesRepository.findById(input.id);
+      if (!entity) {
+        throw new NotFoundError('Service not found');
+      }
       return ServicesOutputMapper.toOutput(entity);
     }
   }

@@ -2,10 +2,12 @@ import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { ServicesRepository } from '@/services/domain/repositories/services.repository';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { ServicesModelMapper } from './models/services-model.mapper';
-import { NotFoundError } from '@/shared/domain/errors/not-found-error';
+import { Prisma } from '@prisma/client';
 
 export class ServicesPrismaRepository implements ServicesRepository.Repository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService | Prisma.TransactionClient,
+  ) {}
 
   async findAllForBarberShop(barberShopId: string): Promise<ServiceEntity[]> {
     const services = await this.prismaService.service.findMany({
@@ -22,7 +24,7 @@ export class ServicesPrismaRepository implements ServicesRepository.Repository {
     });
     return;
   }
-  findById(id: string): Promise<ServiceEntity> {
+  findById(id: string): Promise<ServiceEntity | null> {
     return this._get(id);
   }
   async findAll(): Promise<ServiceEntity[]> {
@@ -30,7 +32,6 @@ export class ServicesPrismaRepository implements ServicesRepository.Repository {
     return services.map((service) => ServicesModelMapper.toEntity(service));
   }
   async update(entity: ServiceEntity): Promise<void> {
-    await this._get(entity._id);
     await this.prismaService.service.update({
       data: entity.toJSON(),
       where: {
@@ -39,22 +40,15 @@ export class ServicesPrismaRepository implements ServicesRepository.Repository {
     });
   }
   async delete(id: string): Promise<void> {
-    await this._get(id);
     await this.prismaService.service.delete({
       where: { id },
     });
   }
 
-  protected async _get(id: string): Promise<ServiceEntity> {
-    try {
-      const service = await this.prismaService.service.findUnique({
-        where: {
-          id,
-        },
-      });
-      return ServicesModelMapper.toEntity(service);
-    } catch {
-      throw new NotFoundError(`ServiceModel not found using ID ${id}`);
-    }
+  protected async _get(id: string): Promise<ServiceEntity | null> {
+    const service = await this.prismaService.service.findUnique({
+      where: { id },
+    });
+    return service ? ServicesModelMapper.toEntity(service) : null;
   }
 }
