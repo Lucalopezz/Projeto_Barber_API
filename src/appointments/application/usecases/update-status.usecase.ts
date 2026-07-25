@@ -9,7 +9,6 @@ import { BarberShopRepository } from '@/barberShop/domain/repositories/barbersho
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
-import { UserEntity } from '@/users/domain/entities/user.entity';
 import { ConflictError } from '@/shared/domain/errors/conflict-error';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -41,8 +40,7 @@ export namespace UpdateStatusUseCase {
         throw new NotFoundError('Appointment not found');
       }
 
-      const professionalBarberShopId =
-        await this.getProfessionalBarberShopId(user);
+      const professionalBarberShopId = user.barberShopId ?? null;
       const isClient = appointment.clientId === user.id;
       const isAssignedProfessional =
         appointment.barberId === user.id &&
@@ -69,15 +67,6 @@ export namespace UpdateStatusUseCase {
 
       await this.appointmentRepository.update(appointment);
       return AppointmentOutputMapper.toOutput(appointment);
-    }
-
-    private async getProfessionalBarberShopId(
-      user: UserEntity,
-    ): Promise<string | null> {
-      if (user.barberShopId) {
-        return user.barberShopId;
-      }
-      return null;
     }
   }
 }

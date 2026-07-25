@@ -8,7 +8,6 @@ import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
-import { UserEntity } from '@/users/domain/entities/user.entity';
 import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
 import { ConflictError } from '@/shared/domain/errors/conflict-error';
 import { ServicesRepository } from '@/services/domain/repositories/services.repository';
@@ -52,8 +51,7 @@ export namespace UpdateAppointmentUseCase {
         );
       }
 
-      const professionalBarberShopId =
-        await this.getProfessionalBarberShopId(user);
+      const professionalBarberShopId = user.barberShopId ?? null;
 
       // if the barber is not the barber assigned to the appointment or the appointment is not in his barber shop
       if (
@@ -81,15 +79,6 @@ export namespace UpdateAppointmentUseCase {
 
       await this.appointmentRepository.update(appointment);
       return AppointmentOutputMapper.toOutput(appointment);
-    }
-
-    private async getProfessionalBarberShopId(
-      user: UserEntity,
-    ): Promise<string | null> {
-      if (user.barberShopId) {
-        return user.barberShopId;
-      }
-      return null;
     }
   }
 }
