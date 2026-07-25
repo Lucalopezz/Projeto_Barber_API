@@ -4,6 +4,7 @@ import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import { Role } from '@/users/domain/entities/role.enum';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
+import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace UpdateUserUseCase {
@@ -24,6 +25,9 @@ export namespace UpdateUserUseCase {
         throw new BadRequestError('Name and Role not provided');
       }
       const entity = await this.userRepository.findById(input.id);
+      if (!entity) {
+        throw new NotFoundError('User not found');
+      }
       if (entity.id !== input.userId) {
         throw new UnauthorizedError(
           "You don't have permission to update this user",

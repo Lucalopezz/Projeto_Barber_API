@@ -42,6 +42,17 @@ export class UserEntity extends Entity<UserProps> {
     UserEntity.validade({ ...this.props, password: value });
     this.password = value;
   }
+  becomeOwner(barberShopId: string): void {
+    const updatedProps = {
+      ...this.props,
+      role: Role.owner,
+      barberShopId,
+    };
+
+    UserEntity.validade(updatedProps);
+    this.role = Role.owner;
+    this.barberShopId = barberShopId;
+  }
 
   get name(): string {
     return this.props.name;
@@ -69,6 +80,9 @@ export class UserEntity extends Entity<UserProps> {
   }
   get barberShopId(): string | null {
     return this.props.barberShopId;
+  }
+  private set barberShopId(value: string | null) {
+    this.props.barberShopId = value;
   }
 
   static validade(data: UserProps) {

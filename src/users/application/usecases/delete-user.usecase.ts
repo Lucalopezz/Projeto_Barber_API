@@ -1,6 +1,7 @@
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
+import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace DeleteUserUseCase {
@@ -16,6 +17,9 @@ export namespace DeleteUserUseCase {
 
     async execute(input: Input): Promise<Output> {
       const entity = await this.userRepository.findById(input.id);
+      if (!entity) {
+        throw new NotFoundError('User not found');
+      }
       if (entity.id !== input.userId) {
         throw new UnauthorizedError(
           "You don't have permission to delete this user",

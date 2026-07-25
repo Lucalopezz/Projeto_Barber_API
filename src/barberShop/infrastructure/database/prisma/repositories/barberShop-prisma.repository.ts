@@ -3,13 +3,14 @@ import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entit
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { BarberShopModelMapper } from './models/barberShop-model.mapper';
-import { NotFoundError } from '@/shared/domain/errors/not-found-error';
-import { Role } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 
 export class BarberShopPrismaRepository
   implements BarberShopRepository.Repository
 {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService | Prisma.TransactionClient,
+  ) {}
 
   sortableFields: string[] = ['name', 'createdAt'];
 
@@ -79,19 +80,9 @@ export class BarberShopPrismaRepository
       ownerId: entity.ownerId,
     };
 
-    await this.prismaService.$transaction(async (tx) => {
-      await tx.barberShop.create({ data });
-      // Promote the barber and keep its shop context in the same transaction.
-      await tx.user.update({
-        where: { id: data.ownerId },
-        data: {
-          role: Role.owner,
-          barberShopId: data.id,
-        },
-      });
-    });
+    await this.prismaService.barberShop.create({ data });
   }
-  findById(id: string): Promise<BarberShopEntity> {
+  findById(id: string): Promise<BarberShopEntity | null> {
     return this._get(id);
   }
   async findAll(): Promise<BarberShopEntity[]> {
@@ -103,7 +94,6 @@ export class BarberShopPrismaRepository
       name: entity.name,
       address: entity.address.toString(),
     };
-    await this._get(entity._id);
     await this.prismaService.barberShop.update({
       data: data,
       where: {
@@ -112,23 +102,16 @@ export class BarberShopPrismaRepository
     });
   }
   async delete(id: string): Promise<void> {
-    await this._get(id);
     await this.prismaService.barberShop.delete({
       where: {
         id,
       },
     });
   }
-  protected async _get(id: string): Promise<BarberShopEntity> {
-    try {
-      const shop = await this.prismaService.barberShop.findUnique({
-        where: {
-          id,
-        },
-      });
-      return BarberShopModelMapper.toEntity(shop);
-    } catch {
-      throw new NotFoundError(`BarberShop not found using ID ${id}`);
-    }
+  protected async _get(id: string): Promise<BarberShopEntity | null> {
+    const shop = await this.prismaService.barberShop.findUnique({
+      where: { id },
+    });
+    return shop ? BarberShopModelMapper.toEntity(shop) : null;
   }
 }

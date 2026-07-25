@@ -7,6 +7,7 @@ import {
   UserContextOutput,
   UserContextOutputMapper,
 } from '../dtos/user-context-output.dto';
+import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace GetUserUseCase {
@@ -23,6 +24,9 @@ export namespace GetUserUseCase {
 
     async execute(input: Input): Promise<Output> {
       const user = await this.userRepository.findById(input.id);
+      if (!user) {
+        throw new NotFoundError('User not found');
+      }
       let barberShop = null;
       let relationship: BarberShopRelationship | null = null;
 
@@ -33,7 +37,7 @@ export namespace GetUserUseCase {
         barberShop = await this.barberShopRepository.findById(
           user.barberShopId,
         );
-        relationship = 'barber';
+        relationship = barberShop ? 'barber' : null;
       }
 
       return UserContextOutputMapper.toOutput(user, barberShop, relationship);

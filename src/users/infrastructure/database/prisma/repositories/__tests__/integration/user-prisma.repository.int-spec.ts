@@ -124,10 +124,8 @@ describe('UserPrismaRepository integration tests', () => {
     expect(output).toBeNull();
   });
 
-  it('should throws error when a entity not found', async () => {
-    await expect(() => sut.findByEmail('a@a.com')).rejects.toThrow(
-      new NotFoundError(`UserModel not found using email a@a.com`),
-    );
+  it('should return null when a entity is not found by email', async () => {
+    await expect(sut.findByEmail('a@a.com')).resolves.toBeNull();
   });
 
   it('should finds a entity by email', async () => {
@@ -140,20 +138,17 @@ describe('UserPrismaRepository integration tests', () => {
     expect(output.toJSON()).toStrictEqual(entity.toJSON());
   });
 
-  it('should throws error when a entity found by email', async () => {
+  it('should report an existing entity by email', async () => {
     const entity = new UserEntity(UserDataBuilder({ email: 'a@a.com' }));
     const newUser = await prismaService.user.create({
       data: entity.toJSON(),
     });
 
-    await expect(() => sut.emailExists('a@a.com')).rejects.toThrow(
-      new ConflictError(`Email address already used`),
-    );
+    await expect(sut.existsByEmail('a@a.com')).resolves.toBe(true);
   });
 
-  it('should not finds a entity by email', async () => {
-    expect.assertions(0);
-    await sut.emailExists('a@a.com');
+  it('should report a missing entity by email', async () => {
+    await expect(sut.existsByEmail('a@a.com')).resolves.toBe(false);
   });
 
   describe('search method tests', () => {

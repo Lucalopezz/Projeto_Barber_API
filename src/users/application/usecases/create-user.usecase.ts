@@ -5,6 +5,7 @@ import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { HashProvider } from '@/shared/application/providers/hash-provider';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { UserEntity } from '@/users/domain/entities/user.entity';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace CreateUserUseCase {
@@ -32,7 +33,9 @@ export namespace CreateUserUseCase {
           'Owner role is assigned when a barber creates a BarberShop',
         );
       }
-      await this.userRepository.emailExists(email);
+      if (await this.userRepository.existsByEmail(email)) {
+        throw new ConflictError('Email address already used');
+      }
       const hashPass = await this.hashProvider.generateHash(password);
 
       const entity = new UserEntity(

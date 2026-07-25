@@ -11,6 +11,7 @@ import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entit
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { Role } from '@/users/domain/entities/role.enum';
+import { CreateBarberShopTransaction } from '../ports/create-barber-shop.transaction';
 
 export namespace CreateBarberShopUseCase {
   export type Input = {
@@ -24,6 +25,7 @@ export namespace CreateBarberShopUseCase {
     constructor(
       private barberShopRepository: BarberShopRepository.Repository,
       private userRepo: UserRepository.Repository,
+      private transaction: CreateBarberShopTransaction,
     ) {}
 
     async execute(input: Input): Promise<BarberShopOutput> {
@@ -50,7 +52,13 @@ export namespace CreateBarberShopUseCase {
         ownerId,
       });
 
-      await this.barberShopRepository.insert(entity);
+      await this.transaction.execute(
+        async ({ barberShopRepository, userRepository }) => {
+          await barberShopRepository.insert(entity);
+          owner.becomeOwner(entity.id);
+          await userRepository.update(owner);
+        },
+      );
 
       return BarberShopOutputMapper.toOutput(entity);
     }

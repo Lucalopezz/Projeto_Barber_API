@@ -1,39 +1,30 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ConflictError } from '@/shared/domain/errors/conflict-error';
-import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { UserModelMapper } from './models/user-model.mapper';
 import { Role } from '@/users/domain/entities/role.enum';
+import { Prisma } from '@prisma/client';
 
 export class UserPrismaRepository implements UserRepository.Repository {
-  constructor(private prismaService: PrismaService) {}
+  constructor(
+    private prismaService: PrismaService | Prisma.TransactionClient,
+  ) {}
 
   sortableFields: string[] = ['name', 'role', 'createdAt'];
 
-  async findByEmail(email: string): Promise<UserEntity> {
-    try {
-      const user = await this.prismaService.user.findUnique({
-        where: {
-          email,
-        },
-      });
-      return UserModelMapper.toEntity(user);
-    } catch {
-      throw new NotFoundError(`UserModel not found using email ${email}`);
-    }
+  async findByEmail(email: string): Promise<UserEntity | null> {
+    const user = await this.prismaService.user.findUnique({
+      where: { email },
+    });
+    return user ? UserModelMapper.toEntity(user) : null;
   }
 
-  async emailExists(email: string): Promise<void> {
+  async existsByEmail(email: string): Promise<boolean> {
     const user = await this.prismaService.user.findUnique({
-      where: {
-        email,
-      },
+      where: { email },
     });
-    if (user) {
-      throw new ConflictError('Email address already used');
-    }
+    return !!user;
   }
 
   async search(
@@ -88,7 +79,7 @@ export class UserPrismaRepository implements UserRepository.Repository {
     });
   }
 
-  findById(id: string): Promise<UserEntity> {
+  findById(id: string): Promise<UserEntity | null> {
     return this._get(id);
   }
 
@@ -98,7 +89,6 @@ export class UserPrismaRepository implements UserRepository.Repository {
   }
 
   async update(entity: UserEntity): Promise<void> {
-    await this._get(entity._id);
     await this.prismaService.user.update({
       data: entity.toJSON(),
       where: {
@@ -108,23 +98,14 @@ export class UserPrismaRepository implements UserRepository.Repository {
   }
 
   async delete(id: string): Promise<void> {
-    await this._get(id);
     await this.prismaService.user.delete({
       where: {
         id,
       },
     });
   }
-  protected async _get(id: string): Promise<UserEntity> {
-    try {
-      const user = await this.prismaService.user.findUnique({
-        where: {
-          id,
-        },
-      });
-      return UserModelMapper.toEntity(user);
-    } catch {
-      throw new NotFoundError(`UserModel not found using ID ${id}`);
-    }
+  protected async _get(id: string): Promise<UserEntity | null> {
+    const user = await this.prismaService.user.findUnique({ where: { id } });
+    return user ? UserModelMapper.toEntity(user) : null;
   }
 }

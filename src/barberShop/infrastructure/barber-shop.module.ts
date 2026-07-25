@@ -12,6 +12,8 @@ import { GetBarberShopUseCase } from '../application/usecases/get-barberShop.use
 import { UpdateBarberShopUseCase } from '../application/usecases/update-barberShop.usecase';
 import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberShop.usecase';
 import { AuthModule } from '@/auth/auth.module';
+import { CreateBarberShopPrismaTransaction } from './database/prisma/create-barber-shop-prisma.transaction';
+import { CreateBarberShopTransaction } from '../application/ports/create-barber-shop.transaction';
 
 @Module({
   controllers: [BarberShopController],
@@ -36,17 +38,30 @@ import { AuthModule } from '@/auth/auth.module';
       inject: ['PrismaService'],
     },
     {
+      provide: 'CreateBarberShopTransaction',
+      useFactory: (prismaService: PrismaService) => {
+        return new CreateBarberShopPrismaTransaction(prismaService);
+      },
+      inject: ['PrismaService'],
+    },
+    {
       provide: CreateBarberShopUseCase.UseCase,
       useFactory: (
         barberShopRepository: BarberShopRepository.Repository,
         userRepository: UserRepository.Repository,
+        transaction: CreateBarberShopTransaction,
       ) => {
         return new CreateBarberShopUseCase.UseCase(
           barberShopRepository,
           userRepository,
+          transaction,
         );
       },
-      inject: ['BarberShopRepository', 'UserRepository'],
+      inject: [
+        'BarberShopRepository',
+        'UserRepository',
+        'CreateBarberShopTransaction',
+      ],
     },
     {
       provide: ListBarberShopUseCase.UseCase,

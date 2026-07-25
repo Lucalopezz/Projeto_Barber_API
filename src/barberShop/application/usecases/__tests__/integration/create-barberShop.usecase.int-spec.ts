@@ -11,6 +11,7 @@ import { UserEntity } from '@/users/domain/entities/user.entity';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
 import { BarberShopDataBuilder } from '@/barberShop/domain/helpers/barberShop-data-builder';
+import { CreateBarberShopPrismaTransaction } from '@/barberShop/infrastructure/database/prisma/create-barber-shop-prisma.transaction';
 
 describe('CreateBarberShopUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -32,6 +33,7 @@ describe('CreateBarberShopUseCase integration tests', () => {
     sut = new CreateBarberShopUseCase.UseCase(
       barberShopRepository,
       userRepository,
+      new CreateBarberShopPrismaTransaction(prismaService as any),
     );
     await prismaService.appointment.deleteMany();
     await prismaService.service.deleteMany();

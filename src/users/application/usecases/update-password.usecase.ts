@@ -4,6 +4,7 @@ import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { HashProvider } from '@/shared/application/providers/hash-provider';
 import { InvalidPasswordError } from '@/shared/application/errors/invalid-password-error';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
+import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace UpdatePasswordUseCase {
@@ -24,6 +25,9 @@ export namespace UpdatePasswordUseCase {
 
     async execute(input: Input): Promise<Output> {
       const entity = await this.userRepository.findById(input.id);
+      if (!entity) {
+        throw new NotFoundError('User not found');
+      }
       if (entity.id !== input.userId) {
         throw new UnauthorizedError(
           "You don't have permission to update this user",
