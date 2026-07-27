@@ -21,7 +21,7 @@ export class ListAppointmentsDto
   @IsOptional()
   @IsString()
   @IsUUID()
-  serviceID?: string;
+  serviceId?: string;
 
   @IsOptional()
   @Type(() => Date)

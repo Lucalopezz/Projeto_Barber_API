@@ -269,7 +269,7 @@ describe('ListAppointmentsUseCase integration tests', () => {
 
     const input: ListAppointmentsUseCase.Input = {
       userId: client.id,
-      serviceID: service1._id,
+      serviceId: service1._id,
     };
 
     // Act

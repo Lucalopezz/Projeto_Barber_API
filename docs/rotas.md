@@ -154,7 +154,7 @@ A resposta contém `id`, `date`, `status`, `clientId`, `barberId`, `barberShopId
 
 ### Filtrar lista — `GET /appointments`
 
-Query opcional: `page`, `perPage`, `sort`, `sortDir`, `serviceID` e `date`. Note a grafia atual `serviceID` com `ID` maiúsculo. O filtro depende do contexto da conta: proprietário vê sua agenda; quem não possui barbearia vê agendamentos em que é cliente.
+Query opcional: `page`, `perPage`, `sort`, `sortDir`, `serviceId` e `date`. O filtro depende do contexto da conta: proprietário vê sua agenda; quem não possui barbearia vê agendamentos em que é cliente.
 
 ### Alterar status — `PATCH /appointments/:id`
 

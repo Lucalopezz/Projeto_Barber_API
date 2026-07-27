@@ -18,7 +18,7 @@ export namespace ListAppointmentsUseCase {
     sort?: string;
     sortDir?: 'asc' | 'desc';
     //Separed filter in 2 camps for a batter search
-    serviceID?: string;
+    serviceId?: string;
     date?: Date;
     userId: string;
   };
@@ -41,8 +41,8 @@ export namespace ListAppointmentsUseCase {
       } else {
         filter.customerId = input.userId;
       }
-      if (input.serviceID) {
-        filter.serviceId = input.serviceID;
+      if (input.serviceId) {
+        filter.serviceId = input.serviceId;
       }
       if (input.date) {
         filter.date = input.date;
