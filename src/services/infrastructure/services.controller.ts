@@ -21,6 +21,9 @@ import { GetServicesUseCase } from '../application/usecases/get-services.usecase
 import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
 import { DeleteServicesUseCase } from '../application/usecases/delete-services.usecase';
 import { ListServicesByBarberShopUseCase } from '../application/usecases/list-services-by-barberShop.usecase';
+import { RoleGuard } from '@/auth/guard/role.guard';
+import { Roles } from '@/auth/decorators/roles.decorator';
+import { Role } from '@/users/domain/entities/role.enum';
 
 @Controller('services')
 export class ServicesController {
@@ -42,7 +45,8 @@ export class ServicesController {
   }
 
   @Post()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles([Role.owner])
   async create(
     @Body() createServiceDto: CreateServiceDto,
     @CurrentUserId() userId: string,
@@ -55,7 +59,8 @@ export class ServicesController {
   }
 
   @Get()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles([Role.owner])
   async findAll(@CurrentUserId() userId: string) {
     const models = await this.listServicesUseCase.execute({ userId });
     return models.map((model) => ServicesController.serviceToResponse(model));
@@ -69,7 +74,8 @@ export class ServicesController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles([Role.owner])
   async update(
     @Param('id') id: string,
     @Body() updateServiceDto: UpdateServiceDto,
@@ -84,7 +90,8 @@ export class ServicesController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles([Role.owner])
   remove(@Param('id') id: string, @CurrentUserId() userId: string) {
     return this.deleteServicesUseCase.execute({
       id,

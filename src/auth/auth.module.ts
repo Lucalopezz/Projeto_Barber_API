@@ -3,6 +3,8 @@ import { EnvConfigModule } from '@/shared/infrastructure/env-config/env-config.m
 import { JwtModule } from '@nestjs/jwt';
 import { EnvConfigService } from '@/shared/infrastructure/env-config/env-config.service';
 import { AuthService } from './auth.service';
+import { AuthGuard } from './guard/auth.guard';
+import { RoleGuard } from './guard/role.guard';
 
 @Module({
   imports: [
@@ -17,7 +19,7 @@ import { AuthService } from './auth.service';
       inject: [EnvConfigService],
     }),
   ],
-  providers: [AuthService],
-  exports: [AuthService],
+  providers: [AuthService, AuthGuard, RoleGuard],
+  exports: [AuthService, AuthGuard, RoleGuard],
 })
 export class AuthModule {}

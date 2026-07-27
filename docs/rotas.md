@@ -86,11 +86,11 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `POST` | `/barber-shop` | 🔒 Cria a barbearia do barbeiro autenticado e promove sua conta para `owner`. A API de gestão atual aceita uma por proprietário. |
+| `POST` | `/barber-shop` | 🔒 `barber` — Cria a barbearia do barbeiro autenticado e promove sua conta para `owner`. A API de gestão atual aceita uma por proprietário. |
 | `GET` | `/barber-shop/catalog` | 🌐 Lista barbearias paginadas para a vitrine. |
 | `GET` | `/barber-shop/catalog/:id` | 🌐 Busca uma barbearia da vitrine por ID. |
-| `PUT` | `/barber-shop/:id` | 🔒 Atualiza a própria barbearia. |
-| `DELETE` | `/barber-shop/:id` | 🔒 Exclui a própria barbearia. |
+| `PUT` | `/barber-shop/:id` | 🔒 `owner` — Atualiza a própria barbearia. |
+| `DELETE` | `/barber-shop/:id` | 🔒 `owner` — Exclui a própria barbearia. |
 
 ### Criar/atualizar — `POST /barber-shop` e `PUT /barber-shop/:id`
 
@@ -109,11 +109,11 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `POST` | `/services` | Cria serviço na barbearia do dono autenticado. |
-| `GET` | `/services` | Lista serviços da própria barbearia. |
+| `POST` | `/services` | 🔒 `owner` — Cria serviço na barbearia do dono autenticado. |
+| `GET` | `/services` | 🔒 `owner` — Lista serviços da própria barbearia. |
 | `GET` | `/services/:id` | Busca serviço por ID. |
-| `PATCH` | `/services/:id` | Atualiza serviço da própria barbearia. |
-| `DELETE` | `/services/:id` | Exclui serviço da própria barbearia. |
+| `PATCH` | `/services/:id` | 🔒 `owner` — Atualiza serviço da própria barbearia. |
+| `DELETE` | `/services/:id` | 🔒 `owner` — Exclui serviço da própria barbearia. |
 | `GET` | `/services/catalog/:barberShopId` | 🌐 Lista os serviços da barbearia escolhida para a vitrine. |
 
 ### Criar/atualizar — `POST /services` e `PATCH /services/:id`
@@ -139,7 +139,7 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 | `GET` | `/appointments` | Lista agendamentos do cliente ou, para o dono de uma barbearia, da sua barbearia. |
 | `GET` | `/appointments/:id` | Busca um agendamento próprio do cliente. |
 | `PATCH` | `/appointments/:id` | Cancela ou conclui um agendamento sem excluí-lo. |
-| `PUT` | `/appointments/:id` | Altera data e/ou serviço de um agendamento em aberto. |
+| `PUT` | `/appointments/:id` | 🔒 `owner` ou `barber` — Altera data e/ou serviço de um agendamento em aberto. |
 
 ### Criar — `POST /appointments`
 

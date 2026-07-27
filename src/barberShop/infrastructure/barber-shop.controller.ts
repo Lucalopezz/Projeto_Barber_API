@@ -26,6 +26,9 @@ import { UpdateBarberShopUseCase } from '../application/usecases/update-barberSh
 import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberShop.usecase';
 import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
 import { AuthGuard } from '@/auth/guard/auth.guard';
+import { RoleGuard } from '@/auth/guard/role.guard';
+import { Roles } from '@/auth/decorators/roles.decorator';
+import { Role } from '@/users/domain/entities/role.enum';
 
 @Controller('barber-shop')
 export class BarberShopController {
@@ -53,7 +56,8 @@ export class BarberShopController {
   }
 
   @Post()
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles([Role.barber])
   async create(
     @Body() createBarberShopDto: CreateBarberShopDto,
     @CurrentUserId() userId: string,
@@ -78,7 +82,8 @@ export class BarberShopController {
   }
 
   @Put(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles([Role.owner])
   async update(
     @Param('id') id: string,
     @Body() updateBarberShopDto: UpdateBarberShopDto,
@@ -93,7 +98,8 @@ export class BarberShopController {
   }
 
   @Delete(':id')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, RoleGuard)
+  @Roles([Role.owner])
   remove(@Param('id') id: string, @CurrentUserId() ownerId: string) {
     return this.deleteBarberShopUseCase.execute({ id, ownerId });
   }

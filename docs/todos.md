@@ -13,7 +13,7 @@ Esta lista prioriza o que impede o fluxo de uma plataforma de barbearias, especi
 
 ## Prioridade 1 — contrato consistente e seguro
 
-- [ ] **Aplicar RBAC de verdade.** O `AuthGuard` apenas autentica; o papel `role` não é usado nas rotas. Um cliente autenticado alcança endpoints de criação/listagem de serviços e recebe erros tardios. Adicionar guard/decorator de papéis e regras por recurso, retornando `403` de modo uniforme.
+- [x] **Aplicar RBAC de verdade.** O `AuthGuard` apenas autentica; o papel `role` não é usado nas rotas. Um cliente autenticado alcança endpoints de criação/listagem de serviços e recebe erros tardios. Adicionar guard/decorator de papéis e regras por recurso, retornando `403` de modo uniforme.
 - [ ] **Corrigir os filtros de agendamento e seus nomes.** A query usa `serviceID` (maiúsculo) em vez de `serviceId`; padronizar para camelCase. Adicionar `barberShopId` como filtro de vitrine/gestão quando apropriado e intervalos (`dateFrom`, `dateTo`) em vez de igualdade exata de data/hora.
 - [ ] **Completar a disponibilidade da agenda.** A verificação atual bloqueia somente a mesma combinação exata de `date` e `serviceId`. Ela permite dois serviços diferentes no mesmo horário e não considera duração, expediente, folgas, fuso horário ou cancelamentos. Criar agenda/disponibilidade por barbeiro, validar sobreposição de intervalos e definir o fuso de armazenamento e apresentação.
 - [ ] **Modelar profissionais da barbearia.** O banco contém `User.barberShopId`, mas não há endpoint para adicionar/remover barbeiros nem agendamento associado a um profissional. Decidir se cada agendamento é da barbearia ou de um barbeiro específico; para agenda realista, incluir `barberId`, disponibilidade e autorização de membros.

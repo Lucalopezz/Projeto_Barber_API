@@ -26,6 +26,9 @@ import { UpdateStatusDto } from './dto/update-status.dto';
 import { GetAppointmentUseCase } from '../application/usecases/get-appointment.usecase';
 import { ListAppointmentsUseCase } from '../application/usecases/list-appointments.usecase';
 import { ListAppointmentsDto } from './dto/list-appointments.dto';
+import { RoleGuard } from '@/auth/guard/role.guard';
+import { Roles } from '@/auth/decorators/roles.decorator';
+import { Role } from '@/users/domain/entities/role.enum';
 
 @Controller('appointments')
 @UseGuards(AuthGuard)
@@ -95,6 +98,8 @@ export class AppointmentsController {
     return AppointmentsController.appointmentToResponse(model);
   }
   @Put(':id')
+  @UseGuards(RoleGuard)
+  @Roles([Role.owner, Role.barber])
   async update(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateAppointmentDto,
