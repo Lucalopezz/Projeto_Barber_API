@@ -29,7 +29,7 @@ import { UpdatePasswordDto } from './dto/update-password.dto';
 import { UpdateUserUseCase } from '../application/usecases/update-user.usecase';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DeleteUserUseCase } from '../application/usecases/delete-user.usecase';
-import { AuthGuard } from '@/auth/auth.guard';
+import { AuthGuard } from '@/auth/guard/auth.guard';
 import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
 import { SigninDto } from './dto/signin.dto';
 import { SigninUseCase } from '../application/usecases/signin.usecase';
@@ -82,7 +82,7 @@ export class UsersController {
   @Post('login')
   async login(@Body() signinDto: SigninDto) {
     const output = await this.signinUseCase.execute(signinDto);
-    return this.authService.generateJwt(output.id);
+    return this.authService.generateJwt(output.id, output.role);
   }
 
   @Get()

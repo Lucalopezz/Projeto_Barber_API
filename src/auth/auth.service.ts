@@ -1,6 +1,7 @@
 import { EnvConfigService } from '@/shared/infrastructure/env-config/env-config.service';
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { Role } from '@/users/domain/entities/role.enum';
 
 type GenerateJwtProps = {
   accessToken: string;
@@ -12,8 +13,11 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: EnvConfigService,
   ) {}
-  async generateJwt(userId: string): Promise<GenerateJwtProps> {
-    const accessToken = await this.jwtService.signAsync({ id: userId }, {});
+  async generateJwt(userId: string, role: Role): Promise<GenerateJwtProps> {
+    const accessToken = await this.jwtService.signAsync(
+      { id: userId, role },
+      {},
+    );
     return { accessToken };
   }
 

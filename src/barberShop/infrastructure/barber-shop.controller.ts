@@ -25,7 +25,7 @@ import { GetBarberShopUseCase } from '../application/usecases/get-barberShop.use
 import { UpdateBarberShopUseCase } from '../application/usecases/update-barberShop.usecase';
 import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberShop.usecase';
 import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
-import { AuthGuard } from '@/auth/auth.guard';
+import { AuthGuard } from '@/auth/guard/auth.guard';
 
 @Controller('barber-shop')
 export class BarberShopController {

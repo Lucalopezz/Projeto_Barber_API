@@ -19,7 +19,7 @@ import {
   AppointmentCollectionPresenter,
   AppointmentPresenter,
 } from './presenters/appointment.presenter';
-import { AuthGuard } from '@/auth/auth.guard';
+import { AuthGuard } from '@/auth/guard/auth.guard';
 import { UpdateStatusUseCase } from '../application/usecases/update-status.usecase';
 import { UpdateAppointmentUseCase } from '../application/usecases/update-appointment.usecase';
 import { UpdateStatusDto } from './dto/update-status.dto';
