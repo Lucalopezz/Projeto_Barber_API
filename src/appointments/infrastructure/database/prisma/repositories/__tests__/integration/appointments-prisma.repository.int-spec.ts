@@ -15,6 +15,7 @@ import { UserEntity } from '@/users/domain/entities/user.entity';
 import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entity';
 import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { Role } from '@/users/domain/entities/role.enum';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
 
 describe('AppointmentsPrismaRepository integration tests', () => {
   const prismaService = new PrismaClient();
@@ -140,6 +141,38 @@ describe('AppointmentsPrismaRepository integration tests', () => {
     expect(result?.clientId).toBe(entity.clientId);
     expect(result?.serviceId).toBe(entity.serviceId);
     expect(result?.barberShopId).toBe(entity.barberShopId);
+  });
+
+  it('should reject overlapping scheduled intervals for the same barber at database level', async () => {
+    const { barberShopId, ownerId, serviceId } =
+      await createBarberShopWithService();
+    const firstClient = await createClient();
+    const secondClient = await createClient();
+    const date = new Date('2026-08-03T13:00:00.000Z');
+    const first = new AppointmentEntity(
+      AppointmentDataBuilder({
+        barberShopId,
+        barberId: ownerId,
+        serviceId,
+        clientId: firstClient.id,
+        date,
+      }),
+    );
+    const second = new AppointmentEntity(
+      AppointmentDataBuilder({
+        barberShopId,
+        barberId: ownerId,
+        serviceId,
+        clientId: secondClient.id,
+        date: new Date('2026-08-03T13:15:00.000Z'),
+      }),
+    );
+
+    await sut.insert(first);
+
+    await expect(sut.insert(second)).rejects.toThrow(
+      new ConflictError('Appointment not available'),
+    );
   });
 
   it('should return all appointments', async () => {
@@ -292,21 +325,21 @@ describe('AppointmentsPrismaRepository integration tests', () => {
           barberId: ownerId,
           serviceId,
           clientId: clients[0].id,
-          date: new Date(baseDate.getTime() + 1),
+          date: new Date(baseDate.getTime() + 31 * 60 * 1000),
         }),
         AppointmentDataBuilder({
           barberShopId,
           barberId: ownerId,
           serviceId,
           clientId: clients[1].id,
-          date: new Date(baseDate.getTime() + 2),
+          date: new Date(baseDate.getTime() + 62 * 60 * 1000),
         }),
         AppointmentDataBuilder({
           barberShopId,
           barberId: ownerId,
           serviceId,
           clientId: clients[2].id,
-          date: new Date(baseDate.getTime() + 3),
+          date: new Date(baseDate.getTime() + 93 * 60 * 1000),
         }),
       ];
 

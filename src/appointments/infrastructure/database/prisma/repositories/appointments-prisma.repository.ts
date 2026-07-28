@@ -4,6 +4,7 @@ import { AppointmentsRepository } from '@/appointments/domain/repositories/appoi
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { AppointmentModelMapper } from './models/appointment-model.mapper';
 import { Prisma } from '@prisma/client';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
 
 export class AppointmentsPrismaRepository
   implements AppointmentsRepository.Repository
@@ -111,9 +112,16 @@ export class AppointmentsPrismaRepository
     });
   }
   async insert(entity: AppointmentEntity): Promise<void> {
-    await this.prismaService.appointment.create({
-      data: entity.toJSON(),
-    });
+    try {
+      await this.prismaService.appointment.create({
+        data: entity.toJSON(),
+      });
+    } catch (error) {
+      if (this.isAvailabilityConflict(error)) {
+        throw new ConflictError('Appointment not available');
+      }
+      throw error;
+    }
   }
   findById(id: string): Promise<AppointmentEntity | null> {
     return this._get(id);
@@ -123,10 +131,17 @@ export class AppointmentsPrismaRepository
     return models.map((model) => AppointmentModelMapper.toEntity(model));
   }
   async update(entity: AppointmentEntity): Promise<void> {
-    await this.prismaService.appointment.update({
-      data: entity.toJSON(),
-      where: { id: entity.id },
-    });
+    try {
+      await this.prismaService.appointment.update({
+        data: entity.toJSON(),
+        where: { id: entity.id },
+      });
+    } catch (error) {
+      if (this.isAvailabilityConflict(error)) {
+        throw new ConflictError('Appointment not available');
+      }
+      throw error;
+    }
   }
   async delete(id: string): Promise<void> {
     await this.prismaService.appointment.delete({
@@ -139,5 +154,13 @@ export class AppointmentsPrismaRepository
       where: { id },
     });
     return appointment ? AppointmentModelMapper.toEntity(appointment) : null;
+  }
+
+  private isAvailabilityConflict(error: unknown): boolean {
+    return (
+      (error instanceof Prisma.PrismaClientKnownRequestError ||
+        error instanceof Prisma.PrismaClientUnknownRequestError) &&
+      error.message.includes('Appointment_no_overlapping_scheduled')
+    );
   }
 }

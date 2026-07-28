@@ -8,7 +8,7 @@ Base URL local: `http://localhost:3001`. Não há prefixo como `/api` ou version
 
 - **Auth**: `🔒` exige `Authorization: Bearer <accessToken>`; `🌐` é pública.
 - **Sucesso**: em geral, `{ "data": <recurso> }`; coleções paginadas retornam `data` e `meta`. Login retorna somente `accessToken`.
-- **Datas**: envie datas em ISO 8601, por exemplo `"2026-07-15T14:00:00.000Z"`.
+- **Datas**: envie instantes em ISO 8601 com `Z` ou offset explícito, por exemplo `"2026-07-15T14:00:00.000Z"` ou `"2026-07-15T11:00:00-03:00"`. A API persiste e apresenta esses instantes em UTC.
 - **Paginação**: `page`, `perPage`, `sort` e `sortDir` (`asc` ou `desc`) são aceitos nas rotas de busca. Quando omitidos, a página é `1` e `perPage` é `15`.
 - **Erros**: payload inválido retorna `422`; ausência/invalidade de token retorna `401`; recursos não encontrados podem retornar `404`. Alguns erros de regra ainda não estão normalizados e são tema do backlog.
 
@@ -141,6 +141,10 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 | `GET` | `/appointments/:id` | Busca um agendamento próprio do cliente. |
 | `PATCH` | `/appointments/:id` | Cancela ou conclui um agendamento sem excluí-lo. |
 | `PUT` | `/appointments/:id` | 🔒 `owner` ou `barber` — Altera data e/ou serviço de um agendamento em aberto. |
+| `GET` | `/appointments/availability/me` | 🔒 `owner` ou `barber` — Consulta o próprio expediente, folgas e fuso. |
+| `PUT` | `/appointments/availability/me/schedule` | 🔒 `owner` ou `barber` — Substitui o próprio expediente semanal. |
+| `POST` | `/appointments/availability/me/time-offs` | 🔒 `owner` ou `barber` — Cadastra uma folga. |
+| `DELETE` | `/appointments/availability/me/time-offs/:id` | 🔒 `owner` ou `barber` — Remove uma folga própria. |
 
 ### Criar — `POST /appointments`
 
@@ -189,6 +193,68 @@ do agendamento.
 ```
 
 O agendamento só é criado ou remarcado se o intervalo completo couber no expediente do barbeiro, não atingir uma folga e não sobrepor outro agendamento `scheduled` do mesmo barbeiro. Agendamentos cancelados não bloqueiam horários. O expediente recorrente é armazenado por barbeiro em minutos do dia (`BarberSchedule`) e folgas como intervalos UTC (`BarberTimeOff`). A barbearia define o fuso IANA usado para interpretar o expediente; os instantes persistidos e apresentados pela API permanecem em UTC.
+
+### Configurar disponibilidade própria
+
+Antes de receber agendamentos, o proprietário ou barbeiro precisa configurar o
+próprio expediente. `PUT /appointments/availability/me/schedule` substitui
+todas as janelas existentes; uma lista vazia fecha a agenda. `dayOfWeek` usa
+`0` para domingo até `6` para sábado. Os minutos são contados desde `00:00` no
+fuso da barbearia, e `endMinute` é exclusivo. Janelas do mesmo dia não podem se
+sobrepor.
+
+```json
+{
+  "schedules": [
+    { "dayOfWeek": 1, "startMinute": 540, "endMinute": 720 },
+    { "dayOfWeek": 1, "startMinute": 780, "endMinute": 1080 }
+  ]
+}
+```
+
+Folgas são intervalos pontuais e exigem offset explícito:
+
+```json
+{
+  "startsAt": "2026-08-01T12:00:00.000Z",
+  "endsAt": "2026-08-01T15:00:00.000Z",
+  "reason": "Folga"
+}
+```
+
+`GET /appointments/availability/me` devolve o fuso necessário para o cliente
+apresentar a agenda em horário local:
+
+```json
+{
+  "data": {
+    "barberId": "UUID_DO_PROFISSIONAL",
+    "timezone": "America/Sao_Paulo",
+    "schedules": [
+      {
+        "id": "UUID_DA_JANELA",
+        "dayOfWeek": 1,
+        "startMinute": 540,
+        "endMinute": 720
+      }
+    ],
+    "timeOffs": [
+      {
+        "id": "UUID_DA_FOLGA",
+        "startsAt": "2026-08-01T12:00:00.000Z",
+        "endsAt": "2026-08-01T15:00:00.000Z",
+        "reason": "Folga"
+      }
+    ]
+  }
+}
+```
+
+No banco, agendamentos e folgas usam `timestamptz`. Nas respostas, `date`,
+`endDate`, `startsAt` e `endsAt` são serializados em UTC; o front pode
+convertê-los usando o `timezone` acima. Uma restrição no PostgreSQL também
+impede duas requisições concorrentes de reservarem intervalos sobrepostos para
+o mesmo barbeiro.
 
 ## Exemplo de resposta paginada
 

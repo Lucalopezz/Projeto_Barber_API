@@ -11,6 +11,11 @@ O domínio atual possui quatro recursos principais:
 - **serviços**: corte, barba e outros serviços pertencentes a uma barbearia;
 - **agendamentos**: ligam cliente, barbeiro, barbearia e serviço em uma data e possuem status.
 
+Cada profissional configura janelas semanais de expediente e folgas pontuais.
+Um agendamento ocupa o intervalo entre `date` e `endDate`, calculado pela
+duração do serviço, e só pode ser criado dentro do expediente e sem sobrepor
+folgas ou outro agendamento em aberto do mesmo barbeiro.
+
 ## Papéis e fluxo esperado
 
 | Papel | Necessidade de produto | Estado atual da API |
@@ -55,6 +60,7 @@ O contrato de serviço expõe `barberShopId`, que é o ID da barbearia do servi�
 - Rotas protegidas exigem `Authorization: Bearer <accessToken>`.
 - `POST /users/login` retorna `{ "accessToken": "..." }`, sem o envelope `data`.
 - As demais respostas de sucesso são envelopadas como `{ "data": ... }`. Listas paginadas retornam `{ "data": [...], "meta": { "currentPage", "perPage", "lastPage", "total" } }`.
+- Instantes de agendamentos e folgas são recebidos com offset explícito, persistidos como `timestamptz` e apresentados em UTC. Janelas semanais usam minutos do dia no fuso IANA da barbearia.
 - O CORS está aberto para qualquer origem no estado atual. Isso é conveniente em desenvolvimento, mas precisa ser restringido antes de produção.
 - A validação remove campos não previstos e responde com `422` para payload inválido. Há filtros explícitos para erros `404`, `409` e alguns erros de credenciais; a padronização completa dos erros fica pendente.
 

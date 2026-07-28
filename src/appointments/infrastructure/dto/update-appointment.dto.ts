@@ -1,13 +1,13 @@
 import { UpdateAppointmentUseCase } from '@/appointments/application/usecases/update-appointment.usecase';
-import { Type } from 'class-transformer';
 import { IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ToUtcDate } from './utc-date.transform';
 
 export class UpdateAppointmentDto
   implements Omit<UpdateAppointmentUseCase.Input, 'id' | 'userId'>
 {
   @IsOptional()
   @IsDate()
-  @Type(() => Date)
+  @ToUtcDate()
   date: Date;
 
   @IsString()

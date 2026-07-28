@@ -78,6 +78,7 @@ export class BarberShopPrismaRepository
       name: entity.name,
       address: entity.address.toString(),
       ownerId: entity.ownerId,
+      timezone: entity.timezone,
     };
 
     await this.prismaService.barberShop.create({ data });
@@ -93,6 +94,7 @@ export class BarberShopPrismaRepository
     const data = {
       name: entity.name,
       address: entity.address.toString(),
+      timezone: entity.timezone,
     };
     await this.prismaService.barberShop.update({
       data: data,

@@ -1,7 +1,6 @@
 import { CreateAppointmentsUseCase } from '@/appointments/application/usecases/create-appointment.usecase';
-import { Type } from 'class-transformer';
-
 import { IsDate, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import { ToUtcDate } from './utc-date.transform';
 export class CreateAppointmentDto
   implements Omit<CreateAppointmentsUseCase.Input, 'clientId'>
 {
@@ -12,6 +11,6 @@ export class CreateAppointmentDto
 
   @IsNotEmpty()
   @IsDate()
-  @Type(() => Date)
+  @ToUtcDate()
   date: Date;
 }

@@ -19,8 +19,8 @@ export namespace UpdateAppointmentUseCase {
   export type Input = {
     id: string;
     userId: string;
-    date: Date;
-    serviceId: string;
+    date?: Date;
+    serviceId?: string;
   };
 
   export type Output = AppointmentOutput;
@@ -48,7 +48,13 @@ export namespace UpdateAppointmentUseCase {
         throw new NotFoundError('User not found');
       }
 
-      const service = await this.serviceRepository.findById(serviceId);
+      if (date === undefined && serviceId === undefined) {
+        throw new BadRequestError('Date or serviceId must be provided');
+      }
+
+      const targetDate = date ?? appointment.date;
+      const targetServiceId = serviceId ?? appointment.serviceId;
+      const service = await this.serviceRepository.findById(targetServiceId);
       if (!service) {
         throw new NotFoundError('Service not found');
       }
@@ -81,16 +87,18 @@ export namespace UpdateAppointmentUseCase {
         throw new ConflictError('Only scheduled appointments can be updated');
       }
 
-      const endDate = new Date(date.getTime() + service.duration * 60 * 1000);
+      const endDate = new Date(
+        targetDate.getTime() + service.duration * 60 * 1000,
+      );
       await this.availabilityService.ensureAvailable({
         barberId: appointment.barberId,
-        startsAt: date,
+        startsAt: targetDate,
         endsAt: endDate,
         timezone: barberShop.timezone,
         excludeAppointmentId: appointment.id,
       });
 
-      appointment.update(date, serviceId, endDate);
+      appointment.update(targetDate, targetServiceId, endDate);
 
       await this.appointmentRepository.update(appointment);
       return AppointmentOutputMapper.toOutput(appointment);

@@ -9,6 +9,7 @@ import {
   UseGuards,
   Put,
   Query,
+  Delete,
 } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
@@ -29,6 +30,17 @@ import { ListAppointmentsDto } from './dto/list-appointments.dto';
 import { RoleGuard } from '@/auth/guard/role.guard';
 import { Roles } from '@/auth/decorators/roles.decorator';
 import { Role } from '@/users/domain/entities/role.enum';
+import { GetBarberAvailabilityUseCase } from '../application/usecases/get-barber-availability.usecase';
+import { UpdateBarberScheduleUseCase } from '../application/usecases/update-barber-schedule.usecase';
+import { CreateBarberTimeOffUseCase } from '../application/usecases/create-barber-time-off.usecase';
+import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barber-time-off.usecase';
+import { UpdateBarberScheduleDto } from './dto/update-barber-schedule.dto';
+import { CreateBarberTimeOffDto } from './dto/create-barber-time-off.dto';
+import {
+  BarberAvailabilityPresenter,
+  BarberSchedulePresenter,
+  BarberTimeOffPresenter,
+} from './presenters/barber-availability.presenter';
 
 @Controller('appointments')
 @UseGuards(AuthGuard)
@@ -43,6 +55,14 @@ export class AppointmentsController {
   private getAppointmentUseCase: GetAppointmentUseCase.UseCase;
   @Inject(ListAppointmentsUseCase.UseCase)
   private listAppointmentsUseCase: ListAppointmentsUseCase.UseCase;
+  @Inject(GetBarberAvailabilityUseCase.UseCase)
+  private getBarberAvailabilityUseCase: GetBarberAvailabilityUseCase.UseCase;
+  @Inject(UpdateBarberScheduleUseCase.UseCase)
+  private updateBarberScheduleUseCase: UpdateBarberScheduleUseCase.UseCase;
+  @Inject(CreateBarberTimeOffUseCase.UseCase)
+  private createBarberTimeOffUseCase: CreateBarberTimeOffUseCase.UseCase;
+  @Inject(DeleteBarberTimeOffUseCase.UseCase)
+  private deleteBarberTimeOffUseCase: DeleteBarberTimeOffUseCase.UseCase;
 
   static appointmentToResponse(output: AppointmentOutput) {
     return new AppointmentPresenter(output);
@@ -73,6 +93,52 @@ export class AppointmentsController {
       userId,
     });
     return AppointmentsController.listAppointmentsToResponse(output);
+  }
+
+  @Get('availability/me')
+  @UseGuards(RoleGuard)
+  @Roles([Role.owner, Role.barber])
+  async getAvailability(@CurrentUserId() userId: string) {
+    const output = await this.getBarberAvailabilityUseCase.execute({ userId });
+    return new BarberAvailabilityPresenter(output);
+  }
+
+  @Put('availability/me/schedule')
+  @UseGuards(RoleGuard)
+  @Roles([Role.owner, Role.barber])
+  async updateSchedule(
+    @Body() dto: UpdateBarberScheduleDto,
+    @CurrentUserId() userId: string,
+  ) {
+    const output = await this.updateBarberScheduleUseCase.execute({
+      userId,
+      schedules: dto.schedules,
+    });
+    return output.map((schedule) => new BarberSchedulePresenter(schedule));
+  }
+
+  @Post('availability/me/time-offs')
+  @UseGuards(RoleGuard)
+  @Roles([Role.owner, Role.barber])
+  async createTimeOff(
+    @Body() dto: CreateBarberTimeOffDto,
+    @CurrentUserId() userId: string,
+  ) {
+    const output = await this.createBarberTimeOffUseCase.execute({
+      userId,
+      ...dto,
+    });
+    return new BarberTimeOffPresenter(output);
+  }
+
+  @Delete('availability/me/time-offs/:id')
+  @UseGuards(RoleGuard)
+  @Roles([Role.owner, Role.barber])
+  async deleteTimeOff(
+    @Param('id') id: string,
+    @CurrentUserId() userId: string,
+  ) {
+    await this.deleteBarberTimeOffUseCase.execute({ id, userId });
   }
 
   @Get(':id')

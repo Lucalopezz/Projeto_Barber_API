@@ -227,7 +227,6 @@ describe('UpdateAppointmentUseCase integration tests', () => {
       id: appointment._id,
       userId: barber.id,
       date: newDate,
-      serviceId: service._id,
     };
 
     // Act
@@ -255,7 +254,6 @@ describe('UpdateAppointmentUseCase integration tests', () => {
     const input: UpdateAppointmentUseCase.Input = {
       id: appointment._id,
       userId: barber.id,
-      date: new Date('2025-12-20T14:00:00Z'),
       serviceId: service2._id,
     };
 

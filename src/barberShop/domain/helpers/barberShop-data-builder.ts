@@ -17,6 +17,7 @@ export function BarberShopDataBuilder(props: Props): BarberShopProps {
     name: props.name ?? faker.company.name(),
     address: props.address ?? new Address(generateValidAddress()),
     ownerId: props.ownerId ?? faker.string.uuid(),
+    timezone: props.timezone ?? 'America/Sao_Paulo',
     createdAt: props.createdAt ?? new Date(),
   };
 }

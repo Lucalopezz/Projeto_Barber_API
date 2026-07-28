@@ -8,6 +8,7 @@ type ZonedDateParts = {
   day: number;
   hour: number;
   minute: number;
+  second: number;
   dayOfWeek: number;
 };
 
@@ -47,12 +48,24 @@ export class AppointmentAvailabilityService {
     const start = this.getZonedParts(startsAt, timezone);
     const end = this.getZonedParts(endsAt, timezone);
 
-    // A recurring window does not silently spill into another local day.
-    if (
-      start.year !== end.year ||
-      start.month !== end.month ||
-      start.day !== end.day
-    ) {
+    const sameLocalDay =
+      start.year === end.year &&
+      start.month === end.month &&
+      start.day === end.day;
+    // Check if the appointment ends exactly at the next midnight
+    const endsExactlyAtNextMidnight =
+      !sameLocalDay &&
+      end.hour === 0 &&
+      end.minute === 0 &&
+      end.second === 0 &&
+      endsAt.getMilliseconds() === 0 &&
+      Date.UTC(end.year, end.month - 1, end.day) -
+        Date.UTC(start.year, start.month - 1, start.day) ===
+        24 * 60 * 60 * 1000;
+
+    // Midnight is the exclusive 1440 boundary of the starting day. Any
+    // duration beyond it would spill into a different recurring window.
+    if (!sameLocalDay && !endsExactlyAtNextMidnight) {
       throw new BadRequestError('Appointment not available');
     }
 
@@ -60,8 +73,18 @@ export class AppointmentAvailabilityService {
       barberId,
       start.dayOfWeek,
     );
-    const startMinute = start.hour * 60 + start.minute;
-    const endMinute = end.hour * 60 + end.minute;
+    // Check if the appointment is within any of the schedules
+    const startMinute =
+      start.hour * 60 +
+      start.minute +
+      start.second / 60 +
+      startsAt.getMilliseconds() / 60000;
+    const endMinute = endsExactlyAtNextMidnight
+      ? 1440
+      : end.hour * 60 +
+        end.minute +
+        end.second / 60 +
+        endsAt.getMilliseconds() / 60000;
     const insideSchedule = schedules.some(
       (schedule) =>
         startMinute >= schedule.startMinute && endMinute <= schedule.endMinute,
@@ -81,6 +104,7 @@ export class AppointmentAvailabilityService {
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
+      second: '2-digit',
       hourCycle: 'h23',
     });
     const parts = Object.fromEntries(
@@ -96,6 +120,7 @@ export class AppointmentAvailabilityService {
       day: Number(parts.day),
       hour: Number(parts.hour),
       minute: Number(parts.minute),
+      second: Number(parts.second),
       dayOfWeek,
     };
   }

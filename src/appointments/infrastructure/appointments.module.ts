@@ -18,6 +18,10 @@ import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/rep
 import { AppointmentAvailabilityService } from '../application/services/appointment-availability.service';
 import { BarberAvailabilityPrismaRepository } from './database/prisma/repositories/barber-availability-prisma.repository';
 import { BarberAvailabilityRepository } from '../domain/repositories/barber-availability.repository';
+import { GetBarberAvailabilityUseCase } from '../application/usecases/get-barber-availability.usecase';
+import { UpdateBarberScheduleUseCase } from '../application/usecases/update-barber-schedule.usecase';
+import { CreateBarberTimeOffUseCase } from '../application/usecases/create-barber-time-off.usecase';
+import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barber-time-off.usecase';
 
 @Module({
   controllers: [AppointmentsController],
@@ -94,6 +98,60 @@ import { BarberAvailabilityRepository } from '../domain/repositories/barber-avai
         'BarberShopRepository',
         AppointmentAvailabilityService,
       ],
+    },
+    {
+      provide: GetBarberAvailabilityUseCase.UseCase,
+      useFactory: (
+        userRepository: UserRepository.Repository,
+        barberShopRepository: BarberShopRepository.Repository,
+        availabilityRepository: BarberAvailabilityRepository.Repository,
+      ) =>
+        new GetBarberAvailabilityUseCase.UseCase(
+          userRepository,
+          barberShopRepository,
+          availabilityRepository,
+        ),
+      inject: [
+        'UserRepository',
+        'BarberShopRepository',
+        'BarberAvailabilityRepository',
+      ],
+    },
+    {
+      provide: UpdateBarberScheduleUseCase.UseCase,
+      useFactory: (
+        userRepository: UserRepository.Repository,
+        availabilityRepository: BarberAvailabilityRepository.Repository,
+      ) =>
+        new UpdateBarberScheduleUseCase.UseCase(
+          userRepository,
+          availabilityRepository,
+        ),
+      inject: ['UserRepository', 'BarberAvailabilityRepository'],
+    },
+    {
+      provide: CreateBarberTimeOffUseCase.UseCase,
+      useFactory: (
+        userRepository: UserRepository.Repository,
+        availabilityRepository: BarberAvailabilityRepository.Repository,
+      ) =>
+        new CreateBarberTimeOffUseCase.UseCase(
+          userRepository,
+          availabilityRepository,
+        ),
+      inject: ['UserRepository', 'BarberAvailabilityRepository'],
+    },
+    {
+      provide: DeleteBarberTimeOffUseCase.UseCase,
+      useFactory: (
+        userRepository: UserRepository.Repository,
+        availabilityRepository: BarberAvailabilityRepository.Repository,
+      ) =>
+        new DeleteBarberTimeOffUseCase.UseCase(
+          userRepository,
+          availabilityRepository,
+        ),
+      inject: ['UserRepository', 'BarberAvailabilityRepository'],
     },
     {
       provide: GetAppointmentUseCase.UseCase,
