@@ -21,6 +21,10 @@ import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { AppointmentEntity } from '@/appointments/domain/entities/appointment.entity';
 import { Role } from '@/users/domain/entities/role.enum';
 import { ConflictError } from '@/shared/domain/errors/conflict-error';
+import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
+import { BarberAvailabilityPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/barber-availability-prisma.repository';
+import { AppointmentAvailabilityService } from '@/appointments/application/services/appointment-availability.service';
+import { randomUUID } from 'node:crypto';
 
 describe('UpdateAppointmentUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -28,6 +32,8 @@ describe('UpdateAppointmentUseCase integration tests', () => {
   let appointmentRepository: AppointmentsPrismaRepository;
   let serviceRepository: ServicesPrismaRepository;
   let userRepository: UserPrismaRepository;
+  let barberShopRepository: BarberShopPrismaRepository;
+  let availabilityRepository: BarberAvailabilityPrismaRepository;
   let module: TestingModule;
 
   beforeAll(async () => {
@@ -40,6 +46,10 @@ describe('UpdateAppointmentUseCase integration tests', () => {
     );
     serviceRepository = new ServicesPrismaRepository(prismaService as any);
     userRepository = new UserPrismaRepository(prismaService as any);
+    barberShopRepository = new BarberShopPrismaRepository(prismaService as any);
+    availabilityRepository = new BarberAvailabilityPrismaRepository(
+      prismaService as any,
+    );
   });
 
   beforeEach(async () => {
@@ -47,6 +57,11 @@ describe('UpdateAppointmentUseCase integration tests', () => {
       appointmentRepository,
       serviceRepository,
       userRepository,
+      barberShopRepository,
+      new AppointmentAvailabilityService(
+        appointmentRepository,
+        availabilityRepository,
+      ),
     );
     await prismaService.appointment.deleteMany();
     await prismaService.service.deleteMany();
@@ -82,6 +97,15 @@ describe('UpdateAppointmentUseCase integration tests', () => {
         address: barberShop.address.toString(),
         ownerId: barber.id,
       },
+    });
+    await prismaService.barberSchedule.createMany({
+      data: Array.from({ length: 7 }, (_, dayOfWeek) => ({
+        id: randomUUID(),
+        barberId: barber.id,
+        dayOfWeek,
+        startMinute: 0,
+        endMinute: 1440,
+      })),
     });
     await prismaService.user.update({
       where: { id: barber.id },
@@ -141,6 +165,15 @@ describe('UpdateAppointmentUseCase integration tests', () => {
       }),
     );
     await userRepository.insert(barber);
+    await prismaService.barberSchedule.createMany({
+      data: Array.from({ length: 7 }, (_, dayOfWeek) => ({
+        id: randomUUID(),
+        barberId: barber.id,
+        dayOfWeek,
+        startMinute: 0,
+        endMinute: 1440,
+      })),
+    });
     return barber;
   };
 
@@ -235,8 +268,9 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
   it('should reject a service from another barber shop', async () => {
     const { barber, barberShop } = await createBarberShopWithOwner();
-    const { barberShop: otherBarberShop } =
-      await createBarberShopWithOwner('other-owner@test.com');
+    const { barberShop: otherBarberShop } = await createBarberShopWithOwner(
+      'other-owner@test.com',
+    );
     const currentService = await createService(barberShop.id, 'Corte');
     const otherService = await createService(otherBarberShop.id, 'Barba');
     const client = await createClient();
@@ -273,7 +307,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     // Act & Assert
     await expect(sut.execute(input)).rejects.toThrow(
-      new NotFoundError('AppointmentModel not found using id non-existent-id'),
+      new NotFoundError('Appointment not found'),
     );
   });
 

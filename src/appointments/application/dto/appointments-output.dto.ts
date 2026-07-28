@@ -4,6 +4,7 @@ import { AppointmentStatus } from '@/appointments/domain/entities/appointmentSta
 export type AppointmentOutput = {
   id: string;
   date: Date;
+  endDate: Date;
   status: AppointmentStatus;
   clientId: string;
   barberId: string;

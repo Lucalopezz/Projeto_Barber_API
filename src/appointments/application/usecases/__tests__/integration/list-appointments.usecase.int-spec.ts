@@ -281,7 +281,7 @@ describe('ListAppointmentsUseCase integration tests', () => {
     expect(output.total).toBe(1);
   });
 
-  it('should filter appointments by date', async () => {
+  it('should filter appointments by date interval', async () => {
     // Arrange
     const { barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
@@ -303,7 +303,8 @@ describe('ListAppointmentsUseCase integration tests', () => {
 
     const input: ListAppointmentsUseCase.Input = {
       userId: client.id,
-      date: filterDate,
+      dateFrom: filterDate,
+      dateTo: new Date('2025-12-15T23:59:59.999Z'),
     };
 
     // Act

@@ -9,6 +9,7 @@ import { BarberShopRepository } from '@/barberShop/domain/repositories/barbersho
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { AppointmentEntity } from '@/appointments/domain/entities/appointment.entity';
 import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
+import { AppointmentAvailabilityService } from '../services/appointment-availability.service';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace CreateAppointmentsUseCase {
@@ -25,6 +26,7 @@ export namespace CreateAppointmentsUseCase {
       private appointmentRepository: AppointmentsRepository.Repository,
       private serviceRepository: ServicesRepository.Repository,
       private barberShopRepository: BarberShopRepository.Repository,
+      private availabilityService: AppointmentAvailabilityService,
     ) {}
 
     async execute(input: Input): Promise<AppointmentOutput> {
@@ -40,20 +42,20 @@ export namespace CreateAppointmentsUseCase {
       if (!barberShop) {
         throw new BadRequestError('BarberShop not found');
       }
-      const appointmentExists =
-        await this.appointmentRepository.existsByDateAndBarberId(
-          date,
-          barberShop.ownerId,
-        );
-      if (appointmentExists) {
-        throw new BadRequestError('Appointment not available');
-      }
+      const endDate = new Date(date.getTime() + service.duration * 60 * 1000);
+      await this.availabilityService.ensureAvailable({
+        barberId: barberShop.ownerId,
+        startsAt: date,
+        endsAt: endDate,
+        timezone: barberShop.timezone,
+      });
       const entity = new AppointmentEntity({
         clientId,
         serviceId,
         barberId: barberShop.ownerId,
         barberShopId: barberShop.id,
         date,
+        endDate,
         status: AppointmentStatus.scheduled,
       });
 

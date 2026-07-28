@@ -19,7 +19,9 @@ export namespace ListAppointmentsUseCase {
     sortDir?: 'asc' | 'desc';
     //Separed filter in 2 camps for a batter search
     serviceId?: string;
-    date?: Date;
+    barberShopId?: string;
+    dateFrom?: Date;
+    dateTo?: Date;
     userId: string;
   };
 
@@ -44,8 +46,14 @@ export namespace ListAppointmentsUseCase {
       if (input.serviceId) {
         filter.serviceId = input.serviceId;
       }
-      if (input.date) {
-        filter.date = input.date;
+      if (input.barberShopId) {
+        filter.barberShopId = input.barberShopId;
+      }
+      if (input.dateFrom) {
+        filter.dateFrom = input.dateFrom;
+      }
+      if (input.dateTo) {
+        filter.dateTo = input.dateTo;
       }
 
       const params = new AppointmentsRepository.AppointmentsSearchParams({

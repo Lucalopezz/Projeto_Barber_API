@@ -16,6 +16,9 @@ import { UserEntity } from '@/users/domain/entities/user.entity';
 import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entity';
 import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { Role } from '@/users/domain/entities/role.enum';
+import { BarberAvailabilityPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/barber-availability-prisma.repository';
+import { AppointmentAvailabilityService } from '@/appointments/application/services/appointment-availability.service';
+import { randomUUID } from 'node:crypto';
 
 describe('CreateAppointmentsUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -25,6 +28,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let barberShopRepository: BarberShopPrismaRepository;
   let userRepository: UserPrismaRepository;
+  let availabilityRepository: BarberAvailabilityPrismaRepository;
   let module: TestingModule;
 
   beforeAll(async () => {
@@ -38,6 +42,9 @@ describe('CreateAppointmentsUseCase integration tests', () => {
     serviceRepository = new ServicesPrismaRepository(prismaService as any);
     barberShopRepository = new BarberShopPrismaRepository(prismaService as any);
     userRepository = new UserPrismaRepository(prismaService as any);
+    availabilityRepository = new BarberAvailabilityPrismaRepository(
+      prismaService as any,
+    );
   });
 
   beforeEach(async () => {
@@ -45,6 +52,10 @@ describe('CreateAppointmentsUseCase integration tests', () => {
       appointmentRepository,
       serviceRepository,
       barberShopRepository,
+      new AppointmentAvailabilityService(
+        appointmentRepository,
+        availabilityRepository,
+      ),
     );
     await prismaService.appointment.deleteMany();
     await prismaService.service.deleteMany();
@@ -81,18 +92,27 @@ describe('CreateAppointmentsUseCase integration tests', () => {
         ownerId: barber.id,
       },
     });
+    await prismaService.barberSchedule.createMany({
+      data: Array.from({ length: 7 }, (_, dayOfWeek) => ({
+        id: randomUUID(),
+        barberId: barber.id,
+        dayOfWeek,
+        startMinute: 0,
+        endMinute: 1440,
+      })),
+    });
 
     return { barber, barberShop };
   };
 
   // Helper to create service
-  const createService = async (barberShopId: string) => {
+  const createService = async (barberShopId: string, duration = 30) => {
     const service = new ServiceEntity(
       ServiceDataBuilder({
         barberShopId,
         name: 'Corte de Cabelo',
         price: 50,
-        duration: 30,
+        duration,
       }),
     );
 
@@ -162,9 +182,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
 
     // Act & Assert
     await expect(sut.execute(input)).rejects.toThrow(
-      new BadRequestError(
-        'ServiceModel not found using ID non-existent-service-id',
-      ),
+      new BadRequestError('Service not found'),
     );
   });
 
@@ -196,6 +214,102 @@ describe('CreateAppointmentsUseCase integration tests', () => {
     await expect(sut.execute(secondInput)).rejects.toThrow(
       new BadRequestError('Appointment not available'),
     );
+  });
+
+  it('should reject overlapping appointments from different services', async () => {
+    const { barberShop } = await createBarberShopWithOwner();
+    const longService = await createService(barberShop._id, 60);
+    const otherService = await createService(barberShop._id, 30);
+    const client1 = await createClient();
+    const client2 = await createClient();
+    const start = new Date('2025-12-15T10:00:00Z');
+
+    await sut.execute({
+      clientId: client1.id,
+      serviceId: longService.id,
+      date: start,
+    });
+
+    await expect(
+      sut.execute({
+        clientId: client2.id,
+        serviceId: otherService.id,
+        date: new Date('2025-12-15T10:30:00Z'),
+      }),
+    ).rejects.toThrow(new BadRequestError('Appointment not available'));
+  });
+
+  it('should not block a slot after an appointment is cancelled', async () => {
+    const { barberShop } = await createBarberShopWithOwner();
+    const service = await createService(barberShop._id);
+    const client1 = await createClient();
+    const client2 = await createClient();
+    const date = new Date('2025-12-15T10:00:00Z');
+
+    const first = await sut.execute({
+      clientId: client1.id,
+      serviceId: service.id,
+      date,
+    });
+    await prismaService.appointment.update({
+      where: { id: first.id },
+      data: { status: AppointmentStatus.cancelled },
+    });
+
+    await expect(
+      sut.execute({ clientId: client2.id, serviceId: service.id, date }),
+    ).resolves.toEqual(
+      expect.objectContaining({ status: AppointmentStatus.scheduled }),
+    );
+  });
+
+  it('should reject appointments outside the barber schedule', async () => {
+    const { barber, barberShop } = await createBarberShopWithOwner();
+    const service = await createService(barberShop.id);
+    const client = await createClient();
+    await prismaService.barberSchedule.deleteMany({
+      where: { barberId: barber.id },
+    });
+    await prismaService.barberSchedule.create({
+      data: {
+        id: randomUUID(),
+        barberId: barber.id,
+        dayOfWeek: 1,
+        startMinute: 600,
+        endMinute: 660,
+      },
+    });
+
+    await expect(
+      sut.execute({
+        clientId: client.id,
+        serviceId: service.id,
+        date: new Date('2025-12-15T14:00:00Z'),
+      }),
+    ).rejects.toThrow(new BadRequestError('Appointment not available'));
+  });
+
+  it('should reject appointments during a barber time off', async () => {
+    const { barber, barberShop } = await createBarberShopWithOwner();
+    const service = await createService(barberShop.id);
+    const client = await createClient();
+    await prismaService.barberTimeOff.create({
+      data: {
+        id: randomUUID(),
+        barberId: barber.id,
+        startsAt: new Date('2025-12-15T12:30:00Z'),
+        endsAt: new Date('2025-12-15T13:30:00Z'),
+        reason: 'Férias',
+      },
+    });
+
+    await expect(
+      sut.execute({
+        clientId: client.id,
+        serviceId: service.id,
+        date: new Date('2025-12-15T13:00:00Z'),
+      }),
+    ).rejects.toThrow(new BadRequestError('Appointment not available'));
   });
 
   it('should create appointment and verify it is persisted in database', async () => {

@@ -11,6 +11,8 @@ import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
 import { ConflictError } from '@/shared/domain/errors/conflict-error';
 import { ServicesRepository } from '@/services/domain/repositories/services.repository';
+import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
+import { AppointmentAvailabilityService } from '../services/appointment-availability.service';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace UpdateAppointmentUseCase {
@@ -28,6 +30,8 @@ export namespace UpdateAppointmentUseCase {
       private appointmentRepository: AppointmentsRepository.Repository,
       private serviceRepository: ServicesRepository.Repository,
       private userRepository: UserRepository.Repository,
+      private barberShopRepository: BarberShopRepository.Repository,
+      private availabilityService: AppointmentAvailabilityService,
     ) {}
     async execute(input: Input): Promise<AppointmentOutput> {
       const { id, userId, date, serviceId } = input;
@@ -54,6 +58,13 @@ export namespace UpdateAppointmentUseCase {
         );
       }
 
+      const barberShop = await this.barberShopRepository.findById(
+        appointment.barberShopId,
+      );
+      if (!barberShop) {
+        throw new NotFoundError('BarberShop not found');
+      }
+
       const professionalBarberShopId = user.barberShopId ?? null;
 
       // if the barber is not the barber assigned to the appointment or the appointment is not in his barber shop
@@ -70,16 +81,16 @@ export namespace UpdateAppointmentUseCase {
         throw new ConflictError('Only scheduled appointments can be updated');
       }
 
-      const appointmentExists =
-        await this.appointmentRepository.existsByDateAndBarberId(
-          date,
-          appointment.barberId,
-        );
-      if (appointmentExists && appointment.date.getTime() !== date.getTime()) {
-        throw new BadRequestError('Appointment not available');
-      }
+      const endDate = new Date(date.getTime() + service.duration * 60 * 1000);
+      await this.availabilityService.ensureAvailable({
+        barberId: appointment.barberId,
+        startsAt: date,
+        endsAt: endDate,
+        timezone: barberShop.timezone,
+        excludeAppointmentId: appointment.id,
+      });
 
-      appointment.update(date, serviceId);
+      appointment.update(date, serviceId, endDate);
 
       await this.appointmentRepository.update(appointment);
       return AppointmentOutputMapper.toOutput(appointment);
