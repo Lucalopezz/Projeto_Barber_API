@@ -11,6 +11,10 @@ export class UpdateBarberShopDto
   @IsNotEmpty()
   address?: Address;
 
+  @IsOptional()
+  @IsString()
+  timezone?: string;
+
   @IsString()
   @IsNotEmpty()
   @IsOptional()

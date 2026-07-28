@@ -13,6 +13,7 @@ export namespace UpdateBarberShopUseCase {
     id: string;
     name?: string;
     address?: Address;
+    timezone?: string;
     ownerId: string;
   };
 
@@ -24,7 +25,7 @@ export namespace UpdateBarberShopUseCase {
     ) {}
 
     async execute(input: Input): Promise<Output> {
-      if (!input.name && !input.address) {
+      if (!input.name && !input.address && !input.timezone) {
         throw new BadRequestError('Name and Address not provided');
       }
       const barberShop = await this.barberShopRepository.findByOwnerId(
@@ -34,7 +35,7 @@ export namespace UpdateBarberShopUseCase {
         throw new BadRequestError('Barber shop not found for the given owner');
       }
 
-      barberShop.update(input.name, input.address);
+      barberShop.update(input.name, input.address, input.timezone);
       await this.barberShopRepository.update(barberShop);
 
       return BarberShopOutputMapper.toOutput(barberShop);

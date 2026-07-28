@@ -97,11 +97,12 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 ```json
 {
   "name": "Navalha Fina",
-  "address": "Rua das Flores, 123, Sao Paulo - SP"
+  "address": "Rua das Flores, 123, Sao Paulo - SP",
+  "timezone": "America/Sao_Paulo"
 }
 ```
 
-`address` é uma string no formato `logradouro, número, cidade - UF`; a UF deve ter duas letras. Para listagem, use `page`, `perPage`, `sort`, `sortDir` e `filter` (busca por nome). A resposta contém `id`, `name`, `address`, `ownerId` e `createdAt`.
+`address` é uma string no formato `logradouro, número, cidade - UF`; a UF deve ter duas letras. `timezone` é opcional, usa `America/Sao_Paulo` por padrão e deve ser um identificador IANA. Para listagem, use `page`, `perPage`, `sort`, `sortDir` e `filter` (busca por nome). A resposta contém `id`, `name`, `address`, `ownerId` e `createdAt`.
 
 ## Serviços
 
@@ -131,7 +132,7 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 
 ## Agendamentos
 
-Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vira o cliente e a API atribui o proprietário da barbearia do serviço como profissional responsável. Status válidos: `scheduled`, `completed` e `cancelled`.
+Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vira o cliente e a API atribui o proprietário da barbearia do serviço como profissional responsável. Status válidos: `scheduled`, `completed` e `cancelled`. `date` e `endDate` são instantes em UTC no formato ISO 8601; a duração é calculada pela API a partir do serviço.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
@@ -150,11 +151,11 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 }
 ```
 
-A resposta contém `id`, `date`, `status`, `clientId`, `barberId`, `barberShopId`, `serviceId` e `createdAt`. Use `serviceId` para referenciar o serviço escolhido, `barberId` para identificar o profissional responsável, `barberShopId` para identificar a barbearia e `id` nas ações posteriores.
+A resposta contém `id`, `date`, `endDate`, `status`, `clientId`, `barberId`, `barberShopId`, `serviceId` e `createdAt`. Use `serviceId` para referenciar o serviço escolhido, `barberId` para identificar o profissional responsável, `barberShopId` para identificar a barbearia e `id` nas ações posteriores.
 
 ### Filtrar lista — `GET /appointments`
 
-Query opcional: `page`, `perPage`, `sort`, `sortDir`, `serviceId` e `date`. O filtro depende do contexto da conta: proprietário vê sua agenda; quem não possui barbearia vê agendamentos em que é cliente.
+Query opcional: `page`, `perPage`, `sort`, `sortDir`, `serviceId`, `barberShopId`, `dateFrom` e `dateTo`. Os limites de data são inclusivos para o início do agendamento. O filtro depende do contexto da conta: proprietário vê sua agenda; quem não possui barbearia vê agendamentos em que é cliente.
 
 ### Alterar status — `PATCH /appointments/:id`
 
@@ -187,7 +188,7 @@ do agendamento.
 }
 ```
 
-Embora os campos sejam opcionais no DTO HTTP, a regra de negócio atual verifica disponibilidade usando ambos. O ideal é enviar os dois até essa inconsistência ser corrigida.
+O agendamento só é criado ou remarcado se o intervalo completo couber no expediente do barbeiro, não atingir uma folga e não sobrepor outro agendamento `scheduled` do mesmo barbeiro. Agendamentos cancelados não bloqueiam horários. O expediente recorrente é armazenado por barbeiro em minutos do dia (`BarberSchedule`) e folgas como intervalos UTC (`BarberTimeOff`). A barbearia define o fuso IANA usado para interpretar o expediente; os instantes persistidos e apresentados pela API permanecem em UTC.
 
 ## Exemplo de resposta paginada
 

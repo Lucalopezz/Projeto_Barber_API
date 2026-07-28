@@ -18,6 +18,7 @@ export namespace CreateBarberShopUseCase {
     name: string;
     address: Address;
     ownerId: string;
+    timezone?: string;
   };
   export type Output = BarberShopOutput;
 
@@ -29,7 +30,7 @@ export namespace CreateBarberShopUseCase {
     ) {}
 
     async execute(input: Input): Promise<BarberShopOutput> {
-      const { address, name, ownerId } = input;
+      const { address, name, ownerId, timezone } = input;
 
       const [owner, alreadyHasBarberShop] = await Promise.all([
         this.userRepo.findById(ownerId),
@@ -50,6 +51,7 @@ export namespace CreateBarberShopUseCase {
         name,
         address,
         ownerId,
+        timezone,
       });
 
       await this.transaction.execute(

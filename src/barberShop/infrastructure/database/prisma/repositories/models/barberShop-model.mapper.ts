@@ -9,6 +9,7 @@ export class BarberShopModelMapper {
       name: model.name,
       address: new Address(model.address),
       ownerId: model.ownerId,
+      timezone: model.timezone,
       createdAt: model.createdAt,
     };
     try {
