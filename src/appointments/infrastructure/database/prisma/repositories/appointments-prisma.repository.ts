@@ -12,49 +12,82 @@ export class AppointmentsPrismaRepository
     private prismaService: PrismaService | Prisma.TransactionClient,
   ) {}
   sortableFields: string[] = ['date', 'createdAt', 'serviceId'];
-  async existsByDateAndBarberId(
-    date: Date,
+
+  /**
+   * Finds an overlapping scheduled appointment for a given barber within a specified time range.
+   */
+  async findOverlappingScheduled(
+    startsAt: Date,
+    endsAt: Date,
     barberId: string,
-  ): Promise<boolean> {
+    excludeAppointmentId?: string,
+  ): Promise<AppointmentEntity | null> {
     const appointment = await this.prismaService.appointment.findFirst({
       where: {
-        date,
+        status: 'scheduled',
         barberId,
+        date: { lt: endsAt },
+        endDate: { gt: startsAt },
+        ...(excludeAppointmentId && { id: { not: excludeAppointmentId } }),
       },
     });
-    return !!appointment;
+    return appointment ? AppointmentModelMapper.toEntity(appointment) : null;
   }
+
   async search(
     props: AppointmentsRepository.AppointmentsSearchParams,
   ): Promise<AppointmentsRepository.AppointmentsSearchResult> {
-    const sortable = this.sortableFields?.includes(props.sort) || false;
+    const sortable = this.sortableFields?.includes(props.sort) ?? false;
+
     const orderByField = sortable ? props.sort : 'createdAt';
-    const orderByDir = sortable ? props.sortDir : 'desc';
+    const orderByDir = sortable && props.sortDir ? props.sortDir : 'desc';
 
-    const f = props.filter as AppointmentsRepository.Filter;
-    const where: any = {};
+    const filter = props.filter as AppointmentsRepository.Filter | undefined;
 
-    if (f) {
-      const clauses = [];
-      if (f.serviceId) {
-        clauses.push({ serviceId: { equals: f.serviceId } });
-      }
-      if (f.date) {
-        clauses.push({ date: { equals: f.date } });
-      }
-      if (f.barberShopOwnerId) {
-        clauses.push({
-          service: { barberShop: { ownerId: { equals: f.barberShopOwnerId } } },
-        });
-      } else if (f.barberId) {
-        clauses.push({ barberId: { equals: f.barberId } });
-      } else {
-        clauses.push({ clientId: { equals: f.customerId } });
-      }
-      if (clauses.length > 0) {
-        where.AND = clauses;
-      }
+    const clauses: Prisma.AppointmentWhereInput[] = [];
+
+    if (filter?.serviceId) {
+      clauses.push({
+        serviceId: filter.serviceId,
+      });
     }
+
+    if (filter?.dateFrom || filter?.dateTo) {
+      // gte = greater than or equal, lte = less than or equal
+      clauses.push({
+        date: {
+          ...(filter.dateFrom && { gte: filter.dateFrom }),
+          ...(filter.dateTo && { lte: filter.dateTo }),
+        },
+      });
+    }
+
+    if (filter?.barberShopId) {
+      clauses.push({
+        barberShopId: filter.barberShopId,
+      });
+    }
+
+    if (filter?.barberShopOwnerId) {
+      clauses.push({
+        service: {
+          barberShop: {
+            ownerId: filter.barberShopOwnerId,
+          },
+        },
+      });
+    } else if (filter?.barberId) {
+      clauses.push({
+        barberId: filter.barberId,
+      });
+    } else if (filter?.customerId) {
+      clauses.push({
+        clientId: filter.customerId,
+      });
+    }
+
+    const where: Prisma.AppointmentWhereInput =
+      clauses.length > 0 ? { AND: clauses } : {};
 
     const count = await this.prismaService.appointment.count({ where });
 

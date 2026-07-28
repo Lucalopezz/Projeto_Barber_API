@@ -196,7 +196,11 @@ describe('AppointmentsPrismaRepository integration tests', () => {
     await prismaService.appointment.create({ data: entity.toJSON() });
 
     const newDate = new Date('2025-11-02T11:00:00Z');
-    entity.update(newDate, entity.serviceId);
+    entity.update(
+      newDate,
+      entity.serviceId,
+      new Date(newDate.getTime() + 30 * 60 * 1000),
+    );
     await sut.update(entity);
 
     const updated = await prismaService.appointment.findUnique({

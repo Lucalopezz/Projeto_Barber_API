@@ -7,6 +7,7 @@ export class AppointmentModelMapper {
   static toEntity(model: Appointment) {
     const data = {
       date: model.date,
+      endDate: model.endDate,
       serviceId: model.serviceId,
       clientId: model.clientId,
       barberId: model.barberId,

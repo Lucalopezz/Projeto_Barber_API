@@ -6,6 +6,7 @@ import { Transform } from 'class-transformer';
 
 export class AppointmentPresenter {
   id: string;
+  @Transform(({ value }: { value: Date }) => value.toISOString())
   date: Date;
   clientId: string;
   barberId: string;
@@ -18,11 +19,15 @@ export class AppointmentPresenter {
   status: AppointmentStatus;
 
   @Transform(({ value }: { value: Date }) => value.toISOString())
+  endDate: Date;
+
+  @Transform(({ value }: { value: Date }) => value.toISOString())
   createdAt: Date;
 
   constructor(output: AppointmentOutput) {
     this.id = output.id;
     this.date = output.date;
+    this.endDate = output.endDate;
     this.clientId = output.clientId;
     this.barberId = output.barberId;
     this.barberShopId = output.barberShopId;

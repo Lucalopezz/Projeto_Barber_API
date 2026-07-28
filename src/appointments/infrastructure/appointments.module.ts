@@ -15,6 +15,9 @@ import { GetAppointmentUseCase } from '../application/usecases/get-appointment.u
 import { ListAppointmentsUseCase } from '../application/usecases/list-appointments.usecase';
 import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
+import { AppointmentAvailabilityService } from '../application/services/appointment-availability.service';
+import { BarberAvailabilityPrismaRepository } from './database/prisma/repositories/barber-availability-prisma.repository';
+import { BarberAvailabilityRepository } from '../domain/repositories/barber-availability.repository';
 
 @Module({
   controllers: [AppointmentsController],
@@ -53,22 +56,43 @@ import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/rep
       inject: ['PrismaService'],
     },
     {
+      provide: 'BarberAvailabilityRepository',
+      useFactory: (prismaService: PrismaService) =>
+        new BarberAvailabilityPrismaRepository(prismaService),
+      inject: ['PrismaService'],
+    },
+    {
+      provide: AppointmentAvailabilityService,
+      useFactory: (
+        appointmentRepository: AppointmentsRepository.Repository,
+        availabilityRepository: BarberAvailabilityRepository.Repository,
+      ) =>
+        new AppointmentAvailabilityService(
+          appointmentRepository,
+          availabilityRepository,
+        ),
+      inject: ['AppointmentRepository', 'BarberAvailabilityRepository'],
+    },
+    {
       provide: CreateAppointmentsUseCase.UseCase,
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
         servicesRepository: ServicesRepository.Repository,
         barberShopRepository: BarberShopRepository.Repository,
+        availabilityService: AppointmentAvailabilityService,
       ) => {
         return new CreateAppointmentsUseCase.UseCase(
           appointmentRepository,
           servicesRepository,
           barberShopRepository,
+          availabilityService,
         );
       },
       inject: [
         'AppointmentRepository',
         'ServicesRepository',
         'BarberShopRepository',
+        AppointmentAvailabilityService,
       ],
     },
     {
@@ -118,14 +142,24 @@ import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/rep
         appointmentRepository: AppointmentsRepository.Repository,
         serviceRepository: ServicesRepository.Repository,
         userRepository: UserRepository.Repository,
+        barberShopRepository: BarberShopRepository.Repository,
+        availabilityService: AppointmentAvailabilityService,
       ) => {
         return new UpdateAppointmentUseCase.UseCase(
           appointmentRepository,
           serviceRepository,
           userRepository,
+          barberShopRepository,
+          availabilityService,
         );
       },
-      inject: ['AppointmentRepository', 'ServicesRepository', 'UserRepository'],
+      inject: [
+        'AppointmentRepository',
+        'ServicesRepository',
+        'UserRepository',
+        'BarberShopRepository',
+        AppointmentAvailabilityService,
+      ],
     },
   ],
 })
