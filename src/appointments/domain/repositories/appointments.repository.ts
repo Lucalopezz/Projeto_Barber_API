@@ -9,7 +9,9 @@ import { AppointmentEntity } from '../entities/appointment.entity';
 
 export namespace AppointmentsRepository {
   export type Filter = {
-    date?: Date;
+    dateTo?: Date;
+    dateFrom?: Date;
+    barberShopId?: string;
     serviceId?: string;
     barberShopOwnerId?: string;
     barberId?: string;
@@ -30,6 +32,11 @@ export namespace AppointmentsRepository {
       AppointmentsSearchParams,
       AppointmentsSearchResult
     > {
-    existsByDateAndBarberId(date: Date, barberId: string): Promise<boolean>;
+    findOverlappingScheduled(
+      startsAt: Date,
+      endsAt: Date,
+      barberId: string,
+      excludeAppointmentId?: string,
+    ): Promise<AppointmentEntity | null>;
   }
 }

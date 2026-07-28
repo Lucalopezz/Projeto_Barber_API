@@ -20,6 +20,8 @@ model User {
   barberShop           BarberShop?   @relation("Barbers", fields: [barberShopId], references: [id], onDelete: SetNull)
   appointmentsAsClient Appointment[] @relation("ClientAppointments")
   appointmentsAsBarber Appointment[] @relation("BarberAppointments")
+  schedules            BarberSchedule[]
+  timeOffs             BarberTimeOff[]
 }
 
 model BarberShop {
@@ -29,6 +31,7 @@ model BarberShop {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   ownerId      String
+  timezone     String        @default("America/Sao_Paulo")
   owner        User          @relation("Owner", fields: [ownerId], references: [id], onDelete: Restrict)
   services     Service[]
   barbers      User[]        @relation("Barbers")
@@ -50,7 +53,8 @@ model Service {
 
 model Appointment {
   id           String            @id @default(uuid())
-  date         DateTime
+  date         DateTime          @db.Timestamptz(3)
+  endDate      DateTime          @db.Timestamptz(3)
   status       AppointmentStatus @default(scheduled)
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
@@ -67,7 +71,30 @@ model Appointment {
   @@index([barberId])
   @@index([barberShopId])
   @@index([serviceId])
-  @@index([barberId, date])
+  @@index([barberId, date, endDate])
+}
+
+model BarberSchedule {
+  id         String @id @default(uuid())
+  barberId   String
+  dayOfWeek  Int
+  startMinute Int
+  endMinute  Int
+  barber     User   @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberId, dayOfWeek, startMinute, endMinute])
+  @@index([barberId, dayOfWeek])
+}
+
+model BarberTimeOff {
+  id        String   @id @default(uuid())
+  barberId  String
+  startsAt  DateTime @db.Timestamptz(3)
+  endsAt    DateTime @db.Timestamptz(3)
+  reason    String?
+  barber    User     @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@index([barberId, startsAt, endsAt])
 }
 
 enum Role {

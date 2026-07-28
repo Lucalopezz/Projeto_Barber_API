@@ -5,6 +5,7 @@ import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
 export type AppointmentProps = {
   date: Date;
+  endDate: Date;
   status: AppointmentStatus;
   clientId: string;
   barberId: string;
@@ -26,21 +27,26 @@ export class AppointmentEntity extends Entity<AppointmentProps> {
     AppointmentEntity.validate({ ...this.props, status });
     this.props.status = status;
   }
-  update(date?: Date, serviceId?: string): void {
+  update(date?: Date, serviceId?: string, endDate?: Date): void {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const updatedProps = {
       ...this.props,
       ...(date !== undefined && { date }),
       ...(serviceId !== undefined && { serviceId }),
+      ...(endDate !== undefined && { endDate }),
     };
 
     AppointmentEntity.validate(updatedProps);
 
     if (date !== undefined) this.props.date = date;
     if (serviceId !== undefined) this.props.serviceId = serviceId;
+    if (endDate !== undefined) this.props.endDate = endDate;
   }
   get date(): Date {
     return this.props.date;
+  }
+  get endDate(): Date {
+    return this.props.endDate;
   }
   private set date(value: Date) {
     this.props.date = value;
