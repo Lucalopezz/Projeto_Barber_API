@@ -1,10 +1,13 @@
-import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barbershop-prisma.repository';
+import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { CreateServicesUseCase } from '../../create-services.usecase';
-import { CreateBarberShopUseCase } from '@/barberShop/application/usecases/create-barbershop.usecase';
+import { CreateBarberShopUseCase } from '@/barberShop/application/usecases/create-barberShop.usecase';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
 import { Role } from '@/users/domain/entities/role.enum';
 import { UserEntity } from '@/users/domain/entities/user.entity';
@@ -13,6 +16,7 @@ import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
 import { BarberShopDataBuilder } from '@/barberShop/domain/helpers/barberShop-data-builder';
 import { ServiceDataBuilder } from '@/services/domain/helpers/service-data-builder';
 import { ServicesPrismaRepository } from '@/services/infrastructure/database/prisma/services-prisma.repository';
+import { CreateBarberShopPrismaTransaction } from '@/barberShop/infrastructure/database/prisma/create-barber-shop-prisma.transaction';
 
 describe('CreateServicesUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -41,10 +45,9 @@ describe('CreateServicesUseCase integration tests', () => {
     createBarberShopSut = new CreateBarberShopUseCase.UseCase(
       barberShopRepository,
       userRepository,
+      new CreateBarberShopPrismaTransaction(prismaService as any),
     );
-    await prismaService.service.deleteMany();
-    await prismaService.barberShop.deleteMany();
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {
@@ -263,7 +266,7 @@ describe('CreateServicesUseCase integration tests', () => {
 
     expect(serviceInDb).toBeDefined();
     expect(serviceInDb.name).toBe('Corte de Cabelo');
-    expect(serviceInDb.price).toBe(50);
+    expect(serviceInDb.price.toNumber()).toBe(50);
     expect(serviceInDb.description).toBe('Corte tradicional');
     expect(serviceInDb.duration).toBe(30);
   });

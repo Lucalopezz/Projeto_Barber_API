@@ -1,16 +1,20 @@
-import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barbershop-prisma.repository';
+import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
-import { GetBarberShopUseCase } from '../../get-barbershop.usecase';
-import { CreateBarberShopUseCase } from '../../create-barbershop.usecase';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import { GetBarberShopUseCase } from '../../get-barberShop.usecase';
+import { CreateBarberShopUseCase } from '../../create-barberShop.usecase';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
 import { Role } from '@/users/domain/entities/role.enum';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
 import { BarberShopDataBuilder } from '@/barberShop/domain/helpers/barberShop-data-builder';
+import { CreateBarberShopPrismaTransaction } from '@/barberShop/infrastructure/database/prisma/create-barber-shop-prisma.transaction';
 
 describe('GetBarberShopUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -34,9 +38,9 @@ describe('GetBarberShopUseCase integration tests', () => {
     createSut = new CreateBarberShopUseCase.UseCase(
       barberShopRepository,
       userRepository,
+      new CreateBarberShopPrismaTransaction(prismaService as any),
     );
-    await prismaService.barberShop.deleteMany();
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {
@@ -86,7 +90,7 @@ describe('GetBarberShopUseCase integration tests', () => {
     };
 
     await expect(sut.execute(input)).rejects.toThrow(
-      new NotFoundError('BarberShop not found using ID non-existent-id'),
+      new NotFoundError('BarberShop not found'),
     );
   });
 });

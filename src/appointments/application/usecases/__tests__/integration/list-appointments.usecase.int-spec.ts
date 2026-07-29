@@ -133,9 +133,14 @@ describe('ListAppointmentsUseCase integration tests', () => {
     barberShopId: string,
     date = new Date('2025-12-15T10:00:00Z'),
   ) => {
+    const barberShop = await prismaService.barberShop.findUniqueOrThrow({
+      where: { id: barberShopId },
+      select: { ownerId: true },
+    });
     const appointment = new AppointmentEntity(
       AppointmentDataBuilder({
         clientId,
+        barberId: barberShop.ownerId,
         serviceId,
         barberShopId,
         date,

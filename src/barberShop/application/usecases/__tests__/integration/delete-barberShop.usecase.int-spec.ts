@@ -1,17 +1,21 @@
 // delete-barbershop.usecase.integration.spec.ts
-import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barbershop-prisma.repository';
+import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
-import { DeleteBarberShopUseCase } from '../../delete-barbershop.usecase';
-import { CreateBarberShopUseCase } from '../../create-barbershop.usecase';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import { DeleteBarberShopUseCase } from '../../delete-barberShop.usecase';
+import { CreateBarberShopUseCase } from '../../create-barberShop.usecase';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
 import { Role } from '@/users/domain/entities/role.enum';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
 import { BarberShopDataBuilder } from '@/barberShop/domain/helpers/barberShop-data-builder';
+import { CreateBarberShopPrismaTransaction } from '@/barberShop/infrastructure/database/prisma/create-barber-shop-prisma.transaction';
 
 describe('DeleteBarberShopUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -35,9 +39,9 @@ describe('DeleteBarberShopUseCase integration tests', () => {
     createSut = new CreateBarberShopUseCase.UseCase(
       barberShopRepository,
       userRepository,
+      new CreateBarberShopPrismaTransaction(prismaService as any),
     );
-    await prismaService.barberShop.deleteMany();
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {

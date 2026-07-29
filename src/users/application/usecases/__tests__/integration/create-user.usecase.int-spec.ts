@@ -2,7 +2,10 @@ import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/rep
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { HashProvider } from '@/shared/application/providers/hash-provider';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { BcryptjsHashProvider } from '@/shared/application/providers/bcryptjs-hash.provider';
 import { CreateUserUseCase } from '../../create-user.usecase';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
@@ -27,10 +30,7 @@ describe('SignupUseCase integration tests', () => {
 
   beforeEach(async () => {
     sut = new CreateUserUseCase.UseCase(repository, hashProvider);
-    await prismaService.appointment.deleteMany();
-    await prismaService.service.deleteMany();
-    await prismaService.barberShop.deleteMany();
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {

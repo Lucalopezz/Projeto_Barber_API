@@ -6,9 +6,13 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 import { ListUsersUseCase } from '../../list-users.usecase';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
 import { Role } from '@/users/domain/entities/role.enum';
+import { UserOutputMapper } from '@/users/application/dtos/user-output.dto';
 
 describe('ListUsersUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -26,7 +30,7 @@ describe('ListUsersUseCase integration tests', () => {
 
   beforeEach(async () => {
     sut = new ListUsersUseCase.UseCase(repository);
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {
@@ -53,7 +57,7 @@ describe('ListUsersUseCase integration tests', () => {
     const output = await sut.execute({});
 
     expect(output).toStrictEqual({
-      items: entities.reverse().map((item) => item.toJSON()),
+      items: entities.reverse().map(UserOutputMapper.toOutput),
       total: 3,
       currentPage: 1,
       perPage: 15,
@@ -87,7 +91,10 @@ describe('ListUsersUseCase integration tests', () => {
       role: Role.client,
     });
 
-    const expectedPage1 = [entities[0].toJSON(), entities[4].toJSON()];
+    const expectedPage1 = [
+      UserOutputMapper.toOutput(entities[0]),
+      UserOutputMapper.toOutput(entities[4]),
+    ];
     expect(output).toMatchObject({
       items: expectedPage1,
       total: 3,
@@ -105,7 +112,7 @@ describe('ListUsersUseCase integration tests', () => {
       name: 'TEST',
       role: Role.client,
     });
-    const expectedPage2 = [entities[2].toJSON()];
+    const expectedPage2 = [UserOutputMapper.toOutput(entities[2])];
     expect(output).toMatchObject({
       items: expectedPage2,
       total: 3,
@@ -149,7 +156,7 @@ describe('ListUsersUseCase integration tests', () => {
 
     const expectedBarbers = entities
       .filter((e) => e.role === Role.barber)
-      .map((item) => item.toJSON());
+      .map(UserOutputMapper.toOutput);
 
     expect(output).toMatchObject({
       items: expectedBarbers,

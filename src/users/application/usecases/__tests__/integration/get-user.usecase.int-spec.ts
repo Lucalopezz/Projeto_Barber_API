@@ -6,7 +6,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { UserEntity } from '@/users/domain/entities/user.entity';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { GetUserUseCase } from '../../get-user.usecase';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
 import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
@@ -32,10 +35,7 @@ describe('GetUserUseCase integration tests', () => {
 
   beforeEach(async () => {
     sut = new GetUserUseCase.UseCase(userRepository, barberShopRepository);
-    await prismaService.appointment.deleteMany();
-    await prismaService.service.deleteMany();
-    await prismaService.barberShop.deleteMany();
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {
@@ -44,7 +44,7 @@ describe('GetUserUseCase integration tests', () => {
 
   it('should throws error when entity not found', async () => {
     await expect(() => sut.execute({ id: 'fakeId' })).rejects.toThrow(
-      new NotFoundError('UserModel not found using ID fakeId'),
+      new NotFoundError('User not found'),
     );
   });
 

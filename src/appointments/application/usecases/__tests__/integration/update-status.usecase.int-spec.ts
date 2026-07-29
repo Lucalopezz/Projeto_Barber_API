@@ -381,8 +381,6 @@ describe('UpdateStatusUseCase integration tests', () => {
         newStatus: AppointmentStatus.completed,
         userId: owner.id,
       }),
-    ).rejects.toThrow(
-      new NotFoundError('AppointmentModel not found using id non-existent-id'),
-    );
+    ).rejects.toThrow(new NotFoundError('Appointment not found'));
   });
 });

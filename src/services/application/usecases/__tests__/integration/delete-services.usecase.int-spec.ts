@@ -1,11 +1,15 @@
-import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barbershop-prisma.repository';
+import { BarberShopPrismaRepository } from '@/barberShop/infrastructure/database/prisma/repositories/barberShop-prisma.repository';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { DeleteServicesUseCase } from '../../delete-services.usecase';
 import { CreateServicesUseCase } from '../../create-services.usecase';
-import { CreateBarberShopUseCase } from '@/barberShop/application/usecases/create-barbershop.usecase';
+import { CreateBarberShopUseCase } from '@/barberShop/application/usecases/create-barberShop.usecase';
+import { CreateBarberShopPrismaTransaction } from '@/barberShop/infrastructure/database/prisma/create-barber-shop-prisma.transaction';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
 import { Role } from '@/users/domain/entities/role.enum';
 import { UserEntity } from '@/users/domain/entities/user.entity';
@@ -47,10 +51,9 @@ describe('DeleteServicesUseCase integration tests', () => {
     createBarberShopSut = new CreateBarberShopUseCase.UseCase(
       barberShopRepository,
       userRepository,
+      new CreateBarberShopPrismaTransaction(prismaService as any),
     );
-    await prismaService.service.deleteMany();
-    await prismaService.barberShop.deleteMany();
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {
@@ -171,9 +174,7 @@ describe('DeleteServicesUseCase integration tests', () => {
 
     // Act & Assert
     await expect(sut.execute(deleteInput)).rejects.toThrow(
-      new BadRequestError(
-        'ServiceModel not found using ID non-existent-service-id',
-      ),
+      new BadRequestError('Service not found for the given barber shop'),
     );
   });
 

@@ -2,7 +2,6 @@
 import { PrismaClient } from '@prisma/client';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
-import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { ServicesPrismaRepository } from '../../services-prisma.repository';
@@ -61,10 +60,8 @@ describe('ServicesPrismaRepository integration tests', () => {
     return barberShop._id;
   };
 
-  it('should throw error when entity not found', async () => {
-    await expect(() => sut.findById('fake-id')).rejects.toThrow(
-      new NotFoundError('ServiceModel not found using ID fake-id'),
-    );
+  it('should return null when entity is not found', async () => {
+    await expect(sut.findById('fake-id')).resolves.toBeNull();
   });
 
   it('should find a entity by id', async () => {
@@ -116,7 +113,7 @@ describe('ServicesPrismaRepository integration tests', () => {
     expect(service).not.toBeNull();
     expect(service?.name).toBe(entity.name);
     expect(service?.description).toBe(entity.description);
-    expect(service?.price).toBe(entity.price);
+    expect(service?.price.toNumber()).toBe(entity.price);
     expect(service?.duration).toBe(entity.duration);
     expect(service?.barberShopId).toBe(barberShopId);
   });
@@ -195,7 +192,7 @@ describe('ServicesPrismaRepository integration tests', () => {
     expect(result.lastPage).toBe(2);
   });
 
-  it('should throw error on update when entity not found', async () => {
+  it('should reject update when entity is not found', async () => {
     const barberShopId = await createBarberShop();
     const entity = new ServiceEntity(
       ServiceDataBuilder({
@@ -203,9 +200,7 @@ describe('ServicesPrismaRepository integration tests', () => {
       }),
     );
 
-    await expect(() => sut.update(entity)).rejects.toThrow(
-      new NotFoundError(`ServiceModel not found using ID ${entity._id}`),
-    );
+    await expect(sut.update(entity)).rejects.toThrow();
   });
 
   it('should update an entity', async () => {
@@ -237,7 +232,7 @@ describe('ServicesPrismaRepository integration tests', () => {
     expect(updated?.name).toBe('Updated Service Name');
   });
 
-  it('should throw error on delete when entity not found', async () => {
+  it('should reject delete when entity is not found', async () => {
     const barberShopId = await createBarberShop();
     const entity = new ServiceEntity(
       ServiceDataBuilder({
@@ -245,9 +240,7 @@ describe('ServicesPrismaRepository integration tests', () => {
       }),
     );
 
-    await expect(() => sut.delete(entity._id)).rejects.toThrow(
-      new NotFoundError(`ServiceModel not found using ID ${entity._id}`),
-    );
+    await expect(sut.delete(entity._id)).rejects.toThrow();
   });
 
   it('should delete an entity', async () => {

@@ -7,7 +7,10 @@ import { HashProvider } from '@/shared/application/providers/hash-provider';
 import { UserEntity } from '@/users/domain/entities/user.entity';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { InvalidPasswordError } from '@/shared/application/errors/invalid-password-error';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { BcryptjsHashProvider } from '@/shared/application/providers/bcryptjs-hash.provider';
 import { UpdatePasswordUseCase } from '../../update-password.usecase';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
@@ -30,7 +33,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
 
   beforeEach(async () => {
     sut = new UpdatePasswordUseCase.UseCase(repository, hashProvider);
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {
@@ -46,9 +49,7 @@ describe('UpdatePasswordUseCase integration tests', () => {
         oldPassword: 'OldPassword',
         password: 'NewPassword',
       }),
-    ).rejects.toThrow(
-      new NotFoundError(`UserModel not found using ID ${entity._id}`),
-    );
+    ).rejects.toThrow(new NotFoundError('User not found'));
   });
 
   it('should throws error when old password not provided', async () => {

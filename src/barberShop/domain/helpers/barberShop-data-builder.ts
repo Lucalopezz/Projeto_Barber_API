@@ -9,7 +9,8 @@ export function BarberShopDataBuilder(props: Props): BarberShopProps {
     const street = faker.location.street();
     const number = faker.number.int({ min: 1, max: 9999 }).toString();
     const city = faker.location.city();
-    const state = faker.location.state({ abbreviated: true });
+    const generatedState = faker.location.state({ abbreviated: true });
+    const state = /^[A-Za-z]{2}$/.test(generatedState) ? generatedState : 'SP';
     return `${street}, ${number}, ${city} – ${state}`;
   };
 

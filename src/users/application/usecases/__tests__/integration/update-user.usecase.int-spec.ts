@@ -5,7 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { UserEntity } from '@/users/domain/entities/user.entity';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { UpdateUserUseCase } from '../../update-user.usecase';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
 import { Role } from '@/users/domain/entities/role.enum';
@@ -26,10 +29,7 @@ describe('UpdateUserUseCase integration tests', () => {
 
   beforeEach(async () => {
     sut = new UpdateUserUseCase.UseCase(repository);
-    await prismaService.appointment.deleteMany();
-    await prismaService.service.deleteMany();
-    await prismaService.barberShop.deleteMany();
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {

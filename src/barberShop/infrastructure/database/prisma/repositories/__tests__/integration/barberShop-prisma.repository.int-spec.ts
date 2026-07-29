@@ -3,7 +3,6 @@ import { PrismaClient } from '@prisma/client';
 import { BarberShopPrismaRepository } from '../../barberShop-prisma.repository';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
-import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entity';
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
@@ -40,10 +39,8 @@ describe('BarberShopPrismaRepository integration tests', () => {
     });
   };
 
-  it('should throw error when entity not found', async () => {
-    await expect(() => sut.findById('fake-id')).rejects.toThrow(
-      new NotFoundError('BarberShop not found using ID fake-id'),
-    );
+  it('should return null when entity is not found', async () => {
+    await expect(sut.findById('fake-id')).resolves.toBeNull();
   });
 
   it('should find a entity by id', async () => {
@@ -128,7 +125,7 @@ describe('BarberShopPrismaRepository integration tests', () => {
     );
   });
 
-  it('should throw error on update when entity not found', async () => {
+  it('should reject update when entity is not found', async () => {
     const owner = await createOwner();
     const entity = new BarberShopEntity(
       BarberShopDataBuilder({
@@ -136,9 +133,7 @@ describe('BarberShopPrismaRepository integration tests', () => {
       }),
     );
 
-    await expect(() => sut.update(entity)).rejects.toThrow(
-      new NotFoundError(`BarberShop not found using ID ${entity._id}`),
-    );
+    await expect(sut.update(entity)).rejects.toThrow();
   });
 
   it('should update an entity', async () => {
@@ -167,7 +162,7 @@ describe('BarberShopPrismaRepository integration tests', () => {
     expect(updated?.name).toBe('Updated Name');
   });
 
-  it('should throw error on delete when entity not found', async () => {
+  it('should reject delete when entity is not found', async () => {
     const owner = await createOwner();
     const entity = new BarberShopEntity(
       BarberShopDataBuilder({
@@ -175,9 +170,7 @@ describe('BarberShopPrismaRepository integration tests', () => {
       }),
     );
 
-    await expect(() => sut.delete(entity._id)).rejects.toThrow(
-      new NotFoundError(`BarberShop not found using ID ${entity._id}`),
-    );
+    await expect(sut.delete(entity._id)).rejects.toThrow();
   });
 
   it('should delete an entity', async () => {

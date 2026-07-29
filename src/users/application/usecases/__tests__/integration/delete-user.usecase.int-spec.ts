@@ -5,7 +5,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { UserEntity } from '@/users/domain/entities/user.entity';
-import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
+import {
+  clearDatabase,
+  setupPrismaTests,
+} from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { DeleteUserUseCase } from '../../delete-user.usecase';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
 
@@ -25,7 +28,7 @@ describe('DeleteUseCase integration tests', () => {
 
   beforeEach(async () => {
     sut = new DeleteUserUseCase.UseCase(repository);
-    await prismaService.user.deleteMany();
+    await clearDatabase(prismaService);
   });
 
   afterAll(async () => {
@@ -35,7 +38,7 @@ describe('DeleteUseCase integration tests', () => {
   it('should throws error when entity not found', async () => {
     await expect(() =>
       sut.execute({ id: 'fakeId', userId: 'fakeId' }),
-    ).rejects.toThrow(new NotFoundError('UserModel not found using ID fakeId'));
+    ).rejects.toThrow(new NotFoundError('User not found'));
   });
 
   it('should delete a user', async () => {
