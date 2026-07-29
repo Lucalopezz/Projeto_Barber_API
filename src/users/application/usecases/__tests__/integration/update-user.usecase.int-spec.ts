@@ -8,6 +8,7 @@ import { UserEntity } from '@/users/domain/entities/user.entity';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { UpdateUserUseCase } from '../../update-user.usecase';
 import { UserDataBuilder } from '@/users/domain/helpers/user-data-builder';
+import { Role } from '@/users/domain/entities/role.enum';
 
 describe('UpdateUserUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -25,6 +26,9 @@ describe('UpdateUserUseCase integration tests', () => {
 
   beforeEach(async () => {
     sut = new UpdateUserUseCase.UseCase(repository);
+    await prismaService.appointment.deleteMany();
+    await prismaService.service.deleteMany();
+    await prismaService.barberShop.deleteMany();
     await prismaService.user.deleteMany();
   });
 
@@ -35,7 +39,7 @@ describe('UpdateUserUseCase integration tests', () => {
   it('should throws error when entity not found', async () => {
     await expect(() =>
       sut.execute({ id: 'fakeId', name: 'fake name', userId: 'fakeId' }),
-    ).rejects.toThrow(new NotFoundError('UserModel not found using ID fakeId'));
+    ).rejects.toThrow(new NotFoundError('User not found'));
   });
 
   it('should update a user', async () => {
@@ -51,5 +55,18 @@ describe('UpdateUserUseCase integration tests', () => {
     });
 
     expect(output.name).toBe('new name');
+  });
+
+  it('should not change the user role when updating the profile', async () => {
+    const entity = new UserEntity(UserDataBuilder({ role: Role.client }));
+    await prismaService.user.create({ data: entity.toJSON() });
+
+    const output = await sut.execute({
+      id: entity._id,
+      name: 'new name',
+      userId: entity._id,
+    });
+
+    expect(output.role).toBe(Role.client);
   });
 });

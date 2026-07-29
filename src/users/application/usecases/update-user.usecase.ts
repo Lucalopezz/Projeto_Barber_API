@@ -2,7 +2,6 @@ import { UserRepository } from '@/users/domain/repositories/user.repository';
 import { UserOutput, UserOutputMapper } from '../dtos/user-output.dto';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
-import { Role } from '@/users/domain/entities/role.enum';
 import { UnauthorizedError } from '@/shared/application/errors/unauthorized-error';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 
@@ -11,7 +10,6 @@ export namespace UpdateUserUseCase {
   export type Input = {
     id: string;
     userId: string;
-    role?: Role;
     name?: string;
   };
 
@@ -21,8 +19,8 @@ export namespace UpdateUserUseCase {
     constructor(private userRepository: UserRepository.Repository) {}
 
     async execute(input: Input): Promise<Output> {
-      if (!input.name && !input.role) {
-        throw new BadRequestError('Name and Role not provided');
+      if (!input.name) {
+        throw new BadRequestError('Name not provided');
       }
       const entity = await this.userRepository.findById(input.id);
       if (!entity) {

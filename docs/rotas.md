@@ -20,7 +20,7 @@ Base URL local: `http://localhost:3001`. Não há prefixo como `/api` ou version
 | `POST` | `/users/login` | 🌐 | Autentica e gera token JWT. |
 | `GET` | `/users` | 🔒 | Lista usuários com paginação. |
 | `GET` | `/users/me` | 🔒 | Retorna o usuário do token e seu contexto de barbearia, quando houver. |
-| `PUT` | `/users/:id` | 🔒 | Atualiza nome e/ou papel do próprio usuário. |
+| `PUT` | `/users/:id` | 🔒 | Atualiza o nome do próprio usuário. |
 | `PATCH` | `/users/:id` | 🔒 | Atualiza a senha do próprio usuário. |
 | `DELETE` | `/users/:id` | 🔒 | Exclui o próprio usuário. |
 
@@ -55,6 +55,16 @@ Resposta:
 ### Buscar usuários — `GET /users`
 
 Query opcional: `page`, `perPage`, `sort`, `sortDir`, `name`, `role`. Exemplo: `/users?role=barber&page=1&perPage=10`.
+
+### Atualizar perfil — `PUT /users/:id`
+
+```json
+{
+  "name": "Ana Souza"
+}
+```
+
+O usuário autenticado só pode atualizar o próprio nome. O papel da conta não é alterável por esta rota.
 
 ### Contexto do usuário — `GET /users/me`
 
