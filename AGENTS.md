@@ -4,8 +4,8 @@
 
 Esta é uma API REST de barbearias em NestJS, TypeScript, Prisma e PostgreSQL. A organização segue Clean Architecture/DDD: regras de negócio ficam isoladas de HTTP e do banco.
 
-- Antes de alterar comportamento HTTP, consulte `docs/rotas.md`.
-- Para regras de produto, relações e limitações conhecidas, consulte `docs/visao-geral.md` e `docs/todos.md`.
+- Antes de alterar comportamento HTTP, consulte `docs/api.md`, o Swagger e o contrato OpenAPI gerado.
+- Para regras de produto, relações e limitações conhecidas, consulte `docs/regras-de-negocio.md`, `docs/visao-geral.md` e `docs/backlog/todos.md`.
 - `prisma/schema.prisma` e as migrações em `prisma/migrations/` são a fonte de verdade do esquema persistido. Nunca altere uma migração já aplicada; crie uma nova quando o esquema mudar.
 
 ## Estrutura do projeto
@@ -34,7 +34,7 @@ Use o alias `@/` para imports a partir de `src` (por exemplo, `@/shared/domain/e
 3. Atualize a implementação Prisma e o mapper em `infrastructure/database/prisma` para cumprir o contrato de repositório. Não importe Prisma para `domain` ou `application`.
 4. Exponha a funcionalidade pelo controller com DTOs de entrada e presenters de saída.
 5. Registre cada dependência nova no módulo do recurso usando os providers/factories existentes. Repositórios usam tokens de string (por exemplo, `'UserRepository'`); casos de uso usam a própria classe `UseCase` como token.
-6. Acrescente ou ajuste testes no nível correspondente e atualize a documentação de rotas quando o contrato público mudar.
+6. Acrescente ou ajuste testes no nível correspondente, atualize os decorators OpenAPI e revise `docs/api.md` quando o contrato público mudar.
 
 ## Convenções de domínio e aplicação
 
@@ -80,9 +80,9 @@ Use o alias `@/` para imports a partir de `src` (por exemplo, `@/shared/domain/e
 
 ## Compatibilidade e cuidados
 
-- Não altere contratos públicos, nomes de rotas, métodos HTTP, envelopes, campos ou regras de autorização sem solicitação explícita e atualização de `docs/rotas.md`.
+- Não altere contratos públicos, nomes de rotas, métodos HTTP, envelopes, campos ou regras de autorização sem solicitação explícita, atualização do OpenAPI e revisão de `docs/api.md`.
 - Enquanto o front consumidor não estiver em produção, correções de contrato ainda podem ser aplicadas diretamente: exponha apenas o campo canônico, sem aliases legados ou marcações de depreciação. Atualize a documentação e os testes afetados. Após haver consumidores em produção ou integrações externas, defina uma estratégia explícita de compatibilidade antes de remover ou renomear campos.
-- Existe uma incompatibilidade conhecida que deve ser preservada até uma tarefa específica: o filtro de agendamentos usa `serviceId` no contrato HTTP. Consulte `docs/todos.md` antes de normalizá-la.
+- Existe uma incompatibilidade conhecida que deve ser preservada até uma tarefa específica: o filtro de agendamentos usa `serviceId` no contrato HTTP. Consulte `docs/backlog/todos.md` antes de normalizá-la.
 - Não exponha senha, hash ou modelos Prisma diretamente.
 - Não misture refatorações amplas com uma alteração de produto pontual. Mantenha o estilo do módulo vizinho, inclusive o padrão de namespaces e injeção de dependência.
 - Não altere a documetacão de to-dos a nao ser para marcar um como concluído. Ela é a fonte de verdade do backlog e das prioridades, e não deve ser usada para anotar decisões de implementação.

@@ -6,9 +6,14 @@ API REST para uma plataforma de barbearias, construída com NestJS, TypeScript, 
 
 - Swagger UI: `http://localhost:3001/docs`
 - Contrato OpenAPI JSON: `http://localhost:3001/docs/openapi.json`
-- [Visão geral e execução local](./docs/visao-geral.md)
-- [Rotas e contratos HTTP](./docs/rotas.md)
-- [Backlog técnico e de produto](./docs/todos.md)
+- [Índice completo da documentação](./docs/README.md)
+- [Visão geral](./docs/visao-geral.md)
+- [Arquitetura](./docs/arquitetura.md)
+- [Fluxos da aplicação](./docs/fluxos.md)
+- [Regras de negócio](./docs/regras-de-negocio.md)
+- [Guia da API](./docs/api.md)
+- [Desenvolvimento e execução local](./docs/desenvolvimento.md)
+- [Backlog técnico e de produto](./docs/backlog/todos.md)
 
 Na Swagger UI, use **Authorize** com o `accessToken` retornado por
 `POST /api/v1/users/login` para testar as rotas protegidas.
@@ -22,7 +27,9 @@ npx dotenv-cli -e .env.development -- npx prisma migrate deploy
 npm run start:dev
 ```
 
-A API inicia em `http://localhost:3001` por padrão. Configure `APP_PORT`, `DATABASE_URL`, `JWT_SECRET` e `JWT_EXPIRES_IN` em `.env.development`; há um exemplo completo na [visão geral](./docs/visao-geral.md#execução-local).
+A API inicia em `http://localhost:3001` por padrão. Configure `APP_PORT`,
+`DATABASE_URL`, `JWT_SECRET` e `JWT_EXPIRES_IN` em `.env.development`; há um
+exemplo completo no guia de [desenvolvimento](./docs/desenvolvimento.md).
 
 ## Scripts úteis
 
@@ -33,4 +40,5 @@ npm test           # testes
 npm run test:int   # testes de integração
 ```
 
-Para detalhes de recursos, papéis, respostas e limitações conhecidas, use os documentos acima como fonte de referência.
+Para entender qual documento é a fonte de verdade de cada assunto, comece pelo
+[índice da documentação](./docs/README.md).

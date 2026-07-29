@@ -1,95 +1,87 @@
 # Visão geral
 
-## Propósito
+## O que é a aplicação
 
-Esta API REST dá suporte a uma plataforma de barbearias. Ela foi organizada com NestJS, TypeScript, Prisma e PostgreSQL, separando regras de negócio (`domain` e `application`) dos adaptadores HTTP e banco de dados (`infrastructure`).
+A Barber Shop API é o backend de uma plataforma de barbearias. Ela permite
+cadastrar contas, publicar barbearias e serviços, configurar o expediente dos
+profissionais e controlar agendamentos.
 
-O domínio atual possui quatro recursos principais:
+A implementação usa NestJS com Fastify, TypeScript, Prisma e PostgreSQL. As
+regras de negócio são isoladas dos detalhes de HTTP e banco de dados por uma
+organização inspirada em Clean Architecture e DDD.
 
-- **usuários**: contas de clientes, proprietários e barbeiros;
-- **barbearias**: uma barbearia pertence a um usuário com papel `owner` e pode ter barbeiros vinculados;
-- **serviços**: corte, barba e outros serviços pertencentes a uma barbearia;
-- **agendamentos**: ligam cliente, barbeiro, barbearia e serviço em uma data e possuem status.
+## Recursos principais
 
-Cada profissional configura janelas semanais de expediente e folgas pontuais.
-Um agendamento ocupa o intervalo entre `date` e `endDate`, calculado pela
-duração do serviço, e só pode ser criado dentro do expediente e sem sobrepor
-folgas ou outro agendamento em aberto do mesmo barbeiro.
+| Recurso         | Responsabilidade                                                                  |
+| --------------- | --------------------------------------------------------------------------------- |
+| Usuário         | Identidade, credenciais e papel da conta.                                         |
+| Barbearia       | Estabelecimento, endereço, fuso horário e proprietário.                           |
+| Serviço         | Oferta da barbearia, com preço, descrição e duração.                              |
+| Disponibilidade | Expediente semanal e folgas pontuais de um profissional.                          |
+| Agendamento     | Reserva de um serviço, ligando cliente, profissional e barbearia em um intervalo. |
 
-## Papéis e fluxo esperado
+## Atores
 
-| Papel | Necessidade de produto | Estado atual da API |
-| --- | --- | --- |
-| Cliente (`client`) | Explorar barbearias e seus serviços, escolher horário e criar/consultar/cancelar os próprios agendamentos. | Pode explorar barbearias e listar os serviços da barbearia escolhida pelas rotas públicas da vitrine. |
-| Proprietário (`owner`) | Cadastrar sua barbearia, administrar seus serviços e consultar/atualizar os agendamentos dela. | Cadastra uma única barbearia e administra seus serviços. A listagem de agendamentos usa as barbearias de sua propriedade. |
-| Barbeiro (`barber`) | Trabalhar em uma barbearia e atender agendamentos atribuídos a ele. | O vínculo persistido existe, mas ainda não há fluxo ou rota para adicionar/remover barbeiros. |
+### Cliente (`client`)
 
-Uma conta pode ser criada como `client` ou `barber`. O barbeiro que cria uma barbearia passa a ter papel `owner`; a propriedade é representada por `BarberShop.ownerId`. Um barbeiro convidado mantém o papel `barber` e seu vínculo de trabalho é representado por `User.barberShopId`. O endpoint autenticado `GET /users/me` expõe esse contexto sem substituir as verificações de autorização dos casos de uso.
+Explora a vitrine pública, consulta serviços e horários, cria agendamentos com
+uma conta autenticada, acompanha os próprios agendamentos e pode cancelá-los.
 
-Embora o esquema comporte proprietários, barbeiros e múltiplas barbearias por proprietário, a API de gestão atual continua limitada a uma barbearia por proprietário e não oferece fluxo para vincular outros barbeiros. Essas limitações precisam ser removidas junto com as rotas de gestão correspondentes.
+### Barbeiro (`barber`)
 
-## Modelo de dados e identificadores
+Pode criar uma barbearia e, nesse momento, passa a ser `owner`. O modelo também
+permite que um barbeiro seja vinculado a uma barbearia, configure sua agenda e
+atenda reservas atribuídas a ele. A API ainda não possui endpoints para
+adicionar ou remover esses profissionais.
 
-```text
-User (id, role)
- ├── ownerId ────────────> BarberShop (id)
- ├── barberShopId ───────> BarberShop (id)
- ├── clientId ───────────> Appointment (id)
- └── barberId ───────────> Appointment (id)
+### Proprietário (`owner`)
 
-BarberShop (id)
- ├── barberShopId ───────> Service (id)
- └── barberShopId ───────> Appointment (id)
+Administra sua barbearia e os serviços dela. Também configura o próprio
+expediente e atua como profissional padrão nos agendamentos públicos. Hoje, a
+API limita a gestão a uma barbearia por proprietário.
 
-Service (id) ────────────> Appointment.serviceId
+## Relações essenciais
+
+```mermaid
+erDiagram
+    USER ||--o{ BARBER_SHOP : possui
+    BARBER_SHOP ||--o{ USER : vincula_profissionais
+    BARBER_SHOP ||--o{ SERVICE : oferece
+    USER ||--o{ APPOINTMENT : agenda_como_cliente
+    USER ||--o{ APPOINTMENT : atende_como_barbeiro
+    BARBER_SHOP ||--o{ APPOINTMENT : recebe
+    SERVICE ||--o{ APPOINTMENT : define
+    USER ||--o{ BARBER_SCHEDULE : configura
+    USER ||--o{ BARBER_TIME_OFF : bloqueia
 ```
 
-IDs são UUIDs gerados no domínio. No front, mantenha ao menos estes identificadores no estado da jornada:
+- `BarberShop.ownerId` identifica o proprietário.
+- `User.barberShopId` identifica a barbearia em que o profissional atua.
+- `Service.barberShopId` impede que um serviço seja usado fora de sua
+  barbearia.
+- `Appointment` guarda `clientId`, `barberId`, `barberShopId` e `serviceId`.
+- Todos os IDs públicos são UUIDs.
 
-1. da resposta de `GET /api/v1/barber-shops`, guarde `barberShop.id` da barbearia escolhida;
-2. da resposta de `GET /api/v1/services?barberShopId=:barberShopId`, guarde `service.id`;
-3. ao criar o agendamento, envie `serviceId`; a API resolve internamente `clientId`, `barberShopId` e o `barberId` do proprietário da barbearia do serviço;
-4. da resposta do agendamento, guarde `appointment.id` para consultar, alterar ou cancelar.
+## Estado atual do produto
 
-O contrato de serviço expõe `barberShopId`, que é o ID da barbearia do serviço.
+O fluxo completo já atende a barbearia operada pelo próprio dono:
 
-## Autenticação e formato HTTP
+1. um usuário se cadastra como `barber`;
+2. cria uma barbearia e é promovido a `owner`;
+3. cadastra serviços e configura seu expediente;
+4. um cliente encontra a barbearia, escolhe serviço e horário;
+5. o agendamento é atribuído ao proprietário;
+6. cliente e profissional acompanham o ciclo da reserva.
 
-- A aplicação escuta em `APP_PORT` ou, se a variável não existir, em `3001`.
-- Todas as rotas usam o prefixo versionado `/api/v1`; por exemplo, a autenticação é feita em `POST /api/v1/users/login`. As rotas anteriores, sem prefixo, foram descontinuadas e não possuem aliases.
-- Rotas protegidas exigem `Authorization: Bearer <accessToken>`.
-- `POST /api/v1/users/login` retorna `{ "accessToken": "..." }`, sem o envelope `data`.
-- As demais respostas de sucesso são envelopadas como `{ "data": ... }`. Listas paginadas retornam `{ "data": [...], "meta": { "currentPage", "perPage", "lastPage", "total" } }`.
-- Instantes de agendamentos e folgas são recebidos com offset explícito, persistidos como `timestamptz` e apresentados em UTC. Janelas semanais usam minutos do dia no fuso IANA da barbearia.
-- Configure `CORS_ALLOWED_ORIGINS` com uma lista de origens separadas por vírgula (por exemplo, `https://app.example.com,https://admin.example.com`). Sem origens configuradas, nenhuma origem recebe CORS. O curinga `*` só é aceito em `NODE_ENV=development`.
-- A validação remove campos não previstos e responde com `422` para payload inválido. Há filtros explícitos para erros `404`, `409` e alguns erros de credenciais; a padronização completa dos erros fica pendente.
+O schema suporta profissionais adicionais, mas o onboarding deles e a escolha
+do barbeiro durante o agendamento ainda não estão expostos. Consulte o
+[backlog](./backlog/todos.md) para as demais limitações conhecidas.
 
-Consulte o contrato completo em [rotas.md](./rotas.md) e as melhorias priorizadas em [todos.md](./todos.md).
+## Mapa da documentação
 
-## Execução local
-
-Pré-requisitos: Node.js, npm e PostgreSQL (ou Docker). O `docker-compose.yml` disponibiliza PostgreSQL na porta `5450`.
-
-```bash
-npm install
-docker compose up -d
-```
-
-Crie `.env.development` com valores compatíveis com o ambiente:
-
-```env
-APP_PORT=3001
-DATABASE_URL="postgresql://postgres:docker@localhost:5450/barber_api?schema=public"
-JWT_SECRET="troque-esta-chave"
-JWT_EXPIRES_IN=3600
-CORS_ALLOWED_ORIGINS=*
-```
-
-Depois aplique as migrações e inicie a API:
-
-```bash
-npx dotenv-cli -e .env.development -- npx prisma migrate deploy
-npm run start:dev
-```
-
-Os comandos de teste disponíveis são `npm test`, `npm run test:int` e `npm run test:e2e` (este último depende da configuração de teste existir no projeto).
+- Entenda a implementação em [Arquitetura](./arquitetura.md).
+- Veja as jornadas ponta a ponta em [Fluxos da aplicação](./fluxos.md).
+- Consulte permissões e invariantes em
+  [Regras de negócio](./regras-de-negocio.md).
+- Integre um cliente HTTP usando o [Guia da API](./api.md) e o Swagger.
+- Prepare o ambiente pelo guia de [Desenvolvimento](./desenvolvimento.md).
