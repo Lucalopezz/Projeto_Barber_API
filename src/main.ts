@@ -6,6 +6,7 @@ import {
 import { AppModule } from './app.module';
 import { EnvConfigService } from './shared/infrastructure/env-config/env-config.service';
 import { applyGlobalConfig } from './global-config';
+import { setupOpenApi } from './shared/infrastructure/openapi/openapi';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -15,6 +16,7 @@ async function bootstrap() {
   const envConfigService = app.get(EnvConfigService);
 
   applyGlobalConfig(app, envConfigService);
+  setupOpenApi(app);
 
   const port = envConfigService.getAppPort() || 3001;
   await app.listen(port, '0.0.0.0');

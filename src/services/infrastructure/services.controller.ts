@@ -30,8 +30,16 @@ import { RoleGuard } from '@/auth/guard/role.guard';
 import { Roles } from '@/auth/decorators/roles.decorator';
 import { Role } from '@/users/domain/entities/role.enum';
 import { ListServicesDto } from './dto/list-services.dto';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiDataResponse,
+  ApiErrorResponses,
+  ApiPaginatedResponse,
+  ApiProtected,
+} from '@/shared/infrastructure/openapi/openapi.decorators';
 
 @Controller('services')
+@ApiTags('Serviços')
 export class ServicesController {
   @Inject(CreateServicesUseCase.UseCase)
   private createServicesUseCase: CreateServicesUseCase.UseCase;
@@ -55,6 +63,9 @@ export class ServicesController {
   @Post()
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.owner])
+  @ApiOperation({ summary: 'Criar um serviço na própria barbearia' })
+  @ApiDataResponse(ServicePresenter, 201, 'Serviço criado')
+  @ApiProtected(403, 404, 409, 422)
   async create(
     @Body() createServiceDto: CreateServiceDto,
     @CurrentUserId() userId: string,
@@ -67,12 +78,19 @@ export class ServicesController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar serviços de uma barbearia' })
+  @ApiPaginatedResponse(ServicePresenter)
+  @ApiErrorResponses(404, 422)
   async findAll(@Query() query: ListServicesDto) {
     const output = await this.listServicesByBarberShopUseCase.execute(query);
     return ServicesController.servicesToResponse(output);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Consultar um serviço' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID do serviço' })
+  @ApiDataResponse(ServicePresenter)
+  @ApiErrorResponses(404)
   async findOne(@Param('id') id: string) {
     const model = await this.getServicesUseCase.execute({ id });
     return ServicesController.serviceToResponse(model);
@@ -81,6 +99,10 @@ export class ServicesController {
   @Patch(':id')
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.owner])
+  @ApiOperation({ summary: 'Atualizar um serviço da própria barbearia' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID do serviço' })
+  @ApiDataResponse(ServicePresenter)
+  @ApiProtected(403, 404, 409, 422)
   async update(
     @Param('id') id: string,
     @Body() updateServiceDto: UpdateServiceDto,
@@ -98,6 +120,10 @@ export class ServicesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.owner])
+  @ApiOperation({ summary: 'Excluir um serviço da própria barbearia' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID do serviço' })
+  @ApiResponse({ status: 204, description: 'Serviço excluído' })
+  @ApiProtected(403, 404)
   async remove(@Param('id') id: string, @CurrentUserId() userId: string) {
     await this.deleteServicesUseCase.execute({
       id,

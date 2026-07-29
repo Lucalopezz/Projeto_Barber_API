@@ -1,4 +1,5 @@
 import { Transform } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 export type PaginationPresenterProps = {
   currentPage: number;
@@ -8,12 +9,16 @@ export type PaginationPresenterProps = {
 };
 
 export class PaginationPresenter {
+  @ApiProperty({ example: 1 })
   @Transform(({ value }) => parseInt(value))
   currentPage: number;
+  @ApiProperty({ example: 15 })
   @Transform(({ value }) => parseInt(value))
   perPage: number;
+  @ApiProperty({ example: 1 })
   @Transform(({ value }) => parseInt(value))
   lastPage: number;
+  @ApiProperty({ example: 1 })
   @Transform(({ value }) => parseInt(value))
   total: number;
 

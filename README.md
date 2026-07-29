@@ -4,9 +4,14 @@ API REST para uma plataforma de barbearias, construída com NestJS, TypeScript, 
 
 ## Documentação
 
+- Swagger UI: `http://localhost:3001/docs`
+- Contrato OpenAPI JSON: `http://localhost:3001/docs/openapi.json`
 - [Visão geral e execução local](./docs/visao-geral.md)
 - [Rotas e contratos HTTP](./docs/rotas.md)
 - [Backlog técnico e de produto](./docs/todos.md)
+
+Na Swagger UI, use **Authorize** com o `accessToken` retornado por
+`POST /api/v1/users/login` para testar as rotas protegidas.
 
 ## Início rápido
 

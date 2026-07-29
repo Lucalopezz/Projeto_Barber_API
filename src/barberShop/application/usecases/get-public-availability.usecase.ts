@@ -1,4 +1,4 @@
-import { PublicAvailabilityOutput } from '@/appointments/application/dto/public-availability-output.dto';
+import { PublicAvailabilityOutput } from '@/barberShop/application/dtos/public-availability-output.dto';
 import { AppointmentAvailabilityService } from '@/appointments/application/services/appointment-availability.service';
 import { BarberAvailabilityRepository } from '@/appointments/domain/repositories/barber-availability.repository';
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';

@@ -43,9 +43,17 @@ import {
   BarberSchedulePresenter,
   BarberTimeOffPresenter,
 } from './presenters/barber-availability.presenter';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiDataArrayResponse,
+  ApiDataResponse,
+  ApiPaginatedResponse,
+  ApiProtected,
+} from '@/shared/infrastructure/openapi/openapi.decorators';
 
 @Controller('appointments')
 @UseGuards(AuthGuard)
+@ApiTags('Agendamentos e disponibilidade')
 export class AppointmentsController {
   @Inject(CreateAppointmentsUseCase.UseCase)
   private createAppointmentsUseCase: CreateAppointmentsUseCase.UseCase;
@@ -74,6 +82,9 @@ export class AppointmentsController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Criar um agendamento' })
+  @ApiDataResponse(AppointmentPresenter, 201, 'Agendamento criado')
+  @ApiProtected(403, 404, 409, 422)
   async create(
     @Body() createAppointmentDto: CreateAppointmentDto,
     @CurrentUserId() userId: string,
@@ -86,6 +97,9 @@ export class AppointmentsController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar agendamentos visíveis para o usuário' })
+  @ApiPaginatedResponse(AppointmentPresenter)
+  @ApiProtected(422)
   async search(
     @Query() searchParams: ListAppointmentsDto,
     @CurrentUserId() userId: string,
@@ -100,6 +114,9 @@ export class AppointmentsController {
   @Get('availability/me')
   @UseGuards(RoleGuard)
   @Roles([Role.owner, Role.barber])
+  @ApiOperation({ summary: 'Consultar a própria disponibilidade' })
+  @ApiDataResponse(BarberAvailabilityPresenter)
+  @ApiProtected(403, 404)
   async getAvailability(@CurrentUserId() userId: string) {
     const output = await this.getBarberAvailabilityUseCase.execute({ userId });
     return new BarberAvailabilityPresenter(output);
@@ -108,6 +125,9 @@ export class AppointmentsController {
   @Put('availability/me/schedule')
   @UseGuards(RoleGuard)
   @Roles([Role.owner, Role.barber])
+  @ApiOperation({ summary: 'Substituir o próprio expediente semanal' })
+  @ApiDataArrayResponse(BarberSchedulePresenter)
+  @ApiProtected(403, 404, 422)
   async updateSchedule(
     @Body() dto: UpdateBarberScheduleDto,
     @CurrentUserId() userId: string,
@@ -122,6 +142,9 @@ export class AppointmentsController {
   @Post('availability/me/time-offs')
   @UseGuards(RoleGuard)
   @Roles([Role.owner, Role.barber])
+  @ApiOperation({ summary: 'Cadastrar uma folga própria' })
+  @ApiDataResponse(BarberTimeOffPresenter, 201, 'Folga cadastrada')
+  @ApiProtected(403, 404, 409, 422)
   async createTimeOff(
     @Body() dto: CreateBarberTimeOffDto,
     @CurrentUserId() userId: string,
@@ -137,6 +160,10 @@ export class AppointmentsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(RoleGuard)
   @Roles([Role.owner, Role.barber])
+  @ApiOperation({ summary: 'Remover uma folga própria' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID da folga' })
+  @ApiResponse({ status: 204, description: 'Folga removida' })
+  @ApiProtected(403, 404)
   async deleteTimeOff(
     @Param('id') id: string,
     @CurrentUserId() userId: string,
@@ -145,6 +172,10 @@ export class AppointmentsController {
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Consultar um agendamento visível' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID do agendamento' })
+  @ApiDataResponse(AppointmentPresenter)
+  @ApiProtected(404)
   async findOne(@Param('id') id: string, @CurrentUserId() userId: string) {
     const model = await this.getAppointmentUseCase.execute({
       id,
@@ -154,6 +185,10 @@ export class AppointmentsController {
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Cancelar ou concluir um agendamento' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID do agendamento' })
+  @ApiDataResponse(AppointmentPresenter)
+  @ApiProtected(403, 404, 409, 422)
   async updateStatus(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateStatusDto,
@@ -169,6 +204,10 @@ export class AppointmentsController {
   @Put(':id')
   @UseGuards(RoleGuard)
   @Roles([Role.owner, Role.barber])
+  @ApiOperation({ summary: 'Alterar data ou serviço de um agendamento' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID do agendamento' })
+  @ApiDataResponse(AppointmentPresenter)
+  @ApiProtected(403, 404, 409, 422)
   async update(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateAppointmentDto,

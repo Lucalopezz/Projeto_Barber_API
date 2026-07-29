@@ -36,8 +36,17 @@ import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.d
 import { SigninDto } from './dto/signin.dto';
 import { SigninUseCase } from '../application/usecases/signin.usecase';
 import { AuthService } from '@/auth/auth.service';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiDataResponse,
+  ApiErrorResponses,
+  ApiPaginatedResponse,
+  ApiProtected,
+} from '@/shared/infrastructure/openapi/openapi.decorators';
+import { AccessTokenResponse } from '@/shared/infrastructure/openapi/openapi.models';
 
 @Controller('users')
+@ApiTags('Usuários e autenticação')
 export class UsersController {
   @Inject(CreateUserUseCase.UseCase)
   private createUserUseCase: CreateUserUseCase.UseCase;
@@ -76,12 +85,22 @@ export class UsersController {
   }
 
   @Post()
+  @ApiOperation({ summary: 'Criar uma conta' })
+  @ApiDataResponse(UserPresenter, 201, 'Conta criada')
+  @ApiErrorResponses(409, 422)
   async create(@Body() createUserDto: CreateUserDto) {
     const output = await this.createUserUseCase.execute(createUserDto);
     return UsersController.userToResponse(output);
   }
 
   @Post('login')
+  @ApiOperation({ summary: 'Autenticar e gerar um JWT' })
+  @ApiResponse({
+    status: 201,
+    description: 'Credenciais válidas',
+    type: AccessTokenResponse,
+  })
+  @ApiErrorResponses(400, 422)
   async login(@Body() signinDto: SigninDto) {
     const output = await this.signinUseCase.execute(signinDto);
     return this.authService.generateJwt(output.id, output.role);
@@ -89,6 +108,9 @@ export class UsersController {
 
   @Get()
   @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Listar usuários' })
+  @ApiPaginatedResponse(UserPresenter)
+  @ApiProtected(422)
   async search(@Query() searchParams: ListUsersDto) {
     const output = await this.listUsersUseCase.execute(searchParams);
     return UsersController.listUsersToResponse(output);
@@ -96,6 +118,9 @@ export class UsersController {
 
   @Get('me')
   @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Consultar o contexto do usuário autenticado' })
+  @ApiDataResponse(UserContextPresenter)
+  @ApiProtected(404)
   async findOne(@CurrentUserId() id: string) {
     const output = await this.getUserUsecase.execute({ id });
     return UsersController.userContextToResponse(output);
@@ -103,6 +128,10 @@ export class UsersController {
 
   @Put(':id')
   @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Atualizar o próprio perfil' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID do usuário' })
+  @ApiDataResponse(UserPresenter)
+  @ApiProtected(403, 404, 422)
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -118,6 +147,10 @@ export class UsersController {
 
   @Patch(':id')
   @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Atualizar a própria senha' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID do usuário' })
+  @ApiDataResponse(UserPresenter)
+  @ApiProtected(403, 404, 422)
   async updatePassword(
     @Param('id') id: string,
     @Body() updatePasswordDto: UpdatePasswordDto,
@@ -134,6 +167,10 @@ export class UsersController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard)
+  @ApiOperation({ summary: 'Excluir a própria conta' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID do usuário' })
+  @ApiResponse({ status: 204, description: 'Conta excluída' })
+  @ApiProtected(403, 404)
   async remove(@Param('id') id: string, @CurrentUserId() userId: string) {
     await this.deleteUserUseCase.execute({ id, userId });
   }

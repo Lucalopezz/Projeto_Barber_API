@@ -31,11 +31,19 @@ import { AuthGuard } from '@/auth/guard/auth.guard';
 import { RoleGuard } from '@/auth/guard/role.guard';
 import { Roles } from '@/auth/decorators/roles.decorator';
 import { Role } from '@/users/domain/entities/role.enum';
-import { GetPublicAvailabilityUseCase } from '@/appointments/application/usecases/get-public-availability.usecase';
+import { GetPublicAvailabilityUseCase } from '@/barberShop/application/usecases/get-public-availability.usecase';
 import { GetPublicAvailabilityDto } from '@/appointments/infrastructure/dto/get-public-availability.dto';
 import { PublicAvailabilityPresenter } from '@/barberShop/infrastructure/presenters/public-availability.presenter';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiDataResponse,
+  ApiErrorResponses,
+  ApiPaginatedResponse,
+  ApiProtected,
+} from '@/shared/infrastructure/openapi/openapi.decorators';
 
 @Controller('barber-shops')
+@ApiTags('Barbearias')
 export class BarberShopController {
   @Inject(ListBarberShopUseCase.UseCase)
   private listBarberShopUseCase: ListBarberShopUseCase.UseCase;
@@ -66,6 +74,9 @@ export class BarberShopController {
   @Post()
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.barber])
+  @ApiOperation({ summary: 'Criar a barbearia do usuário autenticado' })
+  @ApiDataResponse(BarberShopPresenter, 201, 'Barbearia criada')
+  @ApiProtected(403, 409, 422)
   async create(
     @Body() createBarberShopDto: CreateBarberShopDto,
     @CurrentUserId() userId: string,
@@ -78,18 +89,29 @@ export class BarberShopController {
   }
 
   @Get()
+  @ApiOperation({ summary: 'Listar barbearias da vitrine' })
+  @ApiPaginatedResponse(BarberShopPresenter)
+  @ApiErrorResponses(422)
   async search(@Query() searchParams: ListBarberShopDto) {
     const output = await this.listBarberShopUseCase.execute(searchParams);
     return BarberShopController.listBarberShopToResponse(output);
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Consultar uma barbearia' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID da barbearia' })
+  @ApiDataResponse(BarberShopPresenter)
+  @ApiErrorResponses(404)
   async findOne(@Param('id') id: string) {
     const output = await this.getBarberShopUseCase.execute({ id });
     return BarberShopController.barberShopToResponse(output);
   }
 
   @Get(':id/availability')
+  @ApiOperation({ summary: 'Consultar horários disponíveis em uma data' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID da barbearia' })
+  @ApiDataResponse(PublicAvailabilityPresenter)
+  @ApiErrorResponses(404, 422)
   async getAvailability(
     @Param('id') barberShopId: string,
     @Query() query: GetPublicAvailabilityDto,
@@ -104,6 +126,10 @@ export class BarberShopController {
   @Put(':id')
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.owner])
+  @ApiOperation({ summary: 'Atualizar a própria barbearia' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID da barbearia' })
+  @ApiDataResponse(BarberShopPresenter)
+  @ApiProtected(403, 404, 422)
   async update(
     @Param('id') id: string,
     @Body() updateBarberShopDto: UpdateBarberShopDto,
@@ -121,6 +147,10 @@ export class BarberShopController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.owner])
+  @ApiOperation({ summary: 'Excluir a própria barbearia' })
+  @ApiParam({ name: 'id', format: 'uuid', description: 'ID da barbearia' })
+  @ApiResponse({ status: 204, description: 'Barbearia excluída' })
+  @ApiProtected(403, 404)
   async remove(@Param('id') id: string, @CurrentUserId() ownerId: string) {
     await this.deleteBarberShopUseCase.execute({ id, ownerId });
   }

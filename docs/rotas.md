@@ -2,6 +2,13 @@
 
 Base URL local: `http://localhost:3001/api/v1`.
 
+O contrato executável está disponível na Swagger UI em
+`http://localhost:3001/docs` e como OpenAPI JSON em
+`http://localhost:3001/docs/openapi.json`. Os schemas são gerados a partir dos
+DTOs HTTP e incluem exemplos de payload, autenticação Bearer e respostas de
+sucesso e erro. Para testar rotas protegidas na interface, autentique em
+`POST /api/v1/users/login` e informe o `accessToken` no botão **Authorize**.
+
 Todas as rotas abaixo já incluem o prefixo e a versão. As rotas sem
 `/api/v1` e a antiga família `/barber-shop/catalog` foram descontinuadas sem
 aliases, pois ainda não há consumidores em produção.

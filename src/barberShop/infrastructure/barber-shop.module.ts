@@ -14,7 +14,7 @@ import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberSh
 import { AuthModule } from '@/auth/auth.module';
 import { CreateBarberShopPrismaTransaction } from './database/prisma/create-barber-shop-prisma.transaction';
 import { CreateBarberShopTransaction } from '../application/ports/create-barber-shop.transaction';
-import { GetPublicAvailabilityUseCase } from '@/appointments/application/usecases/get-public-availability.usecase';
+import { GetPublicAvailabilityUseCase } from '@/barberShop/application/usecases/get-public-availability.usecase';
 import { AppointmentAvailabilityService } from '@/appointments/application/services/appointment-availability.service';
 import { AppointmentsRepository } from '@/appointments/domain/repositories/appointments.repository';
 import { AppointmentsPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/appointments-prisma.repository';
