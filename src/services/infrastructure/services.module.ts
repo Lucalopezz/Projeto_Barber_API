@@ -7,7 +7,6 @@ import { ServicesPrismaRepository } from './database/prisma/services-prisma.repo
 import { CreateServicesUseCase } from '../application/usecases/create-services.usecase';
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
 import { ServicesRepository } from '../domain/repositories/services.repository';
-import { ListServicesUseCase } from '../application/usecases/list-services.usecase';
 import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
 import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
 import { DeleteServicesUseCase } from '../application/usecases/delete-services.usecase';
@@ -42,19 +41,6 @@ import { ListServicesByBarberShopUseCase } from '../application/usecases/list-se
         barberShopRepository: BarberShopRepository.Repository,
       ) => {
         return new CreateServicesUseCase.UseCase(
-          servicesRepository,
-          barberShopRepository,
-        );
-      },
-      inject: ['ServicesRepository', 'BarberShopRepository'],
-    },
-    {
-      provide: ListServicesUseCase.UseCase,
-      useFactory: (
-        servicesRepository: ServicesRepository.Repository,
-        barberShopRepository: BarberShopRepository.Repository,
-      ) => {
-        return new ListServicesUseCase.UseCase(
           servicesRepository,
           barberShopRepository,
         );

@@ -47,7 +47,7 @@ Service (id) ────────────> Appointment.serviceId
 IDs são UUIDs gerados no domínio. No front, mantenha ao menos estes identificadores no estado da jornada:
 
 1. da resposta de `GET /barber-shop/catalog`, guarde `barberShop.id` da barbearia escolhida;
-2. da resposta de `GET /services/catalog/:barberShopId`, guarde `service.id`;
+2. da resposta de `GET /services?barberShopId=:barberShopId`, guarde `service.id`;
 3. ao criar o agendamento, envie `serviceId`; a API resolve internamente `clientId`, `barberShopId` e o `barberId` do proprietário da barbearia do serviço;
 4. da resposta do agendamento, guarde `appointment.id` para consultar, alterar ou cancelar.
 

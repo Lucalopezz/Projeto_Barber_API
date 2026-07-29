@@ -106,16 +106,17 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 
 ## Serviços
 
-> As operações de gestão de serviços exigem token. `GET /services` lista **somente** os serviços da barbearia de propriedade do usuário autenticado; a rota pública da vitrine fica em `/services/catalog/:barberShopId`.
+> As operações de escrita exigem token de proprietário. A leitura de serviços
+> é pública porque compõe a vitrine: `GET /services?barberShopId=...` lista os
+> serviços de uma barbearia e `GET /services/:id` retorna seus detalhes.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
 | `POST` | `/services` | 🔒 `owner` — Cria serviço na barbearia do dono autenticado. |
-| `GET` | `/services` | 🔒 `owner` — Lista serviços da própria barbearia. |
-| `GET` | `/services/:id` | Busca serviço por ID. |
+| `GET` | `/services?barberShopId=:id` | 🌐 Lista todos os serviços da barbearia informada. |
+| `GET` | `/services/:id` | 🌐 Busca serviço por ID. |
 | `PATCH` | `/services/:id` | 🔒 `owner` — Atualiza serviço da própria barbearia. |
 | `DELETE` | `/services/:id` | 🔒 `owner` — Exclui serviço da própria barbearia. |
-| `GET` | `/services/catalog/:barberShopId` | 🌐 Lista os serviços da barbearia escolhida para a vitrine. |
 
 ### Criar/atualizar — `POST /services` e `PATCH /services/:id`
 
@@ -138,7 +139,7 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 | --- | --- | --- |
 | `POST` | `/appointments` | Cria agendamento para o usuário autenticado. |
 | `GET` | `/appointments` | Lista agendamentos do cliente ou, para o dono de uma barbearia, da sua barbearia. |
-| `GET` | `/appointments/:id` | Busca um agendamento próprio do cliente. |
+| `GET` | `/appointments/:id` | Busca um agendamento visível para o ator autenticado. |
 | `PATCH` | `/appointments/:id` | Cancela ou conclui um agendamento sem excluí-lo. |
 | `PUT` | `/appointments/:id` | 🔒 `owner` ou `barber` — Altera data e/ou serviço de um agendamento em aberto. |
 | `GET` | `/appointments/availability/me` | 🔒 `owner` ou `barber` — Consulta o próprio expediente, folgas e fuso. |
@@ -160,6 +161,14 @@ A resposta contém `id`, `date`, `endDate`, `status`, `clientId`, `barberId`, `b
 ### Filtrar lista — `GET /appointments`
 
 Query opcional: `page`, `perPage`, `sort`, `sortDir`, `serviceId`, `barberShopId`, `dateFrom` e `dateTo`. Os limites de data são inclusivos para o início do agendamento. O filtro depende do contexto da conta: proprietário vê sua agenda; quem não possui barbearia vê agendamentos em que é cliente.
+
+### Consultar detalhes — `GET /appointments/:id`
+
+O cliente pode consultar os próprios agendamentos. O proprietário pode
+consultar qualquer agendamento da sua barbearia. Um barbeiro vinculado pode
+consultar somente os agendamentos atribuídos a ele. Para não revelar a
+existência de agendamentos de terceiros, a API responde `404` quando o recurso
+não é visível para o usuário autenticado.
 
 ### Alterar status — `PATCH /appointments/:id`
 

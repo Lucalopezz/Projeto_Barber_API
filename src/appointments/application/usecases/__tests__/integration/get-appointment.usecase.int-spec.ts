@@ -19,6 +19,7 @@ import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entit
 import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { AppointmentEntity } from '@/appointments/domain/entities/appointment.entity';
 import { Role } from '@/users/domain/entities/role.enum';
+import { randomUUID } from 'node:crypto';
 
 describe('GetAppointmentUseCase integration tests', () => {
   const prismaService = new PrismaClient();
@@ -43,7 +44,10 @@ describe('GetAppointmentUseCase integration tests', () => {
   });
 
   beforeEach(async () => {
-    sut = new GetAppointmentUseCase.UseCase(appointmentRepository);
+    sut = new GetAppointmentUseCase.UseCase(
+      appointmentRepository,
+      userRepository,
+    );
     await prismaService.appointment.deleteMany();
     await prismaService.service.deleteMany();
     await prismaService.barberShop.deleteMany();
@@ -56,17 +60,17 @@ describe('GetAppointmentUseCase integration tests', () => {
 
   // Helper to create barber shop with owner
   const createBarberShopWithOwner = async () => {
-    const barber = new UserEntity(
+    const owner = new UserEntity(
       UserDataBuilder({
-        role: Role.barber,
+        role: Role.owner,
         email: 'barber@test.com',
       }),
     );
-    await userRepository.insert(barber);
+    await userRepository.insert(owner);
 
     const barberShop = new BarberShopEntity(
       BarberShopDataBuilder({
-        ownerId: barber.id,
+        ownerId: owner.id,
         name: 'Test Barber Shop',
       }),
     );
@@ -76,11 +80,15 @@ describe('GetAppointmentUseCase integration tests', () => {
         id: barberShop._id,
         name: barberShop.name,
         address: barberShop.address.toString(),
-        ownerId: barber.id,
+        ownerId: owner.id,
       },
     });
+    await prismaService.user.update({
+      where: { id: owner.id },
+      data: { barberShopId: barberShop.id },
+    });
 
-    return { barber, barberShop };
+    return { owner, barberShop };
   };
 
   // Helper to create service
@@ -114,11 +122,23 @@ describe('GetAppointmentUseCase integration tests', () => {
     const client = new UserEntity(
       UserDataBuilder({
         role: Role.client,
-        email: `client${Date.now()}@test.com`,
+        email: `client-${randomUUID()}@test.com`,
       }),
     );
     await userRepository.insert(client);
     return client;
+  };
+
+  const createBarber = async (barberShopId: string, email: string) => {
+    const barber = new UserEntity(
+      UserDataBuilder({
+        role: Role.barber,
+        barberShopId,
+        email,
+      }),
+    );
+    await userRepository.insert(barber);
+    return barber;
   };
 
   // Helper to create appointment
@@ -126,12 +146,14 @@ describe('GetAppointmentUseCase integration tests', () => {
     clientId: string,
     serviceId: string,
     barberShopId: string,
+    barberId: string,
   ) => {
     const appointment = new AppointmentEntity(
       AppointmentDataBuilder({
         clientId,
         serviceId,
         barberShopId,
+        barberId,
         date: new Date('2025-12-15T10:00:00Z'),
       }),
     );
@@ -145,13 +167,14 @@ describe('GetAppointmentUseCase integration tests', () => {
 
   it('should find an appointment by id when user is the client', async () => {
     // Arrange
-    const { barberShop } = await createBarberShopWithOwner();
+    const { owner, barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
     const client = await createClient();
     const appointment = await createAppointment(
       client.id,
       service._id,
       barberShop._id,
+      owner.id,
     );
 
     const input: GetAppointmentUseCase.Input = {
@@ -185,7 +208,7 @@ describe('GetAppointmentUseCase integration tests', () => {
 
   it('should throw NotFoundError when user is not the client', async () => {
     // Arrange
-    const { barberShop } = await createBarberShopWithOwner();
+    const { owner, barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
     const client = await createClient();
     const otherUser = await createClient();
@@ -194,6 +217,7 @@ describe('GetAppointmentUseCase integration tests', () => {
       client.id,
       service._id,
       barberShop._id,
+      owner.id,
     );
 
     const input: GetAppointmentUseCase.Input = {
@@ -207,9 +231,73 @@ describe('GetAppointmentUseCase integration tests', () => {
     );
   });
 
+  it('should allow the barber shop owner to read its appointment', async () => {
+    const { owner, barberShop } = await createBarberShopWithOwner();
+    const service = await createService(barberShop.id);
+    const client = await createClient();
+    const assignedBarber = await createBarber(
+      barberShop.id,
+      'assigned-owner-test@test.com',
+    );
+    const appointment = await createAppointment(
+      client.id,
+      service.id,
+      barberShop.id,
+      assignedBarber.id,
+    );
+
+    await expect(
+      sut.execute({ id: appointment.id, userId: owner.id }),
+    ).resolves.toEqual(expect.objectContaining({ id: appointment.id }));
+  });
+
+  it('should allow the assigned barber to read the appointment', async () => {
+    const { barberShop } = await createBarberShopWithOwner();
+    const service = await createService(barberShop.id);
+    const client = await createClient();
+    const assignedBarber = await createBarber(
+      barberShop.id,
+      'assigned-barber@test.com',
+    );
+    const appointment = await createAppointment(
+      client.id,
+      service.id,
+      barberShop.id,
+      assignedBarber.id,
+    );
+
+    await expect(
+      sut.execute({ id: appointment.id, userId: assignedBarber.id }),
+    ).resolves.toEqual(expect.objectContaining({ id: appointment.id }));
+  });
+
+  it('should hide the appointment from an unassigned barber', async () => {
+    const { barberShop } = await createBarberShopWithOwner();
+    const service = await createService(barberShop.id);
+    const client = await createClient();
+    const assignedBarber = await createBarber(
+      barberShop.id,
+      'assigned-denied-test@test.com',
+    );
+    const otherBarber = await createBarber(
+      barberShop.id,
+      'unassigned-barber@test.com',
+    );
+    const appointment = await createAppointment(
+      client.id,
+      service.id,
+      barberShop.id,
+      assignedBarber.id,
+    );
+
+    await expect(
+      sut.execute({ id: appointment.id, userId: otherBarber.id }),
+    ).rejects.toThrow(new NotFoundError('Appointment not found'));
+  });
+
   it('should return all appointment fields correctly', async () => {
     // Arrange
-    const { barberShop } = await createBarberShopWithOwner();
+    const { owner, barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
     const client = await createClient();
     const appointmentDate = new Date('2025-12-20T14:30:00Z');
@@ -218,6 +306,7 @@ describe('GetAppointmentUseCase integration tests', () => {
       clientId: client.id,
       serviceId: service._id,
       barberShopId: barberShop._id,
+      barberId: owner.id,
       date: appointmentDate,
       status: AppointmentStatus.scheduled,
     });
@@ -247,7 +336,7 @@ describe('GetAppointmentUseCase integration tests', () => {
 
   it('should retrieve appointment with correct date and status', async () => {
     // Arrange
-    const { barberShop } = await createBarberShopWithOwner();
+    const { owner, barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
     const client = await createClient();
     const appointmentDate = new Date('2025-12-25T09:00:00Z');
@@ -256,6 +345,7 @@ describe('GetAppointmentUseCase integration tests', () => {
       clientId: client.id,
       serviceId: service._id,
       barberShopId: barberShop._id,
+      barberId: owner.id,
       date: appointmentDate,
     });
 

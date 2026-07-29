@@ -157,10 +157,14 @@ import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barbe
       provide: GetAppointmentUseCase.UseCase,
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
+        userRepository: UserRepository.Repository,
       ) => {
-        return new GetAppointmentUseCase.UseCase(appointmentRepository);
+        return new GetAppointmentUseCase.UseCase(
+          appointmentRepository,
+          userRepository,
+        );
       },
-      inject: ['AppointmentRepository'],
+      inject: ['AppointmentRepository', 'UserRepository'],
     },
     {
       provide: UpdateStatusUseCase.UseCase,

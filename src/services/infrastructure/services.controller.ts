@@ -9,6 +9,7 @@ import {
   Delete,
   Inject,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -16,7 +17,6 @@ import { CreateServicesUseCase } from '../application/usecases/create-services.u
 import { AuthGuard } from '@/auth/guard/auth.guard';
 import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
 import { ServicePresenter } from './presenters/barberShop.presenter';
-import { ListServicesUseCase } from '../application/usecases/list-services.usecase';
 import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
 import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
 import { DeleteServicesUseCase } from '../application/usecases/delete-services.usecase';
@@ -24,13 +24,12 @@ import { ListServicesByBarberShopUseCase } from '../application/usecases/list-se
 import { RoleGuard } from '@/auth/guard/role.guard';
 import { Roles } from '@/auth/decorators/roles.decorator';
 import { Role } from '@/users/domain/entities/role.enum';
+import { ListServicesDto } from './dto/list-services.dto';
 
 @Controller('services')
 export class ServicesController {
   @Inject(CreateServicesUseCase.UseCase)
   private createServicesUseCase: CreateServicesUseCase.UseCase;
-  @Inject(ListServicesUseCase.UseCase)
-  private listServicesUseCase: ListServicesUseCase.UseCase;
   @Inject(GetServicesUseCase.UseCase)
   private getServicesUseCase: GetServicesUseCase.UseCase;
   @Inject(UpdateServicesUseCase.UseCase)
@@ -59,15 +58,12 @@ export class ServicesController {
   }
 
   @Get()
-  @UseGuards(AuthGuard, RoleGuard)
-  @Roles([Role.owner])
-  async findAll(@CurrentUserId() userId: string) {
-    const models = await this.listServicesUseCase.execute({ userId });
+  async findAll(@Query() query: ListServicesDto) {
+    const models = await this.listServicesByBarberShopUseCase.execute(query);
     return models.map((model) => ServicesController.serviceToResponse(model));
   }
 
   @Get(':id')
-  @UseGuards(AuthGuard)
   async findOne(@Param('id') id: string) {
     const model = await this.getServicesUseCase.execute({ id });
     return ServicesController.serviceToResponse(model);
@@ -97,13 +93,5 @@ export class ServicesController {
       id,
       barberShopOwnerId: userId,
     });
-  }
-
-  @Get('catalog/:barberShopId')
-  async findAllByBarberShop(@Param('barberShopId') barberShopId: string) {
-    const models = await this.listServicesByBarberShopUseCase.execute({
-      barberShopId,
-    });
-    return models.map((model) => ServicesController.serviceToResponse(model));
   }
 }
