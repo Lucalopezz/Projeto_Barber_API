@@ -20,8 +20,8 @@ Esta lista prioriza o que impede o fluxo de uma plataforma de barbearias, especi
 - [ ] **Padronizar respostas e códigos de erro.** `BadRequestError` e `UnauthorizedError` customizados não têm filtros globais visíveis; podem virar `500` em vez de `400`/`403`. Centralizar o formato `{ statusCode, error, message }`, cobrir `400`, `401`, `403`, `404`, `409` e `422`, e documentar exemplos.
 - [x] **Rever a leitura de recursos individuais.** `GET /services/:id` entrega qualquer serviço a quem tenha token, mas não há escolha clara de regra pública/privada. `GET /appointments/:id` só permite cliente, impedindo a tela de detalhes do barbeiro. Definir políticas por ator e aplicá-las de forma simétrica.
 - [x] **Remover capacidade indevida de trocar o papel pelo perfil comum.** `PUT /users/:id` permite alterar `role`; isso possibilita ao próprio cliente virar `barber`. Separar alteração de perfil da alteração administrativa de papel ou remover `role` desse DTO.
-- [ ] **Adicionar versionamento e nomes de recursos consistentes.** Adotar, por exemplo, prefixo `/api/v1` e pluralização uniforme (`/barber-shops`). Planejar compatibilidade ou descontinuação das rotas atuais.
-- [ ] **Restringir CORS em produção.** A origem `*` é adequada somente para desenvolvimento. Configurar lista de origens por ambiente e documentar variáveis de configuração.
+- [x] **Adicionar versionamento e nomes de recursos consistentes.** Adotar, por exemplo, prefixo `/api/` e pluralização uniforme (`/barber-shops`). Planejar compatibilidade ou descontinuação das rotas atuais.
+- [x] **Restringir CORS em produção.** A origem `*` é adequada somente para desenvolvimento. Configurar lista de origens por ambiente e documentar variáveis de configuração.
 
 ## Prioridade 2 — qualidade, operação e experiência de integração
 

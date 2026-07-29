@@ -30,7 +30,7 @@ import { RoleGuard } from '@/auth/guard/role.guard';
 import { Roles } from '@/auth/decorators/roles.decorator';
 import { Role } from '@/users/domain/entities/role.enum';
 
-@Controller('barber-shop')
+@Controller('barber-shops')
 export class BarberShopController {
   @Inject(ListBarberShopUseCase.UseCase)
   private listBarberShopUseCase: ListBarberShopUseCase.UseCase;
@@ -69,16 +69,16 @@ export class BarberShopController {
     return BarberShopController.barberShopToResponse(model);
   }
 
-  @Get('catalog/:id')
-  async findOne(@Param('id') id: string) {
-    const output = await this.getBarberShopUseCase.execute({ id });
-    return BarberShopController.barberShopToResponse(output);
-  }
-
-  @Get('catalog')
+  @Get()
   async search(@Query() searchParams: ListBarberShopDto) {
     const output = await this.listBarberShopUseCase.execute(searchParams);
     return BarberShopController.listBarberShopToResponse(output);
+  }
+
+  @Get(':id')
+  async findOne(@Param('id') id: string) {
+    const output = await this.getBarberShopUseCase.execute({ id });
+    return BarberShopController.barberShopToResponse(output);
   }
 
   @Put(':id')

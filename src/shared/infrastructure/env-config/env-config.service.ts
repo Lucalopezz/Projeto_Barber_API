@@ -20,4 +20,22 @@ export class EnvConfigService implements EnvConfig {
   getJtwExpiresInSeconds(): number {
     return Number(this.configService.get<number>('JWT_EXPIRES_IN'));
   }
+
+  getCorsAllowedOrigins(): string[] {
+    const origins = (
+      this.configService.get<string>('CORS_ALLOWED_ORIGINS') ?? ''
+    )
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+
+    // Check if the origins array contains "*" and the environment is not development
+    if (origins.includes('*') && this.getNodeEnv() !== 'development') {
+      throw new Error(
+        'CORS_ALLOWED_ORIGINS cannot contain "*" outside development',
+      );
+    }
+
+    return origins;
+  }
 }

@@ -3,4 +3,5 @@ export interface EnvConfig {
   getNodeEnv(): string;
   getJwtSecret(): string;
   getJtwExpiresInSeconds(): number;
+  getCorsAllowedOrigins(): string[];
 }

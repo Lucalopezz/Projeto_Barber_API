@@ -10,8 +10,15 @@ import { NotFoundErrorFilter } from './shared/infrastructure/exception-filters/n
 import { InvalidPasswordErrorFilter } from './shared/infrastructure/exception-filters/invalid-password-error/invalid-password-error.filter';
 import { InvalidCredentialsErrorFilter } from './shared/infrastructure/exception-filters/invalid-credentials-error/invalid-credentials-error.filter';
 import { UnauthorizedErrorFilter } from './shared/infrastructure/exception-filters/unauthorized-error/unauthorized-error.filter';
+import { EnvConfigService } from './shared/infrastructure/env-config/env-config.service';
 
-export function applyGlobalConfig(app: INestApplication) {
+export function applyGlobalConfig(
+  app: INestApplication,
+  envConfigService: EnvConfigService,
+) {
+  const corsAllowedOrigins = envConfigService.getCorsAllowedOrigins();
+
+  app.setGlobalPrefix('api/v1');
   app.useGlobalPipes(
     new ValidationPipe({
       errorHttpStatusCode: 422,
@@ -21,7 +28,7 @@ export function applyGlobalConfig(app: INestApplication) {
     }),
   );
   app.enableCors({
-    origin: '*',
+    origin: corsAllowedOrigins.length > 0 ? corsAllowedOrigins : false,
     methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Authorization',
   });

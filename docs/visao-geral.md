@@ -46,8 +46,8 @@ Service (id) ────────────> Appointment.serviceId
 
 IDs são UUIDs gerados no domínio. No front, mantenha ao menos estes identificadores no estado da jornada:
 
-1. da resposta de `GET /barber-shop/catalog`, guarde `barberShop.id` da barbearia escolhida;
-2. da resposta de `GET /services?barberShopId=:barberShopId`, guarde `service.id`;
+1. da resposta de `GET /api/v1/barber-shops`, guarde `barberShop.id` da barbearia escolhida;
+2. da resposta de `GET /api/v1/services?barberShopId=:barberShopId`, guarde `service.id`;
 3. ao criar o agendamento, envie `serviceId`; a API resolve internamente `clientId`, `barberShopId` e o `barberId` do proprietário da barbearia do serviço;
 4. da resposta do agendamento, guarde `appointment.id` para consultar, alterar ou cancelar.
 
@@ -56,12 +56,12 @@ O contrato de serviço expõe `barberShopId`, que é o ID da barbearia do servi�
 ## Autenticação e formato HTTP
 
 - A aplicação escuta em `APP_PORT` ou, se a variável não existir, em `3001`.
-- Não há prefixo global de rota: por exemplo, a autenticação é feita em `POST /users/login`.
+- Todas as rotas usam o prefixo versionado `/api/v1`; por exemplo, a autenticação é feita em `POST /api/v1/users/login`. As rotas anteriores, sem prefixo, foram descontinuadas e não possuem aliases.
 - Rotas protegidas exigem `Authorization: Bearer <accessToken>`.
-- `POST /users/login` retorna `{ "accessToken": "..." }`, sem o envelope `data`.
+- `POST /api/v1/users/login` retorna `{ "accessToken": "..." }`, sem o envelope `data`.
 - As demais respostas de sucesso são envelopadas como `{ "data": ... }`. Listas paginadas retornam `{ "data": [...], "meta": { "currentPage", "perPage", "lastPage", "total" } }`.
 - Instantes de agendamentos e folgas são recebidos com offset explícito, persistidos como `timestamptz` e apresentados em UTC. Janelas semanais usam minutos do dia no fuso IANA da barbearia.
-- O CORS está aberto para qualquer origem no estado atual. Isso é conveniente em desenvolvimento, mas precisa ser restringido antes de produção.
+- Configure `CORS_ALLOWED_ORIGINS` com uma lista de origens separadas por vírgula (por exemplo, `https://app.example.com,https://admin.example.com`). Sem origens configuradas, nenhuma origem recebe CORS. O curinga `*` só é aceito em `NODE_ENV=development`.
 - A validação remove campos não previstos e responde com `422` para payload inválido. Há filtros explícitos para erros `404`, `409` e alguns erros de credenciais; a padronização completa dos erros fica pendente.
 
 Consulte o contrato completo em [rotas.md](./rotas.md) e as melhorias priorizadas em [todos.md](./todos.md).
@@ -82,6 +82,7 @@ APP_PORT=3001
 DATABASE_URL="postgresql://postgres:docker@localhost:5450/barber_api?schema=public"
 JWT_SECRET="troque-esta-chave"
 JWT_EXPIRES_IN=3600
+CORS_ALLOWED_ORIGINS=*
 ```
 
 Depois aplique as migrações e inicie a API:

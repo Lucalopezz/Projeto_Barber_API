@@ -14,7 +14,7 @@ async function bootstrap() {
   );
   const envConfigService = app.get(EnvConfigService);
 
-  applyGlobalConfig(app);
+  applyGlobalConfig(app, envConfigService);
 
   const port = envConfigService.getAppPort() || 3001;
   await app.listen(port, '0.0.0.0');

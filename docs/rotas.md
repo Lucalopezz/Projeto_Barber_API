@@ -1,6 +1,10 @@
 # Rotas da API
 
-Base URL local: `http://localhost:3001`. Não há prefixo como `/api` ou versionamento no estado atual.
+Base URL local: `http://localhost:3001/api/v1`.
+
+Todas as rotas abaixo já incluem o prefixo e a versão. As rotas sem
+`/api/v1` e a antiga família `/barber-shop/catalog` foram descontinuadas sem
+aliases, pois ainda não há consumidores em produção.
 
 > Este documento descreve o comportamento implementado hoje. Onde ele não atende ao fluxo de produto, a lacuna está registrada em [todos.md](./todos.md).
 
@@ -16,15 +20,15 @@ Base URL local: `http://localhost:3001`. Não há prefixo como `/api` ou version
 
 | Método | Rota | Acesso | Descrição |
 | --- | --- | --- | --- |
-| `POST` | `/users` | 🌐 | Cria uma conta. |
-| `POST` | `/users/login` | 🌐 | Autentica e gera token JWT. |
-| `GET` | `/users` | 🔒 | Lista usuários com paginação. |
-| `GET` | `/users/me` | 🔒 | Retorna o usuário do token e seu contexto de barbearia, quando houver. |
-| `PUT` | `/users/:id` | 🔒 | Atualiza o nome do próprio usuário. |
-| `PATCH` | `/users/:id` | 🔒 | Atualiza a senha do próprio usuário. |
-| `DELETE` | `/users/:id` | 🔒 | Exclui o próprio usuário. |
+| `POST` | `/api/v1/users` | 🌐 | Cria uma conta. |
+| `POST` | `/api/v1/users/login` | 🌐 | Autentica e gera token JWT. |
+| `GET` | `/api/v1/users` | 🔒 | Lista usuários com paginação. |
+| `GET` | `/api/v1/users/me` | 🔒 | Retorna o usuário do token e seu contexto de barbearia, quando houver. |
+| `PUT` | `/api/v1/users/:id` | 🔒 | Atualiza o nome do próprio usuário. |
+| `PATCH` | `/api/v1/users/:id` | 🔒 | Atualiza a senha do próprio usuário. |
+| `DELETE` | `/api/v1/users/:id` | 🔒 | Exclui o próprio usuário. |
 
-### Criar conta — `POST /users`
+### Criar conta — `POST /api/v1/users`
 
 ```json
 {
@@ -37,7 +41,7 @@ Base URL local: `http://localhost:3001`. Não há prefixo como `/api` ou version
 
 `role` aceita `client` ou `barber`. O papel `owner` não pode ser escolhido diretamente no cadastro: ele é atribuído quando um barbeiro cria uma barbearia. A resposta expõe `id`, `name`, `email`, `role` e `createdAt`; a senha nunca é devolvida.
 
-### Login — `POST /users/login`
+### Login — `POST /api/v1/users/login`
 
 ```json
 {
@@ -52,11 +56,11 @@ Resposta:
 { "accessToken": "jwt" }
 ```
 
-### Buscar usuários — `GET /users`
+### Buscar usuários — `GET /api/v1/users`
 
-Query opcional: `page`, `perPage`, `sort`, `sortDir`, `name`, `role`. Exemplo: `/users?role=barber&page=1&perPage=10`.
+Query opcional: `page`, `perPage`, `sort`, `sortDir`, `name`, `role`. Exemplo: `/api/v1/users?role=barber&page=1&perPage=10`.
 
-### Atualizar perfil — `PUT /users/:id`
+### Atualizar perfil — `PUT /api/v1/users/:id`
 
 ```json
 {
@@ -66,7 +70,7 @@ Query opcional: `page`, `perPage`, `sort`, `sortDir`, `name`, `role`. Exemplo: `
 
 O usuário autenticado só pode atualizar o próprio nome. O papel da conta não é alterável por esta rota.
 
-### Contexto do usuário — `GET /users/me`
+### Contexto do usuário — `GET /api/v1/users/me`
 
 Retorna os dados básicos do usuário autenticado e sua relação atual com uma barbearia. `barberShop` é `null` para clientes e barbeiros ainda não vinculados. Quando preenchido, `relationship` é `owner` para o dono ou `barber` para um barbeiro vinculado.
 
@@ -96,13 +100,13 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `POST` | `/barber-shop` | 🔒 `barber` — Cria a barbearia do barbeiro autenticado e promove sua conta para `owner`. A API de gestão atual aceita uma por proprietário. |
-| `GET` | `/barber-shop/catalog` | 🌐 Lista barbearias paginadas para a vitrine. |
-| `GET` | `/barber-shop/catalog/:id` | 🌐 Busca uma barbearia da vitrine por ID. |
-| `PUT` | `/barber-shop/:id` | 🔒 `owner` — Atualiza a própria barbearia. |
-| `DELETE` | `/barber-shop/:id` | 🔒 `owner` — Exclui a própria barbearia. |
+| `POST` | `/api/v1/barber-shops` | 🔒 `barber` — Cria a barbearia do barbeiro autenticado e promove sua conta para `owner`. A API de gestão atual aceita uma por proprietário. |
+| `GET` | `/api/v1/barber-shops` | 🌐 Lista barbearias paginadas para a vitrine. |
+| `GET` | `/api/v1/barber-shops/:id` | 🌐 Busca uma barbearia da vitrine por ID. |
+| `PUT` | `/api/v1/barber-shops/:id` | 🔒 `owner` — Atualiza a própria barbearia. |
+| `DELETE` | `/api/v1/barber-shops/:id` | 🔒 `owner` — Exclui a própria barbearia. |
 
-### Criar/atualizar — `POST /barber-shop` e `PUT /barber-shop/:id`
+### Criar/atualizar — `POST /api/v1/barber-shops` e `PUT /api/v1/barber-shops/:id`
 
 ```json
 {
@@ -117,18 +121,18 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 ## Serviços
 
 > As operações de escrita exigem token de proprietário. A leitura de serviços
-> é pública porque compõe a vitrine: `GET /services?barberShopId=...` lista os
-> serviços de uma barbearia e `GET /services/:id` retorna seus detalhes.
+> é pública porque compõe a vitrine: `GET /api/v1/services?barberShopId=...` lista os
+> serviços de uma barbearia e `GET /api/v1/services/:id` retorna seus detalhes.
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `POST` | `/services` | 🔒 `owner` — Cria serviço na barbearia do dono autenticado. |
-| `GET` | `/services?barberShopId=:id` | 🌐 Lista serviços paginados da barbearia informada. |
-| `GET` | `/services/:id` | 🌐 Busca serviço por ID. |
-| `PATCH` | `/services/:id` | 🔒 `owner` — Atualiza serviço da própria barbearia. |
-| `DELETE` | `/services/:id` | 🔒 `owner` — Exclui serviço da própria barbearia. |
+| `POST` | `/api/v1/services` | 🔒 `owner` — Cria serviço na barbearia do dono autenticado. |
+| `GET` | `/api/v1/services?barberShopId=:id` | 🌐 Lista serviços paginados da barbearia informada. |
+| `GET` | `/api/v1/services/:id` | 🌐 Busca serviço por ID. |
+| `PATCH` | `/api/v1/services/:id` | 🔒 `owner` — Atualiza serviço da própria barbearia. |
+| `DELETE` | `/api/v1/services/:id` | 🔒 `owner` — Exclui serviço da própria barbearia. |
 
-### Criar/atualizar — `POST /services` e `PATCH /services/:id`
+### Criar/atualizar — `POST /api/v1/services` e `PATCH /api/v1/services/:id`
 
 ```json
 {
@@ -141,7 +145,7 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 
 `price` é numérico e `duration` representa minutos. A resposta contém `id`, `name`, `price`, `description`, `duration`, `barberShopId` e `createdAt`. `barberShopId` é o ID da barbearia à qual o serviço pertence e permite navegar da barbearia selecionada para o serviço escolhido.
 
-### Buscar serviços — `GET /services`
+### Buscar serviços — `GET /api/v1/services`
 
 Query: `barberShopId` é obrigatório; `page`, `perPage`, `sort` e `sortDir` são opcionais. A resposta é uma coleção paginada com `data` e `meta`.
 
@@ -151,17 +155,17 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 
 | Método | Rota | Descrição |
 | --- | --- | --- |
-| `POST` | `/appointments` | Cria agendamento para o usuário autenticado. |
-| `GET` | `/appointments` | Lista agendamentos do cliente ou, para o dono de uma barbearia, da sua barbearia. |
-| `GET` | `/appointments/:id` | Busca um agendamento visível para o ator autenticado. |
-| `PATCH` | `/appointments/:id` | Cancela ou conclui um agendamento sem excluí-lo. |
-| `PUT` | `/appointments/:id` | 🔒 `owner` ou `barber` — Altera data e/ou serviço de um agendamento em aberto. |
-| `GET` | `/appointments/availability/me` | 🔒 `owner` ou `barber` — Consulta o próprio expediente, folgas e fuso. |
-| `PUT` | `/appointments/availability/me/schedule` | 🔒 `owner` ou `barber` — Substitui o próprio expediente semanal. |
-| `POST` | `/appointments/availability/me/time-offs` | 🔒 `owner` ou `barber` — Cadastra uma folga. |
-| `DELETE` | `/appointments/availability/me/time-offs/:id` | 🔒 `owner` ou `barber` — Remove uma folga própria. |
+| `POST` | `/api/v1/appointments` | Cria agendamento para o usuário autenticado. |
+| `GET` | `/api/v1/appointments` | Lista agendamentos do cliente ou, para o dono de uma barbearia, da sua barbearia. |
+| `GET` | `/api/v1/appointments/:id` | Busca um agendamento visível para o ator autenticado. |
+| `PATCH` | `/api/v1/appointments/:id` | Cancela ou conclui um agendamento sem excluí-lo. |
+| `PUT` | `/api/v1/appointments/:id` | 🔒 `owner` ou `barber` — Altera data e/ou serviço de um agendamento em aberto. |
+| `GET` | `/api/v1/appointments/availability/me` | 🔒 `owner` ou `barber` — Consulta o próprio expediente, folgas e fuso. |
+| `PUT` | `/api/v1/appointments/availability/me/schedule` | 🔒 `owner` ou `barber` — Substitui o próprio expediente semanal. |
+| `POST` | `/api/v1/appointments/availability/me/time-offs` | 🔒 `owner` ou `barber` — Cadastra uma folga. |
+| `DELETE` | `/api/v1/appointments/availability/me/time-offs/:id` | 🔒 `owner` ou `barber` — Remove uma folga própria. |
 
-### Criar — `POST /appointments`
+### Criar — `POST /api/v1/appointments`
 
 ```json
 {
@@ -172,11 +176,11 @@ Todas as rotas exigem token. Ao criar um agendamento, o usuário autenticado vir
 
 A resposta contém `id`, `date`, `endDate`, `status`, `clientId`, `barberId`, `barberShopId`, `serviceId` e `createdAt`. Use `serviceId` para referenciar o serviço escolhido, `barberId` para identificar o profissional responsável, `barberShopId` para identificar a barbearia e `id` nas ações posteriores.
 
-### Filtrar lista — `GET /appointments`
+### Filtrar lista — `GET /api/v1/appointments`
 
 Query opcional: `page`, `perPage`, `sort`, `sortDir`, `serviceId`, `barberShopId`, `dateFrom` e `dateTo`. Os limites de data são inclusivos para o início do agendamento. O filtro depende do contexto da conta: proprietário vê sua agenda; quem não possui barbearia vê agendamentos em que é cliente.
 
-### Consultar detalhes — `GET /appointments/:id`
+### Consultar detalhes — `GET /api/v1/appointments/:id`
 
 O cliente pode consultar os próprios agendamentos. O proprietário pode
 consultar qualquer agendamento da sua barbearia. Um barbeiro vinculado pode
@@ -184,7 +188,7 @@ consultar somente os agendamentos atribuídos a ele. Para não revelar a
 existência de agendamentos de terceiros, a API responde `404` quando o recurso
 não é visível para o usuário autenticado.
 
-### Alterar status — `PATCH /appointments/:id`
+### Alterar status — `PATCH /api/v1/appointments/:id`
 
 O cliente pode cancelar o próprio agendamento. O proprietário ou barbeiro
 atribuído ao agendamento pode cancelá-lo ou concluí-lo, desde que esteja
@@ -201,7 +205,7 @@ Para concluir, o profissional atribuído envia:
 { "newStatus": "completed" }
 ```
 
-### Alterar data/serviço — `PUT /appointments/:id`
+### Alterar data/serviço — `PUT /api/v1/appointments/:id`
 
 Somente o proprietário ou barbeiro atribuído ao agendamento, vinculado à mesma
 barbearia, pode editar. Agendamentos concluídos ou cancelados não podem ser
@@ -220,7 +224,7 @@ O agendamento só é criado ou remarcado se o intervalo completo couber no exped
 ### Configurar disponibilidade própria
 
 Antes de receber agendamentos, o proprietário ou barbeiro precisa configurar o
-próprio expediente. `PUT /appointments/availability/me/schedule` substitui
+próprio expediente. `PUT /api/v1/appointments/availability/me/schedule` substitui
 todas as janelas existentes; uma lista vazia fecha a agenda. `dayOfWeek` usa
 `0` para domingo até `6` para sábado. Os minutos são contados desde `00:00` no
 fuso da barbearia, e `endMinute` é exclusivo. Janelas do mesmo dia não podem se
@@ -245,7 +249,7 @@ Folgas são intervalos pontuais e exigem offset explícito:
 }
 ```
 
-`GET /appointments/availability/me` devolve o fuso necessário para o cliente
+`GET /api/v1/appointments/availability/me` devolve o fuso necessário para o cliente
 apresentar a agenda em horário local:
 
 ```json
