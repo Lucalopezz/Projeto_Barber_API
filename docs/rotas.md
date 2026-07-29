@@ -113,7 +113,7 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 | Método | Rota | Descrição |
 | --- | --- | --- |
 | `POST` | `/services` | 🔒 `owner` — Cria serviço na barbearia do dono autenticado. |
-| `GET` | `/services?barberShopId=:id` | 🌐 Lista todos os serviços da barbearia informada. |
+| `GET` | `/services?barberShopId=:id` | 🌐 Lista serviços paginados da barbearia informada. |
 | `GET` | `/services/:id` | 🌐 Busca serviço por ID. |
 | `PATCH` | `/services/:id` | 🔒 `owner` — Atualiza serviço da própria barbearia. |
 | `DELETE` | `/services/:id` | 🔒 `owner` — Exclui serviço da própria barbearia. |
@@ -130,6 +130,10 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 ```
 
 `price` é numérico e `duration` representa minutos. A resposta contém `id`, `name`, `price`, `description`, `duration`, `barberShopId` e `createdAt`. `barberShopId` é o ID da barbearia à qual o serviço pertence e permite navegar da barbearia selecionada para o serviço escolhido.
+
+### Buscar serviços — `GET /services`
+
+Query: `barberShopId` é obrigatório; `page`, `perPage`, `sort` e `sortDir` são opcionais. A resposta é uma coleção paginada com `data` e `meta`.
 
 ## Agendamentos
 

@@ -30,16 +30,38 @@ describe('ServicesController', () => {
   });
 
   it('should expose the service list by barber shop without guards', async () => {
-    listServicesByBarberShopUseCase.execute.mockResolvedValue([service]);
+    listServicesByBarberShopUseCase.execute.mockResolvedValue({
+      items: [service],
+      total: 1,
+      currentPage: 1,
+      perPage: 15,
+      lastPage: 1,
+    });
 
-    const output = await sut.findAll({ barberShopId });
+    const output = await sut.findAll({
+      barberShopId,
+      page: 1,
+      perPage: 15,
+      sort: 'name',
+      sortDir: 'asc',
+    });
 
     expect(listServicesByBarberShopUseCase.execute).toHaveBeenCalledWith({
       barberShopId,
+      page: 1,
+      perPage: 15,
+      sort: 'name',
+      sortDir: 'asc',
     });
-    expect(output).toEqual([
+    expect(output.data).toEqual([
       expect.objectContaining({ id: service.id, barberShopId }),
     ]);
+    expect(output.meta).toEqual({
+      currentPage: 1,
+      perPage: 15,
+      lastPage: 1,
+      total: 1,
+    });
     expect(
       Reflect.getMetadata(
         GUARDS_METADATA,

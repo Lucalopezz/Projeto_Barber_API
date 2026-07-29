@@ -1,7 +1,9 @@
-import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
+import {
+  PaginationOutput,
+  PaginationOutputMapper,
+} from '@/shared/application/dtos/pagination-output';
 import { ServicesRepository } from '@/services/domain/repositories/services.repository';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
-import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import {
   ServicesOutput,
   ServicesOutputMapper,
@@ -10,30 +12,40 @@ import {
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ListServicesByBarberShopUseCase {
   export type Input = {
+    page?: number;
+    perPage?: number;
+    sort?: string;
+    sortDir?: 'asc' | 'desc';
     barberShopId: string;
   };
-  export type Output = ServicesOutput[];
+  export type Output = PaginationOutput<ServicesOutput>;
 
   export class UseCase implements UseCaseContract<Input, Output> {
-    constructor(
-      private servicesRepository: ServicesRepository.Repository,
-      private barberShopRepository: BarberShopRepository.Repository,
-    ) {}
+    constructor(private servicesRepository: ServicesRepository.Repository) {}
 
     async execute(input: Input): Promise<Output> {
-      const barberShop = await this.barberShopRepository.findById(
-        input.barberShopId,
-      );
-
-      if (!barberShop) {
-        throw new NotFoundError('BarberShop not found');
+      const filter: ServicesRepository.Filter = {};
+      if (input.barberShopId) {
+        filter.barberShopId = input.barberShopId;
       }
 
-      const entities = await this.servicesRepository.findAllForBarberShop(
-        barberShop.id,
+      const params = new ServicesRepository.ServicesSearchParams({
+        page: input.page,
+        perPage: input.perPage,
+        sort: input.sort,
+        sortDir: input.sortDir,
+        filter,
+      });
+
+      const searchResult = await this.servicesRepository.search(params);
+      const items = searchResult.items.map((entity) =>
+        ServicesOutputMapper.toOutput(entity),
       );
 
-      return entities.map((entity) => ServicesOutputMapper.toOutput(entity));
+      return PaginationOutputMapper.toOutput<ServicesOutput>(
+        items,
+        searchResult,
+      );
     }
   }
 }

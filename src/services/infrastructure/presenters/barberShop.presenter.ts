@@ -1,4 +1,6 @@
 import { ServicesOutput } from '@/services/application/dtos/services-output.dto';
+import { ListServicesByBarberShopUseCase } from '@/services/application/usecases/list-services-by-barberShop.usecase';
+import { CollectionPresenter } from '@/shared/infrastructure/presenters/collection.presenter';
 import { Transform } from 'class-transformer';
 
 export class ServicePresenter {
@@ -23,4 +25,12 @@ export class ServicePresenter {
   }
 }
 
-// Services dont have a search method, so no collection presenter is needed
+export class ServicesCollectionPresenter extends CollectionPresenter {
+  data: ServicePresenter[];
+
+  constructor(output: ListServicesByBarberShopUseCase.Output) {
+    const { items, ...paginationProps } = output;
+    super(paginationProps);
+    this.data = items.map((item) => new ServicePresenter(item));
+  }
+}

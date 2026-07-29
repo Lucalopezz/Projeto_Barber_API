@@ -16,7 +16,10 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 import { CreateServicesUseCase } from '../application/usecases/create-services.usecase';
 import { AuthGuard } from '@/auth/guard/auth.guard';
 import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
-import { ServicePresenter } from './presenters/barberShop.presenter';
+import {
+  ServicePresenter,
+  ServicesCollectionPresenter,
+} from './presenters/barberShop.presenter';
 import { GetServicesUseCase } from '../application/usecases/get-services.usecase';
 import { UpdateServicesUseCase } from '../application/usecases/update-services.usecase';
 import { DeleteServicesUseCase } from '../application/usecases/delete-services.usecase';
@@ -43,6 +46,10 @@ export class ServicesController {
     return new ServicePresenter(output);
   }
 
+  static servicesToResponse(output: ListServicesByBarberShopUseCase.Output) {
+    return new ServicesCollectionPresenter(output);
+  }
+
   @Post()
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.owner])
@@ -59,8 +66,8 @@ export class ServicesController {
 
   @Get()
   async findAll(@Query() query: ListServicesDto) {
-    const models = await this.listServicesByBarberShopUseCase.execute(query);
-    return models.map((model) => ServicesController.serviceToResponse(model));
+    const output = await this.listServicesByBarberShopUseCase.execute(query);
+    return ServicesController.servicesToResponse(output);
   }
 
   @Get(':id')

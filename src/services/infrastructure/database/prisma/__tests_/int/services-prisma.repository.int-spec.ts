@@ -6,6 +6,7 @@ import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { ServicesPrismaRepository } from '../../services-prisma.repository';
+import { ServicesRepository } from '@/services/domain/repositories/services.repository';
 import { ServiceDataBuilder } from '@/services/domain/helpers/service-data-builder';
 import { BarberShopDataBuilder } from '@/barberShop/domain/helpers/barberShop-data-builder';
 import { BarberShopEntity } from '@/barberShop/domain/entities/barber-shop.entity';
@@ -27,6 +28,9 @@ describe('ServicesPrismaRepository integration tests', () => {
 
   beforeEach(async () => {
     sut = new ServicesPrismaRepository(prismaService as any);
+    await prismaService.appointment.deleteMany();
+    await prismaService.barberTimeOff.deleteMany();
+    await prismaService.barberSchedule.deleteMany();
     await prismaService.service.deleteMany();
     await prismaService.barberShop.deleteMany();
     await prismaService.user.deleteMany();
@@ -148,6 +152,47 @@ describe('ServicesPrismaRepository integration tests', () => {
         duration: entity.duration,
       }),
     );
+  });
+
+  it('should search services with barber shop filter and pagination', async () => {
+    const firstBarberShopId = await createBarberShop();
+    const secondBarberShopId = await createBarberShop();
+
+    const services = [
+      new ServiceEntity(
+        ServiceDataBuilder({ name: 'Zeta', barberShopId: firstBarberShopId }),
+      ),
+      new ServiceEntity(
+        ServiceDataBuilder({ name: 'Alpha', barberShopId: firstBarberShopId }),
+      ),
+      new ServiceEntity(
+        ServiceDataBuilder({
+          name: 'Other shop service',
+          barberShopId: secondBarberShopId,
+        }),
+      ),
+    ];
+
+    await prismaService.service.createMany({
+      data: services.map((service) => service.toJSON()),
+    });
+
+    const result = await sut.search(
+      new ServicesRepository.ServicesSearchParams({
+        page: 1,
+        perPage: 1,
+        sort: 'name',
+        sortDir: 'asc',
+        filter: { barberShopId: firstBarberShopId },
+      }),
+    );
+
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].name).toBe('Alpha');
+    expect(result.total).toBe(2);
+    expect(result.currentPage).toBe(1);
+    expect(result.perPage).toBe(1);
+    expect(result.lastPage).toBe(2);
   });
 
   it('should throw error on update when entity not found', async () => {

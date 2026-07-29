@@ -1,5 +1,3 @@
-import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
-import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { ServiceDataBuilder } from '@/services/domain/helpers/service-data-builder';
 import { ServicesRepository } from '@/services/domain/repositories/services.repository';
@@ -8,52 +6,54 @@ import { ListServicesByBarberShopUseCase } from '../../list-services-by-barberSh
 describe('ListServicesByBarberShopUseCase unit tests', () => {
   const barberShopId = '123e4567-e89b-12d3-a456-426614174000';
   const servicesRepository = {
-    findAllForBarberShop: jest.fn(),
+    search: jest.fn(),
   } as unknown as ServicesRepository.Repository;
-  const barberShopRepository = {
-    findById: jest.fn(),
-  } as unknown as BarberShopRepository.Repository;
   let sut: ListServicesByBarberShopUseCase.UseCase;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    sut = new ListServicesByBarberShopUseCase.UseCase(
-      servicesRepository,
-      barberShopRepository,
-    );
+    sut = new ListServicesByBarberShopUseCase.UseCase(servicesRepository);
   });
 
-  it('should list only services from the requested barber shop', async () => {
+  it('should search services using the barber shop filter and pagination', async () => {
     const service = new ServiceEntity(
       ServiceDataBuilder({ barberShopId }),
     );
-    (barberShopRepository.findById as jest.Mock).mockResolvedValue({
-      id: barberShopId,
+    (servicesRepository.search as jest.Mock).mockResolvedValue({
+      items: [service],
+      total: 1,
+      currentPage: 1,
+      perPage: 10,
+      lastPage: 1,
     });
-    (servicesRepository.findAllForBarberShop as jest.Mock).mockResolvedValue([
-      service,
-    ]);
 
-    const output = await sut.execute({ barberShopId });
-
-    expect(servicesRepository.findAllForBarberShop).toHaveBeenCalledWith(
+    const output = await sut.execute({
       barberShopId,
-    );
-    expect(output).toEqual([
+      page: 1,
+      perPage: 10,
+      sort: 'name',
+      sortDir: 'asc',
+    });
+
+    expect(servicesRepository.search).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: service.id,
-        barberShopId,
+        filter: { barberShopId },
+        page: 1,
+        perPage: 10,
+        sort: 'name',
+        sortDir: 'asc',
       }),
+    );
+    expect(output.items).toEqual([
+      expect.objectContaining({ id: service.id, barberShopId }),
     ]);
-  });
-
-  it('should throw when the requested barber shop does not exist', async () => {
-    (barberShopRepository.findById as jest.Mock).mockResolvedValue(null);
-
-    await expect(
-      sut.execute({ barberShopId: 'missing-barber-shop-id' }),
-    ).rejects.toThrow(new NotFoundError('BarberShop not found'));
-
-    expect(servicesRepository.findAllForBarberShop).not.toHaveBeenCalled();
+    expect(output).toEqual(
+      expect.objectContaining({
+        total: 1,
+        currentPage: 1,
+        perPage: 10,
+        lastPage: 1,
+      }),
+    );
   });
 });

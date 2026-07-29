@@ -82,16 +82,10 @@ import { ListServicesByBarberShopUseCase } from '../application/usecases/list-se
     },
     {
       provide: ListServicesByBarberShopUseCase.UseCase,
-      useFactory: (
-        servicesRepository: ServicesRepository.Repository,
-        barberShopRepository: BarberShopRepository.Repository,
-      ) => {
-        return new ListServicesByBarberShopUseCase.UseCase(
-          servicesRepository,
-          barberShopRepository,
-        );
+      useFactory: (servicesRepository: ServicesRepository.Repository) => {
+        return new ListServicesByBarberShopUseCase.UseCase(servicesRepository);
       },
-      inject: ['ServicesRepository', 'BarberShopRepository'],
+      inject: ['ServicesRepository'],
     },
   ],
 })
