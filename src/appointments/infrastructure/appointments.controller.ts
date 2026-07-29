@@ -10,6 +10,8 @@ import {
   Put,
   Query,
   Delete,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
@@ -132,6 +134,7 @@ export class AppointmentsController {
   }
 
   @Delete('availability/me/time-offs/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(RoleGuard)
   @Roles([Role.owner, Role.barber])
   async deleteTimeOff(

@@ -10,6 +10,8 @@ import {
   Inject,
   UseGuards,
   Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
@@ -93,10 +95,11 @@ export class ServicesController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.owner])
-  remove(@Param('id') id: string, @CurrentUserId() userId: string) {
-    return this.deleteServicesUseCase.execute({
+  async remove(@Param('id') id: string, @CurrentUserId() userId: string) {
+    await this.deleteServicesUseCase.execute({
       id,
       barberShopOwnerId: userId,
     });

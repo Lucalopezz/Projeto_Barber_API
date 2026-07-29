@@ -7,6 +7,8 @@ import {
   Patch,
   Param,
   Delete,
+  HttpCode,
+  HttpStatus,
   Inject,
   Query,
   Put,
@@ -130,6 +132,7 @@ export class UsersController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard)
   async remove(@Param('id') id: string, @CurrentUserId() userId: string) {
     await this.deleteUserUseCase.execute({ id, userId });

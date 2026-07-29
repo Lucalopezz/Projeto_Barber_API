@@ -27,5 +27,5 @@ Esta lista prioriza o que impede o fluxo de uma plataforma de barbearias, especi
 
 - [ ] **Publicar OpenAPI/Swagger ou remover a referência.** O README anterior citava Swagger, mas não há configuração encontrada na inicialização. Gerar contrato a partir dos DTOs, com autenticação Bearer, schemas, exemplos e respostas de erro.
 - [ ] **Criar testes e2e para a jornada completa.** Cobrir cadastro/login, criação da barbearia, criação/listagem pública de serviço, agendamento pelo cliente, visualização/atualização pelo barbeiro e negação de acesso entre barbearias.
-- [ ] **Tornar exclusões explícitas.** As rotas `DELETE` retornam corpo vazio. Escolher e documentar `204 No Content` ou uma resposta de confirmação; evitar que o front dependa de comportamento implícito. 
-- [ ] **Melhorar a descoberta de horários.** Antes de pedir um agendamento, o front precisa consultar horários livres. Criar endpoint como `GET /barber-shops/:id/availability?date=...&serviceId=...` e retornar slots utilizáveis.
+- [x] **Tornar exclusões explícitas.** As rotas `DELETE` retornam `204 No Content`, sem corpo, e o contrato está documentado.
+- [x] **Melhorar a descoberta de horários.** `GET /barber-shops/:id/availability?date=...&serviceId=...` retorna slots utilizáveis para a data local da barbearia.

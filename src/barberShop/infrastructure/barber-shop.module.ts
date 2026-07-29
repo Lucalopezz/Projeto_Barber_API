@@ -14,6 +14,14 @@ import { DeleteBarberShopUseCase } from '../application/usecases/delete-barberSh
 import { AuthModule } from '@/auth/auth.module';
 import { CreateBarberShopPrismaTransaction } from './database/prisma/create-barber-shop-prisma.transaction';
 import { CreateBarberShopTransaction } from '../application/ports/create-barber-shop.transaction';
+import { GetPublicAvailabilityUseCase } from '@/appointments/application/usecases/get-public-availability.usecase';
+import { AppointmentAvailabilityService } from '@/appointments/application/services/appointment-availability.service';
+import { AppointmentsRepository } from '@/appointments/domain/repositories/appointments.repository';
+import { AppointmentsPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/appointments-prisma.repository';
+import { BarberAvailabilityRepository } from '@/appointments/domain/repositories/barber-availability.repository';
+import { BarberAvailabilityPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/barber-availability-prisma.repository';
+import { ServicesRepository } from '@/services/domain/repositories/services.repository';
+import { ServicesPrismaRepository } from '@/services/infrastructure/database/prisma/services-prisma.repository';
 
 @Module({
   controllers: [BarberShopController],
@@ -36,6 +44,36 @@ import { CreateBarberShopTransaction } from '../application/ports/create-barber-
         return new UserPrismaRepository(prismaService);
       },
       inject: ['PrismaService'],
+    },
+    {
+      provide: 'AppointmentRepository',
+      useFactory: (prismaService: PrismaService) =>
+        new AppointmentsPrismaRepository(prismaService),
+      inject: ['PrismaService'],
+    },
+    {
+      provide: 'BarberAvailabilityRepository',
+      useFactory: (prismaService: PrismaService) =>
+        new BarberAvailabilityPrismaRepository(prismaService),
+      inject: ['PrismaService'],
+    },
+    {
+      provide: 'ServicesRepository',
+      useFactory: (prismaService: PrismaService) =>
+        new ServicesPrismaRepository(prismaService),
+      inject: ['PrismaService'],
+    },
+    {
+      provide: AppointmentAvailabilityService,
+      useFactory: (
+        appointmentRepository: AppointmentsRepository.Repository,
+        availabilityRepository: BarberAvailabilityRepository.Repository,
+      ) =>
+        new AppointmentAvailabilityService(
+          appointmentRepository,
+          availabilityRepository,
+        ),
+      inject: ['AppointmentRepository', 'BarberAvailabilityRepository'],
     },
     {
       provide: 'CreateBarberShopTransaction',
@@ -90,6 +128,27 @@ import { CreateBarberShopTransaction } from '../application/ports/create-barber-
         return new DeleteBarberShopUseCase.UseCase(barberShopRepository);
       },
       inject: ['BarberShopRepository'],
+    },
+    {
+      provide: GetPublicAvailabilityUseCase.UseCase,
+      useFactory: (
+        barberShopRepository: BarberShopRepository.Repository,
+        servicesRepository: ServicesRepository.Repository,
+        availabilityRepository: BarberAvailabilityRepository.Repository,
+        availabilityService: AppointmentAvailabilityService,
+      ) =>
+        new GetPublicAvailabilityUseCase.UseCase(
+          barberShopRepository,
+          servicesRepository,
+          availabilityRepository,
+          availabilityService,
+        ),
+      inject: [
+        'BarberShopRepository',
+        'ServicesRepository',
+        'BarberAvailabilityRepository',
+        AppointmentAvailabilityService,
+      ],
     },
   ],
 })

@@ -11,7 +11,7 @@ aliases, pois ainda não há consumidores em produção.
 ## Convenções
 
 - **Auth**: `🔒` exige `Authorization: Bearer <accessToken>`; `🌐` é pública.
-- **Sucesso**: em geral, `{ "data": <recurso> }`; coleções paginadas retornam `data` e `meta`. Login retorna somente `accessToken`.
+- **Sucesso**: em geral, `{ "data": <recurso> }`; coleções paginadas retornam `data` e `meta`. Login retorna somente `accessToken`. Todas as rotas `DELETE` retornam `204 No Content`, sem envelope ou corpo.
 - **Datas**: envie instantes em ISO 8601 com `Z` ou offset explícito, por exemplo `"2026-07-15T14:00:00.000Z"` ou `"2026-07-15T11:00:00-03:00"`. A API persiste e apresenta esses instantes em UTC.
 - **Paginação**: `page`, `perPage`, `sort` e `sortDir` (`asc` ou `desc`) são aceitos nas rotas de busca. Quando omitidos, a página é `1` e `perPage` é `15`.
 - **Erros**: payload inválido retorna `422`; ausência/invalidade de token retorna `401`; recursos não encontrados podem retornar `404`. Alguns erros de regra ainda não estão normalizados e são tema do backlog.
@@ -105,6 +105,7 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 | `GET` | `/api/v1/barber-shops/:id` | 🌐 Busca uma barbearia da vitrine por ID. |
 | `PUT` | `/api/v1/barber-shops/:id` | 🔒 `owner` — Atualiza a própria barbearia. |
 | `DELETE` | `/api/v1/barber-shops/:id` | 🔒 `owner` — Exclui a própria barbearia. |
+| `GET` | `/api/v1/barber-shops/:id/availability?date=...&serviceId=...` | 🌐 Consulta horários livres para um serviço em uma data local da barbearia. |
 
 ### Criar/atualizar — `POST /api/v1/barber-shops` e `PUT /api/v1/barber-shops/:id`
 
@@ -117,6 +118,28 @@ As operações de escrita exigem autenticação. As rotas de leitura são públi
 ```
 
 `address` é uma string no formato `logradouro, número, cidade - UF`; a UF deve ter duas letras. `timezone` é opcional, usa `America/Sao_Paulo` por padrão e deve ser um identificador IANA. Para listagem, use `page`, `perPage`, `sort`, `sortDir` e `filter` (busca por nome). A resposta contém `id`, `name`, `address`, `ownerId` e `createdAt`.
+
+### Horários disponíveis — `GET /api/v1/barber-shops/:id/availability`
+
+Rota pública para a jornada de agendamento. `date` é obrigatório no formato de data local `YYYY-MM-DD` e `serviceId` deve pertencer à barbearia. Os slots começam no início do expediente e seguem intervalos de 30 minutos; cada slot considera a duração do serviço, expediente, folgas e agendamentos `scheduled` existentes. Os instantes são UTC e `timezone` informa o fuso usado para a data consultada.
+
+`GET /api/v1/barber-shops/UUID_DA_BARBEARIA/availability?date=2026-07-28&serviceId=UUID_DO_SERVICO`
+
+```json
+{
+  "data": {
+    "date": "2026-07-28",
+    "timezone": "America/Sao_Paulo",
+    "serviceId": "UUID_DO_SERVICO",
+    "slots": [
+      {
+        "startsAt": "2026-07-28T12:00:00.000Z",
+        "endsAt": "2026-07-28T12:45:00.000Z"
+      }
+    ]
+  }
+}
+```
 
 ## Serviços
 

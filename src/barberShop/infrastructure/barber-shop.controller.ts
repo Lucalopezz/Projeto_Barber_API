@@ -10,6 +10,8 @@ import {
   Query,
   Put,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { CreateBarberShopDto } from './dto/create-barber-shop.dto';
 import { UpdateBarberShopDto } from './dto/update-barber-shop.dto';
@@ -29,6 +31,9 @@ import { AuthGuard } from '@/auth/guard/auth.guard';
 import { RoleGuard } from '@/auth/guard/role.guard';
 import { Roles } from '@/auth/decorators/roles.decorator';
 import { Role } from '@/users/domain/entities/role.enum';
+import { GetPublicAvailabilityUseCase } from '@/appointments/application/usecases/get-public-availability.usecase';
+import { GetPublicAvailabilityDto } from '@/appointments/infrastructure/dto/get-public-availability.dto';
+import { PublicAvailabilityPresenter } from '@/barberShop/infrastructure/presenters/public-availability.presenter';
 
 @Controller('barber-shops')
 export class BarberShopController {
@@ -46,6 +51,9 @@ export class BarberShopController {
 
   @Inject(DeleteBarberShopUseCase.UseCase)
   private deleteBarberShopUseCase: DeleteBarberShopUseCase.UseCase;
+
+  @Inject(GetPublicAvailabilityUseCase.UseCase)
+  private getPublicAvailabilityUseCase: GetPublicAvailabilityUseCase.UseCase;
 
   static barberShopToResponse(output: BarberShopOutput) {
     return new BarberShopPresenter(output);
@@ -81,6 +89,18 @@ export class BarberShopController {
     return BarberShopController.barberShopToResponse(output);
   }
 
+  @Get(':id/availability')
+  async getAvailability(
+    @Param('id') barberShopId: string,
+    @Query() query: GetPublicAvailabilityDto,
+  ) {
+    const output = await this.getPublicAvailabilityUseCase.execute({
+      barberShopId,
+      ...query,
+    });
+    return new PublicAvailabilityPresenter(output);
+  }
+
   @Put(':id')
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.owner])
@@ -98,9 +118,10 @@ export class BarberShopController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(AuthGuard, RoleGuard)
   @Roles([Role.owner])
-  remove(@Param('id') id: string, @CurrentUserId() ownerId: string) {
-    return this.deleteBarberShopUseCase.execute({ id, ownerId });
+  async remove(@Param('id') id: string, @CurrentUserId() ownerId: string) {
+    await this.deleteBarberShopUseCase.execute({ id, ownerId });
   }
 }

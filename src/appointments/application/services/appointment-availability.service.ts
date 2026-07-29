@@ -25,6 +25,18 @@ export class AppointmentAvailabilityService {
     timezone: string;
     excludeAppointmentId?: string;
   }): Promise<void> {
+    if (!(await this.isAvailable(input))) {
+      throw new BadRequestError('Appointment not available');
+    }
+  }
+
+  async isAvailable(input: {
+    barberId: string;
+    startsAt: Date;
+    endsAt: Date;
+    timezone: string;
+    excludeAppointmentId?: string;
+  }): Promise<boolean> {
     const { barberId, startsAt, endsAt, timezone, excludeAppointmentId } =
       input;
 
@@ -36,13 +48,13 @@ export class AppointmentAvailabilityService {
         excludeAppointmentId,
       );
     if (overlappingAppointment) {
-      throw new BadRequestError('Appointment not available');
+      return false;
     }
 
     if (
       await this.availabilityRepository.hasTimeOff(barberId, startsAt, endsAt)
     ) {
-      throw new BadRequestError('Appointment not available');
+      return false;
     }
 
     const start = this.getZonedParts(startsAt, timezone);
@@ -66,7 +78,7 @@ export class AppointmentAvailabilityService {
     // Midnight is the exclusive 1440 boundary of the starting day. Any
     // duration beyond it would spill into a different recurring window.
     if (!sameLocalDay && !endsExactlyAtNextMidnight) {
-      throw new BadRequestError('Appointment not available');
+      return false;
     }
 
     const schedules = await this.availabilityRepository.findSchedules(
@@ -91,8 +103,9 @@ export class AppointmentAvailabilityService {
     );
 
     if (!insideSchedule) {
-      throw new BadRequestError('Appointment not available');
+      return false;
     }
+    return true;
   }
 
   private getZonedParts(date: Date, timezone: string): ZonedDateParts {
