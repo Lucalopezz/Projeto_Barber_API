@@ -30,7 +30,8 @@
     "db:stop": "docker compose stop",
     "lint:check": "pnpm lint",
     "test:architecture": "node --test test/architecture/*.test.mjs",
-    "check:architecture": "depcruise --config .dependency-cruiser.cjs --output-type err-long src"
+    "check:architecture": "depcruise --config .dependency-cruiser.cjs --output-type err-long src",
+    "test:evals": "pnpm test --runTestsByPath src/assistant/application/usecases/__tests__/unit/assistant.evals.spec.ts"
   },
   "dependencies": {
     "@fastify/static": "^10.1.6",

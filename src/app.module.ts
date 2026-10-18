@@ -1,3 +1,4 @@
+import { AssistantModule } from './assistant/infrastructure/assistant.module';
 import { Module } from '@nestjs/common';
 import { EnvConfigModule } from './shared/infrastructure/env-config/env-config.module';
 import { UsersModule } from './users/infrastructure/users.module';
@@ -14,6 +15,7 @@ import { AppointmentsModule } from './appointments/infrastructure/appointments.m
     BarberShopModule,
     ServicesModule,
     AppointmentsModule,
+    AssistantModule,
   ],
 })
 export class AppModule {}
