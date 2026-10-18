@@ -102,7 +102,8 @@ Repositórios são injetados por tokens de string, como
 Uma criação de agendamento ilustra o fluxo:
 
 1. o `ValidationPipe` transforma `date` e rejeita campos inválidos;
-2. o `AuthGuard` valida o JWT e coloca `id` e `role` em `request.user`;
+2. o `AuthGuard` valida o JWT, consulta a identidade e o papel atuais no banco
+   e coloca `id` e `role` em `request.user`;
 3. o controller acrescenta o usuário autenticado como `clientId`;
 4. o caso de uso carrega serviço e barbearia;
 5. o serviço de disponibilidade verifica expediente, folgas e conflitos;
@@ -115,8 +116,10 @@ Uma criação de agendamento ilustra o fluxo:
 
 Há duas barreiras complementares:
 
-- `AuthGuard`: valida `Authorization: Bearer <accessToken>`;
-- `RoleGuard`: compara o papel do token com `@Roles(...)`.
+- `AuthGuard`: valida `Authorization: Bearer <accessToken>` e resolve a
+  identidade e o papel atuais do usuário no banco;
+- `RoleGuard`: compara o papel de `request.user`, preenchido pelo `AuthGuard`,
+  com `@Roles(...)`.
 
 O guard de papel protege a entrada, mas não substitui as regras do caso de uso.
 Propriedade e vínculo continuam sendo conferidos na aplicação, pois dois
@@ -145,3 +148,36 @@ mesmo barbeiro.
 - documentação: Swagger/OpenAPI gerado a partir de controllers e DTOs;
 - CORS: origens configuradas por ambiente;
 - erros: filtros globais para os erros já padronizados.
+
+## Fronteiras verificadas automaticamente
+
+`pnpm check:architecture` analisa os arquivos resolvidos por `dependency-cruiser`, usando o alias `@/` do `tsconfig.json`. As regras versionadas ficam em `.dependency-cruiser.cjs`; `pnpm test:architecture` verifica as próprias regras com projetos temporários, sem banco.
+
+| Origem | Código interno permitido | Restrições adicionais |
+| --- | --- | --- |
+| `src/<recurso>/domain` | Outros arquivos em `src/*/domain`, inclusive `shared/domain` | Não acessa application, infraestrutura, auth ou composição da aplicação. |
+| `src/<recurso>/application` | Arquivos em `src/*/domain` e `src/*/application` | Não acessa infraestrutura, auth ou composição da aplicação. |
+| Infraestrutura, auth e composição | Podem conectar domínio, aplicação e adaptadores | Continuam sujeitos a proibição de ciclos, imports não resolvidos e dependência de testes. |
+| Testes e helpers de testes reconhecidos | Podem exercitar infraestrutura mesmo próximos ao domínio | Essa permissão não se propaga para código de produção que os importe. |
+
+No núcleo (`domain`/`application`), imports de NestJS, Prisma e adaptadores HTTP Fastify/Express são proibidos, inclusive imports só de tipos. Isso não é uma proibição de toda biblioteca externa: `class-validator`, `uuid` e o provider de hash já utilizados continuam permitidos pelas convenções atuais.
+
+`shared` preserva as mesmas fronteiras; `shared/infrastructure` não é permitido no núcleo. Contratos entre recursos continuam permitidos nas camadas apropriadas. Esta entrega não transforma cada recurso em bounded context isolado nem proíbe seus contratos existentes.
+
+O verificador inclui arquivos de testes no grafo para detectar produção importando testes; somente as regras de camada isentam suas origens. São reconhecidos os diretórios `__tests__`, `__mocks__`, `__fixtures__`, `test`, `tests`, `testing` e os sufixos `.spec`, `.test`, `.int-spec`, `.e2e-spec`. Ciclos e imports não resolvidos também são erros. Não há baseline ignorada ou exceção para os ciclos encontrados nesta entrega.
+
+A inspeção inicial encontrou seis ciclos entidade → validator → tipo Props exportado pela entidade. Os tipos foram movidos para arquivos `*.props.ts` no próprio domínio; entidades reexportam os tipos para preservar os caminhos existentes. Validadores importam diretamente o contrato de props, eliminando os ciclos inclusive antes da compilação.
+
+### Testes das regras e limites
+
+As fixtures cobrem imports por alias e relativos, `import type`, reexports/barrels, `import()` com caminho literal, resolução de Express para `@types/express`, shared, ciclos inclusive de tipos, imports não resolvidos e retorno não zero da CLI usada como gate. Exemplos válidos garantem que casos de uso possam importar contratos e que testes de integração possam acessar infraestrutura.
+
+Análise estática não resolve imports cujo caminho é construído em runtime. Também não prova a qualidade da modelagem ou das invariantes; a [revisão focada de agendamentos](revisao-ddd-agendamentos.md) registra essa frente separadamente.
+
+### CI e evidência da entrega
+
+`.github/workflows/backend-ci.yml` roda em pull requests, push para `main` e execução manual, com Node 24, pnpm do `packageManager`, PostgreSQL 15 e env efêmeros. Executa testes das regras, check do código, lint, build e testes unitários/integração/e2e. Suites que limpam `barber_api_test` são sequenciais. Actions estão fixadas por SHA e o job tem acesso de leitura ao conteúdo.
+
+O workflow foi validado localmente com `actionlint`; não foi executado no GitHub nesta entrega. Para bloquear merges, após a primeira execução é necessário configurar esse job como check obrigatório na proteção/ruleset da branch. Adicionar o YAML sozinho não configura a proteção da branch.
+
+Em 18/10/2026: 35 testes de arquitetura aprovados; código real com 235 módulos e 1.187 dependências sem violações; lint/build e 130 unitários + 185 integração + 36 e2e aprovados. Auditoria completa após adicionar a ferramenta: zero alertas reportados. No TDD das regras, a configuração inicialmente sem restrições deixou 24 cenários inválidos passarem; os testes falharam como esperado. A regressão adicional de Express também falhou antes de cobrir a resolução por `@types`. Logs temporários em `/tmp/barber-architecture` registram RED/GREEN e o check inicial que detectou os seis ciclos.

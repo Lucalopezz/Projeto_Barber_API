@@ -2,12 +2,8 @@ import { Entity } from '@/shared/domain/entities/entity';
 import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 import { BarberScheduleValidatorFactory } from '../validators/barber-schedule.validator';
 
-export type BarberScheduleProps = {
-  barberId: string;
-  dayOfWeek: number;
-  startMinute: number;
-  endMinute: number;
-};
+import type { BarberScheduleProps } from './barber-schedule.props';
+export type { BarberScheduleProps } from './barber-schedule.props';
 
 export class BarberScheduleEntity extends Entity<BarberScheduleProps> {
   constructor(

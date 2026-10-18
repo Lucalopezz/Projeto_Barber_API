@@ -18,12 +18,12 @@ export namespace AppointmentsRepository {
     customerId?: string;
   };
 
-  export class AppointmentsSearchParams extends SearchParams<Filter> { }
+  export class AppointmentsSearchParams extends SearchParams<Filter> {}
 
   export class AppointmentsSearchResult extends SearchResult<
     AppointmentEntity,
     Filter
-  > { }
+  > {}
 
   export interface Repository extends SearchableRepositoryInterface<
     AppointmentEntity,

@@ -2,14 +2,8 @@ import { Entity } from '@/shared/domain/entities/entity';
 import { ServiceValidatorFactory } from '../validators/services.validator';
 import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
-export type ServiceProps = {
-  name: string;
-  price: number;
-  description: string;
-  duration: number;
-  createdAt?: Date;
-  barberShopId: string;
-};
+import type { ServiceProps } from './services.props';
+export type { ServiceProps } from './services.props';
 
 export class ServiceEntity extends Entity<ServiceProps> {
   constructor(

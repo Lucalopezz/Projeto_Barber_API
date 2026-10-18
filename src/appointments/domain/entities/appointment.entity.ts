@@ -3,16 +3,8 @@ import { AppointmentStatus } from './appointmentStatus.enum';
 import { AppointmentValidatorFactory } from '../validators/appointment.validator';
 import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
-export type AppointmentProps = {
-  date: Date;
-  endDate: Date;
-  status: AppointmentStatus;
-  clientId: string;
-  barberId: string;
-  barberShopId: string;
-  serviceId: string;
-  createdAt?: Date;
-};
+import type { AppointmentProps } from './appointment.props';
+export type { AppointmentProps } from './appointment.props';
 
 export class AppointmentEntity extends Entity<AppointmentProps> {
   constructor(

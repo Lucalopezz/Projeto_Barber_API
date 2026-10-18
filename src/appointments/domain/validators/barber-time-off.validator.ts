@@ -10,7 +10,7 @@ import {
   ValidatorConstraintInterface,
 } from 'class-validator';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
-import type { BarberTimeOffProps } from '../entities/barber-time-off.entity';
+import type { BarberTimeOffProps } from '../entities/barber-time-off.props';
 
 @ValidatorConstraint({ name: 'timeOffEndAfterStart', async: false })
 class TimeOffEndAfterStartValidator implements ValidatorConstraintInterface {

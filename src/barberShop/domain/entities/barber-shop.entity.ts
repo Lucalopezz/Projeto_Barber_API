@@ -3,13 +3,8 @@ import { Address } from '../value-objects/address.vo';
 import { BarberShopValidatorFactory } from '../validators/barber-shop.validator';
 import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
-export type BarberShopProps = {
-  name: string;
-  address: Address;
-  createdAt?: Date;
-  ownerId: string;
-  timezone?: string;
-};
+import type { BarberShopProps } from './barber-shop.props';
+export type { BarberShopProps } from './barber-shop.props';
 
 export class BarberShopEntity extends Entity<BarberShopProps> {
   constructor(

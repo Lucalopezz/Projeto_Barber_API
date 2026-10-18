@@ -2,12 +2,8 @@ import { Entity } from '@/shared/domain/entities/entity';
 import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 import { BarberTimeOffValidatorFactory } from '../validators/barber-time-off.validator';
 
-export type BarberTimeOffProps = {
-  barberId: string;
-  startsAt: Date;
-  endsAt: Date;
-  reason?: string | null;
-};
+import type { BarberTimeOffProps } from './barber-time-off.props';
+export type { BarberTimeOffProps } from './barber-time-off.props';
 
 export class BarberTimeOffEntity extends Entity<BarberTimeOffProps> {
   constructor(

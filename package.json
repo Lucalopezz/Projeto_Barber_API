@@ -28,7 +28,9 @@
     "prisma:migrate:test": "dotenv -e .env.test -- prisma migrate deploy",
     "db:up": "docker compose up -d --wait",
     "db:stop": "docker compose stop",
-    "lint:check": "pnpm lint"
+    "lint:check": "pnpm lint",
+    "test:architecture": "node --test test/architecture/*.test.mjs",
+    "check:architecture": "depcruise --config .dependency-cruiser.cjs --output-type err-long src"
   },
   "dependencies": {
     "@fastify/static": "^10.1.6",
@@ -62,6 +64,7 @@
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.71.2",
     "@typescript-eslint/parser": "^8.71.2",
+    "dependency-cruiser": "18.6.0",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "^9.1.2",
     "eslint-plugin-prettier": "^5.5.7",

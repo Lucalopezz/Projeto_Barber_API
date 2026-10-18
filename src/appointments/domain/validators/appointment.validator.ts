@@ -13,7 +13,7 @@ import {
 } from 'class-validator';
 import { AppointmentStatus } from '../entities/appointmentStatus.enum';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
-import { AppointmentProps } from '../entities/appointment.entity';
+import type { AppointmentProps } from '../entities/appointment.props';
 
 // Creates a custom validator to check if endDate is after date
 @ValidatorConstraint({ name: 'endDateAfterStart', async: false })

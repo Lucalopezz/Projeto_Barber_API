@@ -126,3 +126,10 @@ Use o alias `@/` para imports a partir de `src` (por exemplo, `@/shared/domain/e
 - Use `grill-me`/`grilling`, `to-spec` e `to-tickets` quando solicitados; não transforme ajustes pequenos em entrevistas. Quando a interface não tiver ferramenta `Skill`, carregue o `SKILL.md` local diretamente; `grill-me` carrega `grilling`.
 
 - Use a skill própria `barber-local-setup` em `.agents/skills/barber-local-setup/SKILL.md` para preparar/verificar o ambiente Barber, inclusive worktrees. Ela distingue diagnóstico sem mutações de preparação e verificação, preserva env existentes e coordena o schema compartilhado de testes.
+
+## Fronteiras arquiteturais automáticas
+
+- Execute `pnpm test:architecture` e `pnpm check:architecture` após alterar imports, organização de camadas ou configuração das regras. O primeiro testa as regras; o segundo verifica o código real. Ambos rodam no CI junto de lint/build/testes.
+- `.dependency-cruiser.cjs` é a configuração executável das fronteiras descritas em `docs/arquitetura.md`: domain depende de domain; application depende de domain/application; Nest/Prisma/adaptadores HTTP permanecem fora do núcleo. Shared segue as mesmas camadas. Não ignore ciclos, imports não resolvidos ou violações para fazer o check passar.
+- Tipos Props usados por entidade e validator ficam em arquivos de contrato do domínio, evitando o ciclo entidade→validator→entidade. Preserve reexports existentes quando necessário para manter os consumidores.
+- Limites da análise estática e a revisão de modelagem pendente estão em `docs/revisao-ddd-agendamentos.md`. Estar sem violações de imports não comprova todas as invariantes de DDD.

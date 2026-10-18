@@ -9,7 +9,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
-import { UserProps } from '../entities/user.entity';
+import type { UserProps } from '../entities/user.props';
 import { Role } from '../entities/role.enum';
 
 export class UserRules {

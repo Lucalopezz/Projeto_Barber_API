@@ -6,7 +6,7 @@ import {
   Validate,
 } from 'class-validator';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
-import { BarberShopProps } from '../entities/barber-shop.entity';
+import type { BarberShopProps } from '../entities/barber-shop.props';
 import { AddressValidator } from './address.validator';
 
 export class BarberShopRules {

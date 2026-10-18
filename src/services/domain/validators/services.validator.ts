@@ -7,7 +7,7 @@ import {
   IsUUID,
   MaxLength,
 } from 'class-validator';
-import { ServiceProps } from '../entities/services.entity';
+import type { ServiceProps } from '../entities/services.props';
 import { ClassValidatorFields } from '@/shared/domain/validators/class-validator-fields';
 
 export class ServicesRules {

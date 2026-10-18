@@ -3,14 +3,8 @@ import { UserValidatorFactory } from '../validators/user.validator';
 import { Role } from './role.enum';
 import { EntityValidationError } from '@/shared/domain/errors/validation-error';
 
-export type UserProps = {
-  name: string;
-  email: string;
-  role: Role;
-  password: string;
-  barberShopId?: string | null;
-  createdAt?: Date;
-};
+import type { UserProps } from './user.props';
+export type { UserProps } from './user.props';
 
 export class UserEntity extends Entity<UserProps> {
   constructor(
