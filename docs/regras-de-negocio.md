@@ -141,3 +141,12 @@ slots.
 
 Em caso de dúvida sobre integridade persistida, prevalecem
 `prisma/schema.prisma` e as migrations.
+
+## PS — decisões confirmadas em 18/10/2026
+
+- Novas reservas e remarcações: antecedência mínima de 30 minutos, máxima de 60×24 horas, limites inclusivos; início na grade local de 30 minutos, sem segundos/milissegundos. O horizonte é móvel, calculado por instantes; apresentação no fuso da barbearia.
+- Cliente pode cancelar até 24 horas antes, inclusive. Gestão pelo profissional atribuído permanece separada dessa política.
+- Folgas e mudanças de expediente preservam reservas existentes, sem cancelamento ou remarcação automática; bloqueiam apenas novas reservas/remarcações incompatíveis.
+- Operações concorrentes por profissional são serializadas desde a validação de disponibilidade até a gravação. Escritas de agendamento usam versão otimista para impedir que uma cópia antiga reverta cancelamento/conclusão.
+
+Essas regras substituem as indefinições históricas correspondentes. Limite de janelas e onboarding de profissionais adicionais continuam fora desta entrega.

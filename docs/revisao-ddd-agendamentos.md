@@ -57,3 +57,11 @@ Não tratar essas escolhas como bugs sem definir o contrato. Registre decisões 
 Para a etapa 4, a próxima entrega sugerida é um assistente somente de consulta: definir contrato das ferramentas e perguntas de referência, começar com provedor simulado e dados sintéticos, testar seleção/argumentos/respostas e só depois ligar um provedor real, mantendo a chave no backend e medindo custo/latência/erros. Não é necessário autorizar reservas assistidas para esse primeiro exercício.
 
 Refresh token e cache permanecem como estudos futuros no backlog. Não são pré-requisitos para o primeiro assistente de consultas. O CI desta entrega pertence ao backend; a jornada entre os dois repositórios continua disponível pelo runner do frontend, mas não foi adicionada como checkout cruzado nesse job.
+
+## PS — implementação da revisão e passo 4 (18/10/2026)
+
+Os três riscos prioritários acima foram reproduzidos e corrigidos com regressões permanentes: versão otimista no agendamento (409 para gravação antiga), lock por profissional para substituir expediente e criar/remarcar contra folgas/expediente, e invariantes da entidade com cópias defensivas de datas/props e transições terminais. Reservas anteriores são preservadas. As políticas escolhidas estão no PS de [regras de negócio](regras-de-negocio.md). A migration `20261018190000_appointment_optimistic_version` acrescenta `version`, sem reset de dados.
+
+O passo 4 está implementado com [simulador de consultas e avaliações fixas](assistant/simulador.md), ferramentas reais e interface autenticada. Não há adaptador OpenAI nesta entrega, por decisão do usuário. Etapas 1–4 da sequência estão implementadas; a validação conjunta e os limites estão registrados em `docs/entrega-politicas-assistente.md`.
+
+A exigência do check na main ficará como [configuração manual documentada](agents/protecao-main.md), opção escolhida pelo usuário. Não foi aplicada proteção remotamente. Permanecem para estudos futuros: refresh token/cache, provedor real mediante nova decisão, onboarding de profissionais adicionais e decisão sobre limite de janelas. Regras automáticas de imports e testes ajudam a proteger a arquitetura; a revisão de modelagem continua necessária a cada mudança.

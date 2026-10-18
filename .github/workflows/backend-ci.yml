@@ -74,6 +74,8 @@ jobs:
         run: pnpm build
       - name: Unit tests
         run: pnpm test
+      - name: Fixed assistant evaluations
+        run: pnpm test:evals
       - name: Apply test migrations
         run: pnpm prisma:migrate:test
       # These suites clear the same schema and must stay sequential.
