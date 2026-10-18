@@ -21,6 +21,7 @@ endpoints.
 | [Regras de negócio](./regras-de-negocio.md) | Permissões, invariantes, agenda, datas e relações entre entidades.            |
 | [Guia da API](./api.md)                     | As famílias de rotas, autenticação, respostas, erros e como usar o Swagger.   |
 | [Desenvolvimento](./desenvolvimento.md)     | Instalação, variáveis de ambiente, banco, testes e como implementar mudanças. |
+| [CI integrado](./ci-integracao.md)         | Executar a jornada real entre frontend e API e selecionar os commits testados. |
 | [Backlog](./backlog/todos.md)               | Limitações conhecidas e trabalho técnico ou de produto ainda pendente.        |
 
 ## Fontes de verdade

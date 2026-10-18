@@ -1,5 +1,7 @@
 # Laboratório de IA e workflow de desenvolvimento
 
+> A sequência de aprendizado abaixo é histórica. O assistente experimental foi implementado e removido em 18/10/2026 por decisão do usuário; não há plano ativo para recriá-lo ou conectar um modelo. A sequência acordada segue com CI do frontend, integração entre repositórios, refresh token e cache.
+
 Desde 17/10/2026, o front e a API incompletos de estudo também são uma base
 para experimentar IA, skills, agentes e worktrees. O domínio de barbearias
 oferece problemas concretos para medir se essas ferramentas ajudam: contratos

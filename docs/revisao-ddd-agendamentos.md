@@ -1,5 +1,7 @@
 # Revisão focada de DDD — agendamentos
 
+> O assistente experimental foi removido em 18/10/2026 por decisão do usuário. As propostas e registros de implementação abaixo são históricos; a sequência atual segue com CI do frontend, integração entre repositórios, refresh token e cache.
+
 Revisão de leitura em 18/10/2026, separada da implantação das fronteiras de imports. Foram inspecionados entidades, validadores, casos de uso, serviço de disponibilidade, repositórios, migrations, documentação e testes. Não foram alteradas regras de produto nesta revisão. Os cenários concorrentes abaixo são inferências fundamentadas no código e ainda precisam de reprodução automatizada antes de uma correção.
 
 ## Proteções existentes

@@ -1,5 +1,7 @@
 # Estado verificado em 17/10/2026
 
+> O assistente experimental foi removido em 18/10/2026, incluindo módulo, endpoint, avaliações e etapa exclusiva no CI. Catálogo, serviços, disponibilidade e agendamento permanecem ativos. As menções abaixo à implementação e à sequência do assistente são históricas e não descrevem o estado atual.
+
 > **PS — conclusão das partes 1 e 2 em 18/10/2026:** a base foi estabilizada e a
 > jornada de agendamento foi implementada na interface: configurar expediente e
 > folgas, consultar serviços/horários, reservar, acompanhar e cancelar. As

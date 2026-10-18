@@ -1,5 +1,7 @@
 # Passo 3 — validação da skill de setup
 
+> Registro histórico: o assistente mencionado como próximo passo foi posteriormente implementado e removido em 18/10/2026 por decisão do usuário. As evidências desta avaliação de setup permanecem inalteradas.
+
 A skill própria `barber-local-setup` transforma o setup/verificação repetido em instruções reutilizáveis. Não contém um novo instalador nem scripts executáveis próprios: reutiliza pnpm, Compose, Prisma e as suites versionadas dos projetos. O `SKILL.md` contém a descoberta e os limites; as referências separam preparação e verificação. O agente adapta os caminhos e executa as ferramentas existentes.
 
 ## Avaliação independente em 18/10/2026

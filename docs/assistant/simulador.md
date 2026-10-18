@@ -1,5 +1,7 @@
 # Assistente de consulta — simulador v1
 
+> Documento histórico: este simulador foi removido em 18/10/2026 por decisão do usuário. O endpoint retorna 404; os arquivos e comandos de avaliações citados abaixo não existem mais. Este documento preserva o contrato e as evidências da implementação anterior.
+
 Entrega do passo 4: um simulador determinístico, sem modelo generativo, rede externa,
 chave ou custo por mensagem. Ele classifica intenções por regras explícitas e consulta
 os **dados atuais do sistema** pelas ferramentas públicas. Não é uma conversa livre
