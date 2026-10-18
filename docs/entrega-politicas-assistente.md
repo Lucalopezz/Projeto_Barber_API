@@ -1,5 +1,7 @@
 # Entrega — políticas, proteção de concorrência e assistente
 
+> Registro histórico: o assistente descrito nesta entrega foi removido em 18/10/2026 por decisão do usuário. Comandos, rotas e contagens abaixo documentam a entrega original; o comando `test:evals` e seu job exclusivo não existem mais. As políticas e a proteção de concorrência permanecem ativas.
+
 ## Escopo
 
 Complemento da revisão DDD e implementação do passo 4, preservando os documentos históricos com PS. A API mantém domain/application/infrastructure e as fronteiras automáticas; o assistente é uma orquestração de consultas, sem entidade artificial ou dependência de infraestrutura no núcleo.

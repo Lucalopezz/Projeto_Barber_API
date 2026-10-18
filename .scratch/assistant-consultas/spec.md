@@ -1,5 +1,7 @@
 # Assistente de consultas — passo 4
 
+> Registro histórico: a funcionalidade descrita nesta spec foi removida em 18/10/2026 por decisão do usuário. O status e os critérios abaixo registram a entrega original, sem representar funcionalidade ativa.
+
 Status: concluído e validado; evidências em `docs/entrega-politicas-assistente.md`. Decisão do usuário nesta entrega: **somente simulador**; sem integração de provedor externo, chave de API ou chamadas pagas.
 
 ## Resultado esperado

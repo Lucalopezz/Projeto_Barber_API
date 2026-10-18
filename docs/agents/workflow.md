@@ -54,6 +54,6 @@ O passo 3 é atendido pela skill própria `barber-local-setup`, descoberta autom
 
 Ela identifica front/API pelos arquivos e manifests, não pelo nome da pasta da worktree. Quando os projetos não forem irmãos com os nomes padrão, informe os dois caminhos; a integração real seleciona a API com `BARBER_API_DIR`. O modo de diagnóstico não instala dependências, aplica migrations ou encerra servidores.
 
-Os detalhes e comandos ficam em [SKILL.md](../../.agents/skills/barber-local-setup/SKILL.md), que direciona para preparação e verificação conforme o pedido. Esta skill não implementa o assistente de IA (passo 4).
+Os detalhes e comandos ficam em [SKILL.md](../../.agents/skills/barber-local-setup/SKILL.md), que direciona para preparação e verificação conforme o pedido. O assistente de IA citado na sequência histórica foi removido em 18/10/2026.
 
 A [validação independente em worktrees novas](setup-validation.md) registra o procedimento executado, os resultados e suas limitações.

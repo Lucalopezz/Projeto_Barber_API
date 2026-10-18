@@ -159,8 +159,8 @@ como `500` com a mensagem genérica `Internal server error`, sem detalhes intern
 `CORS_ALLOWED_ORIGINS` recebe origens separadas por vírgula. Sem configuração,
 CORS fica desabilitado. `*` só é aceito quando `NODE_ENV=development`.
 
-## PS — políticas e assistente (18/10/2026)
+## Políticas de agendamento (18/10/2026)
 
 Criação e remarcação exigem início entre 30 minutos e 60×24 horas a partir do instante real, com limites inclusivos e grade de 30 minutos no fuso da loja (segundos/milissegundos zero). Violação retorna 400; a disponibilidade pública já filtra esses limites. Cancelamento pelo cliente exige pelo menos 24 horas de antecedência, inclusive; fora do prazo retorna 403. A gestão pelo profissional atribuído segue a autorização existente. Uma atualização baseada em versão antiga retorna 409 e exige recarregar os dados.
 
-O novo `POST /api/v1/assistant/chat` autenticado retorna 200 com envelope padrão. É exclusivamente um simulador de consultas ao catálogo, serviços e disponibilidade, sem escrita ou provedor externo. Consulte [contrato, exemplos e avaliações](assistant/simulador.md).
+O assistente experimental foi removido em 18/10/2026. `POST /api/v1/assistant/chat` retorna `404` e não integra mais o OpenAPI/Swagger. Catálogo, serviços, disponibilidade e agendamento permanecem disponíveis pelas rotas documentadas acima. O [contrato do simulador](assistant/simulador.md) foi preservado apenas como histórico.
