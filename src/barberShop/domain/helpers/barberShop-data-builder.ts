@@ -6,9 +6,14 @@ type Props = Partial<BarberShopProps>;
 
 export function BarberShopDataBuilder(props: Props): BarberShopProps {
   const generateValidAddress = () => {
-    const street = faker.location.street();
+    const normalizePart = (value: string) =>
+      value
+        .replace(/[,–-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const street = normalizePart(faker.location.street());
     const number = faker.number.int({ min: 1, max: 9999 }).toString();
-    const city = faker.location.city();
+    const city = normalizePart(faker.location.city());
     const generatedState = faker.location.state({ abbreviated: true });
     const state = /^[A-Za-z]{2}$/.test(generatedState) ? generatedState : 'SP';
     return `${street}, ${number}, ${city} – ${state}`;

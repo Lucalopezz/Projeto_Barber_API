@@ -4,9 +4,10 @@ import { Address } from '@/barberShop/domain/value-objects/address.vo';
 import { IsNotEmpty, IsOptional, IsString, Validate } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class CreateBarberShopDto
-  implements Omit<CreateBarberShopUseCase.Input, 'ownerId'>
-{
+export class CreateBarberShopDto implements Omit<
+  CreateBarberShopUseCase.Input,
+  'ownerId'
+> {
   @ApiProperty({
     type: String,
     example: 'Rua das Flores, 123, Sao Paulo - SP',

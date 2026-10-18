@@ -36,7 +36,7 @@ describe('UserModelMapper integration tests', () => {
 
   it('should throws error when user model is invalid', async () => {
     const model: User = Object.assign(props, { name: null });
-    expect(() => UserModelMapper.toEntity(model)).toThrowError(ValidationError);
+    expect(() => UserModelMapper.toEntity(model)).toThrow(ValidationError);
   });
 
   it('should convert a user model to a user entity', async () => {

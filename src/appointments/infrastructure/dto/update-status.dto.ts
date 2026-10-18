@@ -3,9 +3,10 @@ import { AppointmentStatus } from '@/appointments/domain/entities/appointmentSta
 import { IsEnum, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class UpdateStatusDto
-  implements Omit<UpdateStatusUseCase.Input, 'id' | 'userId'>
-{
+export class UpdateStatusDto implements Omit<
+  UpdateStatusUseCase.Input,
+  'id' | 'userId'
+> {
   @ApiProperty({
     enum: [AppointmentStatus.completed, AppointmentStatus.cancelled],
     example: AppointmentStatus.cancelled,

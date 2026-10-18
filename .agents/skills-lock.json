@@ -127,10 +127,10 @@
         "references/transactions.md": "d9b441e7113d2bba8a39e639d9560925b464aaa585322ba460e3f2fed00f398e"
       },
       "compatibility": {
-        "projectPrismaVersion": "6.12.0",
+        "projectPrismaVersion": "6.19.3",
         "upstreamSkillVersion": "7.9.1",
-        "scope": "Reference only for APIs verified against local Prisma 6.12.0 types: CRUD, filters, relations, transactions, safe tagged raw SQL.",
-        "excluded": "Prisma 7 constructor/adapter/generator/import setup, sqlCommenter and new options unavailable in 6.12.0. Preserve PrismaService and @prisma/client.",
+        "scope": "Reference only for APIs verified against local Prisma 6.19.3 types: CRUD, filters, relations, transactions, safe tagged raw SQL.",
+        "excluded": "Prisma 7 constructor/adapter/generator/import setup, sqlCommenter and new options unavailable in 6.19.3. Preserve PrismaService and @prisma/client.",
         "historyChecked": {
           "path": "prisma-client-api/SKILL.md",
           "firstCommit": "0d90de964f074ca89608ece63be69b277858801e",

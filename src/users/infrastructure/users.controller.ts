@@ -87,7 +87,7 @@ export class UsersController {
   @Post()
   @ApiOperation({ summary: 'Criar uma conta' })
   @ApiDataResponse(UserPresenter, 201, 'Conta criada')
-  @ApiErrorResponses(409, 422)
+  @ApiErrorResponses(400, 409, 422)
   async create(@Body() createUserDto: CreateUserDto) {
     const output = await this.createUserUseCase.execute(createUserDto);
     return UsersController.userToResponse(output);
@@ -131,7 +131,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Atualizar o próprio perfil' })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do usuário' })
   @ApiDataResponse(UserPresenter)
-  @ApiProtected(403, 404, 422)
+  @ApiProtected(400, 403, 404, 422)
   async update(
     @Param('id') id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -150,7 +150,7 @@ export class UsersController {
   @ApiOperation({ summary: 'Atualizar a própria senha' })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do usuário' })
   @ApiDataResponse(UserPresenter)
-  @ApiProtected(403, 404, 422)
+  @ApiProtected(400, 403, 404, 422)
   async updatePassword(
     @Param('id') id: string,
     @Body() updatePasswordDto: UpdatePasswordDto,

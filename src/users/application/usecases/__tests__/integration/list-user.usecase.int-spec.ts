@@ -127,11 +127,11 @@ describe('ListUsersUseCase integration tests', () => {
     const entities: UserEntity[] = [];
 
     const arrange = [
-      { ...UserDataBuilder({}), role: Role.client },
-      { ...UserDataBuilder({}), role: Role.barber },
-      { ...UserDataBuilder({}), role: Role.barber },
-      { ...UserDataBuilder({}), role: Role.client },
-      { ...UserDataBuilder({}), role: Role.barber },
+      UserDataBuilder({ name: 'Zara', role: Role.client }),
+      UserDataBuilder({ name: 'Carlos', role: Role.barber }),
+      UserDataBuilder({ name: 'Ana', role: Role.barber }),
+      UserDataBuilder({ name: 'Yuri', role: Role.client }),
+      UserDataBuilder({ name: 'Bruno', role: Role.barber }),
     ];
 
     arrange.forEach((element, index) => {
@@ -149,14 +149,15 @@ describe('ListUsersUseCase integration tests', () => {
     });
 
     const output = await sut.execute({
-      sort: 'role',
+      sort: 'name',
       sortDir: 'asc',
       role: Role.barber,
     });
 
-    const expectedBarbers = entities
-      .filter((e) => e.role === Role.barber)
-      .map(UserOutputMapper.toOutput);
+    // Name ordering is supported; equal roles do not establish insertion order.
+    const expectedBarbers = [entities[2], entities[4], entities[1]].map(
+      UserOutputMapper.toOutput,
+    );
 
     expect(output).toMatchObject({
       items: expectedBarbers,

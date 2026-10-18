@@ -18,13 +18,12 @@ export namespace BarberShopRepository {
   > {}
 
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  export interface Repository
-    extends SearchableRepositoryInterface<
-      BarberShopEntity,
-      Filter,
-      BarberShopSearchParams,
-      BarberShopSearchResult
-    > {
+  export interface Repository extends SearchableRepositoryInterface<
+    BarberShopEntity,
+    Filter,
+    BarberShopSearchParams,
+    BarberShopSearchResult
+  > {
     findByOwnerId(ownerId: string): Promise<BarberShopEntity | null>;
   }
 }

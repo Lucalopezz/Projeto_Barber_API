@@ -16,9 +16,7 @@ describe('ListServicesByBarberShopUseCase unit tests', () => {
   });
 
   it('should search services using the barber shop filter and pagination', async () => {
-    const service = new ServiceEntity(
-      ServiceDataBuilder({ barberShopId }),
-    );
+    const service = new ServiceEntity(ServiceDataBuilder({ barberShopId }));
     (servicesRepository.search as jest.Mock).mockResolvedValue({
       items: [service],
       total: 1,

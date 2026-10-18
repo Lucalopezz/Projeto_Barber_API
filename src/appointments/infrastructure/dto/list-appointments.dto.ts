@@ -4,9 +4,10 @@ import { Type } from 'class-transformer';
 import { IsDate, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class ListAppointmentsDto
-  implements Omit<ListAppointmentsUseCase.Input, 'userId'>
-{
+export class ListAppointmentsDto implements Omit<
+  ListAppointmentsUseCase.Input,
+  'userId'
+> {
   @ApiPropertyOptional({ example: 1, minimum: 1, type: Number })
   @IsOptional()
   page?: number;

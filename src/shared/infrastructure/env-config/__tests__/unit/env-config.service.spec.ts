@@ -29,12 +29,13 @@ describe('EnvConfigService', () => {
 
   it('should return configured CORS origins', () => {
     const configService = {
-      get: jest.fn((key: string) =>
-        ({
-          NODE_ENV: 'production',
-          CORS_ALLOWED_ORIGINS:
-            'https://app.example.com, https://admin.example.com',
-        })[key],
+      get: jest.fn(
+        (key: string) =>
+          ({
+            NODE_ENV: 'production',
+            CORS_ALLOWED_ORIGINS:
+              'https://app.example.com, https://admin.example.com',
+          })[key],
       ),
     } as unknown as ConfigService;
     const service = new EnvConfigService(configService);
@@ -47,8 +48,9 @@ describe('EnvConfigService', () => {
 
   it('should reject wildcard CORS origins outside development', () => {
     const configService = {
-      get: jest.fn((key: string) =>
-        ({ NODE_ENV: 'production', CORS_ALLOWED_ORIGINS: '*' })[key],
+      get: jest.fn(
+        (key: string) =>
+          ({ NODE_ENV: 'production', CORS_ALLOWED_ORIGINS: '*' })[key],
       ),
     } as unknown as ConfigService;
     const service = new EnvConfigService(configService);

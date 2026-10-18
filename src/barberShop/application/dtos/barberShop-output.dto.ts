@@ -10,9 +10,12 @@ export type BarberShopOutput = {
 
 export class BarberShopOutputMapper {
   static toOutput(barberShop: BarberShopEntity): BarberShopOutput {
-    const { timezone: _timezone, ...data } = barberShop.toJSON();
+    const data = barberShop.toJSON();
     return {
-      ...data,
+      id: data.id,
+      name: data.name,
+      ownerId: data.ownerId,
+      createdAt: data.createdAt,
       address: data.address.toString(),
     };
   }

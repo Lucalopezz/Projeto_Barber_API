@@ -4,9 +4,10 @@ import { UpdateBarberShopUseCase } from '@/barberShop/application/usecases/updat
 import { Address } from '@/barberShop/domain/value-objects/address.vo';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class UpdateBarberShopDto
-  implements Omit<UpdateBarberShopUseCase.Input, 'id' | 'ownerId'>
-{
+export class UpdateBarberShopDto implements Omit<
+  UpdateBarberShopUseCase.Input,
+  'id' | 'ownerId'
+> {
   @ApiPropertyOptional({
     type: String,
     example: 'Avenida Central, 456, Campinas - SP',

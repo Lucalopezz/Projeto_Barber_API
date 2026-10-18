@@ -88,7 +88,7 @@ export class AppointmentsController {
       'Responde 409 se o intervalo estiver ocupado, fora do expediente ou durante uma folga do profissional.',
   })
   @ApiDataResponse(AppointmentPresenter, 201, 'Agendamento criado')
-  @ApiProtected(403, 404, 409, 422)
+  @ApiProtected(400, 403, 404, 409, 422)
   async create(
     @Body() createAppointmentDto: CreateAppointmentDto,
     @CurrentUserId() userId: string,
@@ -131,7 +131,7 @@ export class AppointmentsController {
   @Roles([Role.owner, Role.barber])
   @ApiOperation({ summary: 'Substituir o próprio expediente semanal' })
   @ApiDataArrayResponse(BarberSchedulePresenter)
-  @ApiProtected(403, 404, 422)
+  @ApiProtected(400, 403, 404, 422)
   async updateSchedule(
     @Body() dto: UpdateBarberScheduleDto,
     @CurrentUserId() userId: string,
@@ -148,7 +148,7 @@ export class AppointmentsController {
   @Roles([Role.owner, Role.barber])
   @ApiOperation({ summary: 'Cadastrar uma folga própria' })
   @ApiDataResponse(BarberTimeOffPresenter, 201, 'Folga cadastrada')
-  @ApiProtected(403, 404, 409, 422)
+  @ApiProtected(400, 403, 404, 409, 422)
   async createTimeOff(
     @Body() dto: CreateBarberTimeOffDto,
     @CurrentUserId() userId: string,
@@ -192,7 +192,7 @@ export class AppointmentsController {
   @ApiOperation({ summary: 'Cancelar ou concluir um agendamento' })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do agendamento' })
   @ApiDataResponse(AppointmentPresenter)
-  @ApiProtected(403, 404, 409, 422)
+  @ApiProtected(400, 403, 404, 409, 422)
   async updateStatus(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateStatusDto,
@@ -215,7 +215,7 @@ export class AppointmentsController {
   })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do agendamento' })
   @ApiDataResponse(AppointmentPresenter)
-  @ApiProtected(403, 404, 409, 422)
+  @ApiProtected(400, 403, 404, 409, 422)
   async update(
     @Param('id') id: string,
     @Body() updateAppointmentDto: UpdateAppointmentDto,

@@ -19,13 +19,12 @@ export namespace UserRepository {
 
   export class UserSearchResult extends SearchResult<UserEntity, Filter> {}
 
-  export interface Repository
-    extends SearchableRepositoryInterface<
-      UserEntity,
-      Filter,
-      UserSearchParams,
-      UserSearchResult
-    > {
+  export interface Repository extends SearchableRepositoryInterface<
+    UserEntity,
+    Filter,
+    UserSearchParams,
+    UserSearchResult
+  > {
     findByEmail(email: string): Promise<UserEntity | null>;
     existsByEmail(email: string): Promise<boolean>;
   }

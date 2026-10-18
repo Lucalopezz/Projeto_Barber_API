@@ -2,9 +2,10 @@ import { CreateServicesUseCase } from '@/services/application/usecases/create-se
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateServiceDto
-  implements Omit<CreateServicesUseCase.Input, 'barberShopOwnerId'>
-{
+export class CreateServiceDto implements Omit<
+  CreateServicesUseCase.Input,
+  'barberShopOwnerId'
+> {
   @ApiProperty({ example: 'Corte degradê' })
   @IsNotEmpty()
   @IsString()

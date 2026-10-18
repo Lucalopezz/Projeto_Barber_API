@@ -12,9 +12,7 @@ import { ClassValidatorFields } from '@/shared/domain/validators/class-validator
 import type { BarberScheduleProps } from '../entities/barber-schedule.entity';
 
 @ValidatorConstraint({ name: 'endMinuteAfterStartMinute', async: false })
-class EndMinuteAfterStartMinuteValidator
-  implements ValidatorConstraintInterface
-{
+class EndMinuteAfterStartMinuteValidator implements ValidatorConstraintInterface {
   validate(endMinute: number, args: ValidationArguments): boolean {
     const schedule = args.object as BarberScheduleRules;
     return (

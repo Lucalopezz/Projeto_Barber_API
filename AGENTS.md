@@ -26,7 +26,7 @@ Esta é uma API REST de barbearias em NestJS, TypeScript, Prisma e PostgreSQL. A
 - As skills externas ficam em `.agents/skills`; consulte `.agents/README.md` e `.agents/skills-lock.json` para o escopo e as revisões de origem.
 - `nestjs-best-practices` complementa estas convenções. Preserve Clean Architecture/DDD, o adaptador Fastify e os contratos existentes; exemplos de outros ORMs não autorizam trocar a persistência.
 - `security-best-practices` deve ser usada quando a tarefa pedir revisão ou implementação de segurança, dentro do escopo solicitado.
-- O projeto permanece no **Prisma 6.12**. A skill oficial `prisma-client-api` foi instalada como referência parcial: use apenas consultas CRUD, filtros, relações e transações compatíveis com a versão instalada. Preserve `@prisma/client`, o generator `prisma-client-js` e o `PrismaService` atuais.
+- O projeto permanece no **Prisma 6.19.3**. A skill oficial `prisma-client-api` foi instalada como referência parcial: use apenas consultas CRUD, filtros, relações e transações compatíveis com a versão instalada. Preserve `@prisma/client`, o generator `prisma-client-js` e o `PrismaService` atuais.
 - Não copie os exemplos de construção/importação do cliente, adapters ou `sqlCommenter` voltados ao Prisma 7. A instalação dessa skill não autoriza migrar dependências, generator ou schema; confira tipos e documentação da versão 6 antes de aplicar uma API.
 
 Cada recurso (`users`, `barberShop`, `services`, `appointments`) separa responsabilidades assim:

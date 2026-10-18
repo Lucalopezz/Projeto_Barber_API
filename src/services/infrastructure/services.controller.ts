@@ -65,7 +65,7 @@ export class ServicesController {
   @Roles([Role.owner])
   @ApiOperation({ summary: 'Criar um serviço na própria barbearia' })
   @ApiDataResponse(ServicePresenter, 201, 'Serviço criado')
-  @ApiProtected(403, 404, 409, 422)
+  @ApiProtected(400, 403, 404, 409, 422)
   async create(
     @Body() createServiceDto: CreateServiceDto,
     @CurrentUserId() userId: string,
@@ -102,7 +102,7 @@ export class ServicesController {
   @ApiOperation({ summary: 'Atualizar um serviço da própria barbearia' })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do serviço' })
   @ApiDataResponse(ServicePresenter)
-  @ApiProtected(403, 404, 409, 422)
+  @ApiProtected(400, 403, 404, 409, 422)
   async update(
     @Param('id') id: string,
     @Body() updateServiceDto: UpdateServiceDto,

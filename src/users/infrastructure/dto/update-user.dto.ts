@@ -2,9 +2,10 @@ import { UpdateUserUseCase } from '@/users/application/usecases/update-user.usec
 import { IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class UpdateUserDto
-  implements Omit<UpdateUserUseCase.Input, 'id' | 'userId'>
-{
+export class UpdateUserDto implements Omit<
+  UpdateUserUseCase.Input,
+  'id' | 'userId'
+> {
   @ApiPropertyOptional({ example: 'Ana Souza' })
   @IsString()
   @IsOptional()

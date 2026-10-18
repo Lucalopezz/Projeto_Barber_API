@@ -19,8 +19,11 @@ Authorization: Bearer <accessToken>
 ```
 
 O token é obtido em `POST /api/v1/users/login`. Na Swagger UI, use o botão
-**Authorize** e informe o token. O papel faz parte do JWT; após criar uma
-barbearia, faça login novamente para obter o papel `owner`.
+**Authorize** e informe o token. A assinatura e a expiração do JWT são verificadas;
+a identidade e o papel usados na autorização vêm do banco a cada requisição. Após
+criar uma barbearia, o mesmo token passa a autorizar as operações de `owner`, sem
+novo login. Contas excluídas recebem `401`; rebaixamentos de papel têm efeito
+imediato. O formato de login e do token continua o mesmo.
 
 ## Famílias de rotas
 
@@ -146,8 +149,10 @@ O pipeline global:
 
 Erros de autenticação retornam `401`; papel insuficiente retorna `403`; recursos
 inexistentes ou invisíveis podem retornar `404`; conflitos conhecidos retornam
-`409`. A padronização integral de erros de aplicação ainda está no
-[backlog](./backlog/todos.md).
+`409`. Erros conhecidos `BadRequestError` retornam `400`; `ValidationError` e
+`EntityValidationError` retornam `422`. Credenciais inválidas no login mantêm o
+contrato `400`; senha atual inválida mantém `422`. Erros inesperados continuam
+como `500` com a mensagem genérica `Internal server error`, sem detalhes internos.
 
 ## CORS
 

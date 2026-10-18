@@ -19,11 +19,10 @@ export namespace ServicesRepository {
   > {}
 
   // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-  export interface Repository
-    extends SearchableRepositoryInterface<
-      ServiceEntity,
-      Filter,
-      ServicesSearchParams,
-      ServicesSearchResult
-    > {}
+  export interface Repository extends SearchableRepositoryInterface<
+    ServiceEntity,
+    Filter,
+    ServicesSearchParams,
+    ServicesSearchResult
+  > {}
 }

@@ -18,20 +18,19 @@ export namespace AppointmentsRepository {
     customerId?: string;
   };
 
-  export class AppointmentsSearchParams extends SearchParams<Filter> {}
+  export class AppointmentsSearchParams extends SearchParams<Filter> { }
 
   export class AppointmentsSearchResult extends SearchResult<
     AppointmentEntity,
     Filter
-  > {}
+  > { }
 
-  export interface Repository
-    extends SearchableRepositoryInterface<
-      AppointmentEntity,
-      Filter,
-      AppointmentsSearchParams,
-      AppointmentsSearchResult
-    > {
+  export interface Repository extends SearchableRepositoryInterface<
+    AppointmentEntity,
+    Filter,
+    AppointmentsSearchParams,
+    AppointmentsSearchResult
+  > {
     findOverlappingScheduled(
       startsAt: Date,
       endsAt: Date,

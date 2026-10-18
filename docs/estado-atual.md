@@ -1,5 +1,42 @@
 # Estado verificado em 17/10/2026
 
+> **PS — conclusão das partes 1 e 2 em 18/10/2026:** a base foi estabilizada e a
+> jornada de agendamento foi implementada na interface: configurar expediente e
+> folgas, consultar serviços/horários, reservar, acompanhar e cancelar. As
+> limitações descritas abaixo sobre ausência dessas telas, novo login após criar
+> loja, lint e dependências vulneráveis pertencem ao diagnóstico histórico.
+>
+> O backend usa NestJS **11.2.7**, Fastify **5.12.7**, Swagger **11.4.7** e Prisma
+> **6.19.3**. É necessário Node **>=24.9.0** e pnpm **12.11.2**; use o lockfile
+> versionado com `pnpm install --frozen-lockfile`. O Prisma permanece no major 6,
+> com schema, migrações e `PrismaService` preservados. Jest foi atualizado e os
+> scripts ativam VM modules para o Faker 10, distribuído como ESM.
+>
+> As auditorias completas e de produção passaram a apresentar **zero alertas**,
+> sem ignorar advisories ou suprimir níveis de severidade. Isso registra o
+> resultado dos comandos nesta entrega; atualizações futuras exigem nova
+> auditoria. Os overrides transitivos compatíveis estão documentados no
+> `pnpm-workspace.yaml`.
+>
+> A autorização usa identidade/papel atuais do banco em cada requisição depois
+> de validar o JWT. O token original funciona após a promoção de barbeiro para
+> owner; contas excluídas recebem `401` e mudanças de papel têm efeito imediato.
+> Erros conhecidos de entrada retornam `400`, validações de domínio retornam
+> `422` e conflitos da agenda seguem `409`. Falhas inesperadas continuam `500`
+> genérico, sem expor detalhes internos. Swagger e `docs/api.md` refletem o contrato.
+>
+> Os dez erros antigos de lint foram corrigidos. O builder de endereços agora
+> normaliza separadores gerados pelo Faker, com regressão determinística e 100
+> amostras fixas. Bugs desta entrega possuem testes de regressão; o trabalho
+> preserva a exigência de TDD do `AGENTS.md`, com a exceção visual autorizada
+> para telas do frontend. As próximas entregas propostas continuam sendo a
+> skill própria de setup/verificação e o assistente de consultas com avaliações.
+>
+> Verificação final: **130 unitários + 185 integração + 36 e2e = 351 testes**
+> aprovados, lint e build aprovados. O frontend passou em **21 cenários** e
+> **uma jornada integrada com API e PostgreSQL reais**, sem mocks HTTP. Os
+> testes que usam `barber_api_test` foram executados sequencialmente.
+
 > **Atualização — skills e correção da agenda:** skills externas foram instaladas
 > em `.agents/skills`, com revisões e hashes em `.agents/skills-lock.json` e
 > restrições de compatibilidade em `.agents/README.md`. A reserva indisponível

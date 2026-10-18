@@ -10,15 +10,19 @@ Instaladas neste repositório em 17/10/2026, sem instalação global, migração
 
 `skills-lock.json` registra caminhos de origem, commits completos, licenças e SHA-256 de cada arquivo instalado. As cópias mantêm integralmente os arquivos upstream; as orientações locais ficam aqui e em `AGENTS.md`.
 
+> Atualização de 18/10/2026: a estabilização da aplicação atualizou o Prisma
+> para **6.19.3**, mantendo o major 6, o generator e o `PrismaService`. As
+> cópias upstream das skills, suas revisões e seus hashes continuam inalterados.
+
 ## Uso no projeto
 
 - NestJS: consultar regras de módulos, injeção de dependências, filtros de exceção e testes. Preserve a organização Clean Architecture/DDD já existente. Exemplos que lançam `HttpException` pertencem aos adaptadores HTTP; domínio e aplicação continuam usando erros próprios. Não mova Prisma para essas camadas.
 - Security Best Practices: usar em tarefas explícitas de segurança, selecionando referências compatíveis com TypeScript e com os frameworks presentes. A coleção não possui uma referência específica de NestJS; não apresente recomendações de Express como uma revisão completa de Nest. A instalação não executou uma auditoria completa do sistema.
-- Prisma Client API: consultar apenas a parte compatível com o Prisma 6.12.0 local, conforme as restrições abaixo.
+- Prisma Client API: consultar apenas a parte compatível com o Prisma 6.19.3 local, conforme as restrições abaixo.
 
 O Codex poderá descobrir estas skills locais no próximo turno/sessão aberto no repositório. Se já houver um agente em execução, informe o caminho absoluto do `SKILL.md` para que ele o leia explicitamente. Uma worktree criada antes de versionar `.agents/` não recebe os arquivos locais automaticamente; faça commit e crie a worktree a partir dele, ou forneça o caminho da cópia revisada ao agente.
 
-## Compatibilidade do Prisma: projeto 6.12.0, referência upstream 7.9.1
+## Compatibilidade do Prisma: projeto 6.19.3, referência upstream 7.9.1
 
 A skill oficial `prisma-client-api` instalada declara versão **7.9.1** e contém exemplos de construção do cliente com adapters e imports voltados ao Prisma 7. Ela foi instalada como referência parcial, sem adaptar seus arquivos upstream e sem migrar a aplicação.
 
@@ -26,9 +30,9 @@ Foi consultado o histórico de `prisma-client-api/SKILL.md`: o primeiro commit, 
 
 Regras para este backend:
 
-- Usar a referência para CRUD, `where`, filtros, paginação, relações, transações e SQL parametrizado **somente quando as opções forem aceitas pelos tipos do Prisma Client 6.12.0 gerado neste projeto**.
+- Usar a referência para CRUD, `where`, filtros, paginação, relações, transações e SQL parametrizado **somente quando as opções forem aceitas pelos tipos do Prisma Client 6.19.3 gerado neste projeto**.
 - Preservar imports de `@prisma/client`, o generator `prisma-client-js`, o `PrismaService`, a configuração de datasource e o acesso ao banco existentes.
-- Ignorar os exemplos de constructor, imports gerados, generator, adapters e `sqlCommenter` específicos de Prisma 7. Também não assumir que toda opção listada nas referências é suportada na versão 6.12.0.
+- Ignorar os exemplos de constructor, imports gerados, generator, adapters e `sqlCommenter` específicos de Prisma 7. Também não assumir que toda opção listada nas referências é suportada na versão 6.19.3.
 - Não atualizar Prisma, instalar adapters, mudar o schema ou gerar uma migração para adequar a aplicação à skill. Uma futura migração de versão precisa de tarefa e validação próprias.
 - Ao tocar em repositórios ou transações, compilar e executar os testes relevantes com a versão local. Testes que limpam `barber_api_test` não podem executar em paralelo com outra suíte que use esse mesmo schema.
 

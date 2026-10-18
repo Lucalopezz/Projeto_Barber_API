@@ -6,9 +6,7 @@ import { BarberShopPrismaRepository } from './repositories/barberShop-prisma.rep
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/repositories/user-prisma.repository';
 
-export class CreateBarberShopPrismaTransaction
-  implements CreateBarberShopTransaction
-{
+export class CreateBarberShopPrismaTransaction implements CreateBarberShopTransaction {
   constructor(private prismaService: PrismaService) {}
 
   async execute<T>(

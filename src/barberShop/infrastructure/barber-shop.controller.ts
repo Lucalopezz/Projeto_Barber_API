@@ -76,7 +76,7 @@ export class BarberShopController {
   @Roles([Role.barber])
   @ApiOperation({ summary: 'Criar a barbearia do usuário autenticado' })
   @ApiDataResponse(BarberShopPresenter, 201, 'Barbearia criada')
-  @ApiProtected(403, 409, 422)
+  @ApiProtected(400, 403, 409, 422)
   async create(
     @Body() createBarberShopDto: CreateBarberShopDto,
     @CurrentUserId() userId: string,
@@ -111,7 +111,7 @@ export class BarberShopController {
   @ApiOperation({ summary: 'Consultar horários disponíveis em uma data' })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID da barbearia' })
   @ApiDataResponse(PublicAvailabilityPresenter)
-  @ApiErrorResponses(404, 422)
+  @ApiErrorResponses(400, 404, 422)
   async getAvailability(
     @Param('id') barberShopId: string,
     @Query() query: GetPublicAvailabilityDto,
@@ -129,7 +129,7 @@ export class BarberShopController {
   @ApiOperation({ summary: 'Atualizar a própria barbearia' })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID da barbearia' })
   @ApiDataResponse(BarberShopPresenter)
-  @ApiProtected(403, 404, 422)
+  @ApiProtected(400, 403, 404, 422)
   async update(
     @Param('id') id: string,
     @Body() updateBarberShopDto: UpdateBarberShopDto,

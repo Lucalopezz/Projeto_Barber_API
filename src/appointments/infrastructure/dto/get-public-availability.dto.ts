@@ -2,9 +2,10 @@ import { GetPublicAvailabilityUseCase } from '@/barberShop/application/usecases/
 import { IsDateString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class GetPublicAvailabilityDto
-  implements Omit<GetPublicAvailabilityUseCase.Input, 'barberShopId'>
-{
+export class GetPublicAvailabilityDto implements Omit<
+  GetPublicAvailabilityUseCase.Input,
+  'barberShopId'
+> {
   @ApiProperty({
     format: 'date',
     example: '2026-08-03',

@@ -42,9 +42,7 @@ describe('ServiceModelMapper integration tests', () => {
 
   it('should throw error when service model is invalid', async () => {
     const model: Service = Object.assign({}, props, { name: null });
-    expect(() => ServicesModelMapper.toEntity(model)).toThrowError(
-      ValidationError,
-    );
+    expect(() => ServicesModelMapper.toEntity(model)).toThrow(ValidationError);
   });
 
   // Helper function to create a user (owner)

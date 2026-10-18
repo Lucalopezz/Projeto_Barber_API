@@ -1,3 +1,4 @@
+import { BusinessInputErrorFilter } from './shared/infrastructure/exception-filters/business-input-error/business-input-error.filter';
 import {
   ClassSerializerInterceptor,
   INestApplication,
@@ -29,7 +30,7 @@ export function applyGlobalConfig(
   );
   app.enableCors({
     origin: corsAllowedOrigins.length > 0 ? corsAllowedOrigins : false,
-    methods: 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+    methods: 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Authorization',
   });
   app.useGlobalInterceptors(
@@ -37,6 +38,7 @@ export function applyGlobalConfig(
     new ClassSerializerInterceptor(app.get(Reflector)),
   );
   app.useGlobalFilters(
+    new BusinessInputErrorFilter(),
     new ConflictErrorFilter(),
     new NotFoundErrorFilter(),
     new InvalidPasswordErrorFilter(),

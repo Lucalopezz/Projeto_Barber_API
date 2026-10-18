@@ -2,9 +2,10 @@ import { UpdateServicesUseCase } from '@/services/application/usecases/update-se
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
-export class UpdateServiceDto
-  implements Omit<UpdateServicesUseCase.Input, 'id' | 'barberShopOwnerId'>
-{
+export class UpdateServiceDto implements Omit<
+  UpdateServicesUseCase.Input,
+  'id' | 'barberShopOwnerId'
+> {
   @ApiPropertyOptional({ example: 'Corte degradê premium' })
   @IsNotEmpty()
   @IsString()
