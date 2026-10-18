@@ -5,7 +5,188 @@ import {
   AppointmentValidator,
   AppointmentValidatorFactory,
 } from '@/appointments/domain/validators/appointment.validator';
-import { AppointmentProps } from '../../appointment.entity';
+import { AppointmentEntity, AppointmentProps } from '../../appointment.entity';
+import { EntityValidationError } from '@/shared/domain/errors/validation-error';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
+
+describe('AppointmentEntity invariants', () => {
+  const makeProps = () =>
+    AppointmentDataBuilder({
+      date: new Date('2030-01-01T12:00:00Z'),
+      endDate: new Date('2030-01-01T12:30:00Z'),
+      createdAt: new Date('2029-01-01T00:00:00Z'),
+    });
+
+  it.each(Object.values(AppointmentStatus))(
+    'restores persisted %s appointments',
+    (status) => {
+      const props = { ...makeProps(), status };
+      const entity = new AppointmentEntity(props, 'persisted-id');
+      expect(entity.toJSON()).toEqual({ id: 'persisted-id', ...props });
+    },
+  );
+
+  it('generates identity and creation timestamp without mutating constructor input', () => {
+    const props = makeProps();
+    delete props.createdAt;
+    const entity = new AppointmentEntity(props);
+    expect(entity.id).toEqual(expect.any(String));
+    expect(entity.createdAt).toBeInstanceOf(Date);
+    expect(props.createdAt).toBeUndefined();
+  });
+
+  it.each([
+    { serviceId: 'invalid' },
+    { endDate: new Date('2030-01-01T11:00:00Z') },
+    { date: new Date(NaN) },
+  ])('rejects invalid constructor data %o', (change) => {
+    expect(() => new AppointmentEntity({ ...makeProps(), ...change })).toThrow(
+      EntityValidationError,
+    );
+  });
+
+  it.each([AppointmentStatus.cancelled, AppointmentStatus.completed])(
+    'transitions scheduled to %s',
+    (status) => {
+      const entity = new AppointmentEntity(makeProps());
+      entity.updateStatus(status);
+      expect(entity.status).toBe(status);
+    },
+  );
+
+  it.each([AppointmentStatus.cancelled, AppointmentStatus.completed])(
+    'keeps %s terminal for every status target',
+    (status) => {
+      const entity = new AppointmentEntity({ ...makeProps(), status });
+      const before = entity.toJSON();
+      for (const target of Object.values(AppointmentStatus)) {
+        expect(() => entity.updateStatus(target)).toThrow(ConflictError);
+        expect(entity.toJSON()).toEqual(before);
+      }
+    },
+  );
+
+  it.each([AppointmentStatus.cancelled, AppointmentStatus.completed])(
+    'does not reschedule %s appointments',
+    (status) => {
+      const entity = new AppointmentEntity({ ...makeProps(), status });
+      const before = entity.toJSON();
+      expect(() =>
+        entity.update(
+          new Date('2030-01-02T12:00:00Z'),
+          undefined,
+          new Date('2030-01-02T12:30:00Z'),
+        ),
+      ).toThrow(ConflictError);
+      expect(entity.toJSON()).toEqual(before);
+    },
+  );
+
+  it('reschedules and changes service together', () => {
+    const entity = new AppointmentEntity(makeProps());
+    const serviceId = AppointmentDataBuilder({}).serviceId;
+    const date = new Date('2030-01-02T12:00:00Z');
+    const endDate = new Date('2030-01-02T13:00:00Z');
+    entity.update(date, serviceId, endDate);
+    expect(entity.toJSON()).toMatchObject({
+      date,
+      endDate,
+      serviceId,
+      status: AppointmentStatus.scheduled,
+    });
+  });
+
+  it('rejects invalid updates without partial mutation', () => {
+    const entity = new AppointmentEntity(makeProps());
+    const before = entity.toJSON();
+    expect(() =>
+      entity.update(
+        new Date('2030-01-02T12:00:00Z'),
+        'invalid',
+        new Date('2030-01-02T13:00:00Z'),
+      ),
+    ).toThrow(EntityValidationError);
+    expect(entity.toJSON()).toEqual(before);
+    expect(() =>
+      entity.update(undefined, undefined, new Date('2030-01-01T11:00:00Z')),
+    ).toThrow(EntityValidationError);
+    expect(entity.toJSON()).toEqual(before);
+    expect(() => entity.updateStatus('unknown' as AppointmentStatus)).toThrow(
+      EntityValidationError,
+    );
+    expect(entity.toJSON()).toEqual(before);
+  });
+
+  it('isolates constructor props and its mutable dates', () => {
+    const props = makeProps();
+    const entity = new AppointmentEntity(props);
+    const before = entity.toJSON();
+    props.status = AppointmentStatus.completed;
+    props.serviceId = 'invalid';
+    props.date.setUTCFullYear(2000);
+    props.endDate.setUTCFullYear(2000);
+    props.createdAt.setUTCFullYear(2000);
+    expect(entity.toJSON()).toEqual(before);
+  });
+
+  it('isolates mutation inputs after a successful update', () => {
+    const entity = new AppointmentEntity(makeProps());
+    const date = new Date('2030-01-02T12:00:00Z');
+    const endDate = new Date('2030-01-02T13:00:00Z');
+    entity.update(date, undefined, endDate);
+    const dateTimestamp = date.getTime();
+    const endTimestamp = endDate.getTime();
+    date.setUTCFullYear(2000);
+    endDate.setUTCFullYear(2000);
+    expect(entity.date.getTime()).toBe(dateTimestamp);
+    expect(entity.endDate.getTime()).toBe(endTimestamp);
+  });
+
+  it.each(['date', 'endDate', 'createdAt'] as const)(
+    'detaches the constructor %s reference',
+    (field) => {
+      const props = makeProps();
+      const timestamp = props[field].getTime();
+      const entity = new AppointmentEntity(props);
+      props[field].setTime(0);
+      expect(entity[field].getTime()).toBe(timestamp);
+    },
+  );
+
+  it.each(['date', 'endDate', 'createdAt'] as const)(
+    'detaches every publicly exposed %s reference',
+    (field) => {
+      const entity = new AppointmentEntity(makeProps());
+      const timestamp = entity[field].getTime();
+      entity.props[field].setTime(0);
+      expect(entity[field].getTime()).toBe(timestamp);
+      entity.toJSON()[field].setTime(0);
+      expect(entity[field].getTime()).toBe(timestamp);
+      entity[field].setTime(0);
+      expect(entity[field].getTime()).toBe(timestamp);
+    },
+  );
+
+  it('exposes detached snapshots through props, toJSON and Date getters', () => {
+    const entity = new AppointmentEntity(makeProps());
+    const before = entity.toJSON();
+    const props = entity.props;
+    props.status = AppointmentStatus.completed;
+    props.serviceId = 'invalid';
+    props.date.setUTCFullYear(2000);
+    props.endDate.setUTCFullYear(2000);
+    props.createdAt.setUTCFullYear(2000);
+    const json = entity.toJSON();
+    json.status = AppointmentStatus.cancelled;
+    json.date.setUTCFullYear(1990);
+    json.endDate.setUTCFullYear(1990);
+    json.createdAt.setUTCFullYear(1990);
+    entity.date.setUTCFullYear(1980);
+    entity.endDate.setUTCFullYear(1980);
+    entity.createdAt.setUTCFullYear(1980);
+    expect(entity.toJSON()).toEqual(before);
+  });
+});
 
 let sut: AppointmentValidator;
 let props: AppointmentProps;

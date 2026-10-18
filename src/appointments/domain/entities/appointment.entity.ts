@@ -2,82 +2,89 @@ import { Entity } from '@/shared/domain/entities/entity';
 import { AppointmentStatus } from './appointmentStatus.enum';
 import { AppointmentValidatorFactory } from '../validators/appointment.validator';
 import { EntityValidationError } from '@/shared/domain/errors/validation-error';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
 
 import type { AppointmentProps } from './appointment.props';
 export type { AppointmentProps } from './appointment.props';
 
 export class AppointmentEntity extends Entity<AppointmentProps> {
-  constructor(
-    public readonly props: AppointmentProps,
-    id?: string,
-  ) {
+  #state: AppointmentProps;
+
+  constructor(props: AppointmentProps, id?: string) {
     AppointmentEntity.validate(props);
-    super(props, id);
-    this.props.createdAt = this.props.createdAt ?? new Date();
+    const state = AppointmentEntity.copy(props);
+    state.createdAt ??= new Date();
+    super(state, id);
+    this.#state = state;
+
+    // Preserve the shared Entity contract while preventing writes through props.
+    // Dates also need copies: Object.freeze alone cannot protect Date#setTime.
+    Object.defineProperty(this, 'props', {
+      get: () => AppointmentEntity.copy(this.#state),
+      configurable: false,
+      enumerable: true,
+    });
   }
+
   updateStatus(status: AppointmentStatus): void {
-    AppointmentEntity.validate({ ...this.props, status });
-    this.props.status = status;
+    this.assertScheduled();
+    const updatedProps = { ...this.#state, status };
+    AppointmentEntity.validate(updatedProps);
+    this.#state = updatedProps;
   }
+
   update(date?: Date, serviceId?: string, endDate?: Date): void {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    this.assertScheduled();
     const updatedProps = {
-      ...this.props,
+      ...this.#state,
       ...(date !== undefined && { date }),
       ...(serviceId !== undefined && { serviceId }),
       ...(endDate !== undefined && { endDate }),
     };
-
     AppointmentEntity.validate(updatedProps);
-
-    if (date !== undefined) this.props.date = date;
-    if (serviceId !== undefined) this.props.serviceId = serviceId;
-    if (endDate !== undefined) this.props.endDate = endDate;
+    this.#state = AppointmentEntity.copy(updatedProps);
   }
+
   get date(): Date {
-    return this.props.date;
+    return new Date(this.#state.date);
   }
   get endDate(): Date {
-    return this.props.endDate;
+    return new Date(this.#state.endDate);
   }
-  private set date(value: Date) {
-    this.props.date = value;
-  }
-  get status(): string {
-    return this.props.status;
-  }
-  private set status(value: AppointmentStatus) {
-    this.props.status = value;
+  get status(): AppointmentStatus {
+    return this.#state.status;
   }
   get clientId(): string {
-    return this.props.clientId;
-  }
-  private set clientId(value: string) {
-    this.props.clientId = value;
+    return this.#state.clientId;
   }
   get serviceId(): string {
-    return this.props.serviceId;
-  }
-  private set serviceId(value: string) {
-    this.props.serviceId = value;
+    return this.#state.serviceId;
   }
   get barberId(): string {
-    return this.props.barberId;
-  }
-  private set barberId(value: string) {
-    this.props.barberId = value;
+    return this.#state.barberId;
   }
   get barberShopId(): string {
-    return this.props.barberShopId;
-  }
-  private set barberShopId(value: string) {
-    this.props.barberShopId = value;
+    return this.#state.barberShopId;
   }
   get createdAt(): Date {
-    return this.props.createdAt;
+    return new Date(this.#state.createdAt);
   }
-  private set createdAt(value: Date) {
-    this.props.createdAt = value;
+
+  private assertScheduled(): void {
+    if (this.#state.status !== AppointmentStatus.scheduled) {
+      throw new ConflictError('Only scheduled appointments can be changed');
+    }
+  }
+
+  private static copy(props: AppointmentProps): AppointmentProps {
+    return {
+      ...props,
+      date: new Date(props.date),
+      endDate: new Date(props.endDate),
+      ...(props.createdAt !== undefined && {
+        createdAt: new Date(props.createdAt),
+      }),
+    };
   }
 
   static validate(props: AppointmentProps) {
