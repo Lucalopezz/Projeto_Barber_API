@@ -126,3 +126,9 @@ Referências consultadas na documentação oficial OpenAI:
 [subagentes](https://learn.chatgpt.com/docs/agent-configuration/subagents),
 [Git worktrees](https://learn.chatgpt.com/docs/environments/git-worktrees) e
 [skills](https://learn.chatgpt.com/docs/build-skills).
+
+## PS — passo 3 da sequência de retomada
+
+O procedimento repetido agora está na skill própria `barber-local-setup`, disponível em `.agents/skills` nos dois projetos. Peça “Use $barber-local-setup para preparar e verificar este par de worktrees”, informando os caminhos quando não forem os checkouts irmãos padrão. Para apenas investigar o ambiente, peça explicitamente o modo diagnóstico.
+
+A skill reutiliza as ferramentas e scripts dos projetos, em vez de criar outro instalador. O agente escolhe as etapas aplicáveis e preserva limites importantes: env existentes, lock congelado, banco de teste isolado, suites de banco sequenciais e processos alheios. [A avaliação independente](agents/setup-validation.md) registra a preparação real em worktrees novas, os checks e a falha de lint encontrada. O [workflow](agents/workflow.md) mostra como usar a skill junto das etapas de discussão/spec/tarefas.

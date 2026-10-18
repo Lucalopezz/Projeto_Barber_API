@@ -12,8 +12,10 @@
 - `GET /users/me` apresenta a relação `owner`, `barber` ou nenhuma relação com
   barbearia.
 
-O JWT contém `id` e `role`. Como o token não acompanha mudanças posteriores no
-banco, uma alteração de papel exige novo login.
+O JWT contém `id` e `role`, mas o `AuthGuard` consulta a identidade e o papel
+atuais no banco após validar o token. Uma alteração de papel passa a valer na
+próxima requisição protegida, sem exigir novo login; uma conta excluída deixa
+de ser aceita mesmo que o token ainda não tenha expirado.
 
 ## Barbearias
 

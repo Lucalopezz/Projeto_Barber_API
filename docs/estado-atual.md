@@ -226,3 +226,9 @@ do navegador e do e2e integrado: `/tmp/barber-browser-smoke.log` e
 ## PS — passo 3: skill de setup/verificação
 
 A skill própria `barber-local-setup` foi criada em `.agents/skills` nos dois projetos. Ela concentra o procedimento para diagnosticar, preparar e verificar checkouts locais/worktrees com pnpm, env, PostgreSQL e as suites existentes. Foi validada por um agente independente em duas worktrees novas: 351 testes da API, 21 cenários do front e uma jornada com API/PostgreSQL reais passaram, com lint/build aprovados após corrigir dois espaços em classes vazias do backend. O modo diagnóstico preservou os env e não repetiu instalações ou migrações. Consulte [o relatório e os limites da avaliação](agents/setup-validation.md) e [o workflow de uso](agents/workflow.md). O assistente de consultas (passo 4), refresh token e cache não foram implementados nesta entrega.
+
+## PS — proteção de arquitetura e revisão de DDD
+
+Foram adicionados `pnpm test:architecture` (35 casos com RED/GREEN observado) e `pnpm check:architecture` (código real sem violações). Seis ciclos de tipos entre entidades/validadores foram eliminados extraindo contratos `*.props.ts` e preservando reexports. Lint/build e os 351 testes existentes do backend passaram; a auditoria após adicionar dependency-cruiser permaneceu com zero alertas. O workflow do backend foi criado e validado com actionlint; sua primeira execução remota e a exigência do check na proteção da branch ainda estão pendentes. A skill de setup dos dois projetos passou a incluir os novos comandos.
+
+A [matriz de fronteiras](arquitetura.md) documenta as regras e seus limites. A [revisão de agendamentos](revisao-ddd-agendamentos.md) separa riscos de concorrência a reproduzir, melhorias de testes/modelagem e decisões de produto; também registra o que resta da sequência principal. O assistente de consultas com avaliações (passo 4) continua sendo a próxima entrega do laboratório.
