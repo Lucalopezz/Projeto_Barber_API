@@ -1,6 +1,6 @@
 # Assistente de consultas — passo 4
 
-Status: em implementação. Decisão do usuário nesta entrega: **somente simulador**; sem integração de provedor externo, chave de API ou chamadas pagas.
+Status: concluído e validado; evidências em `docs/entrega-politicas-assistente.md`. Decisão do usuário nesta entrega: **somente simulador**; sem integração de provedor externo, chave de API ou chamadas pagas.
 
 ## Resultado esperado
 

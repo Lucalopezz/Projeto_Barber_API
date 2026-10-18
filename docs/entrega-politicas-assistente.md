@@ -29,4 +29,38 @@ As etapas 1–4 estão implementadas dentro do escopo confirmado. A configuraç�
 
 Para evoluir o workflow: partir de uma spec curta com exemplos verificáveis, atribuir arquivos/worktree a um implementador, reservar um revisor independente e coordenar recursos compartilhados. Transformar apenas procedimentos repetidos em skills. Novas regras de produto devem acrescentar casos às avaliações/testes antes da implementação; aumentar o número de agentes sem fronteiras claras tende a aumentar conflitos.
 
-As duas jornadas de navegador com API/PostgreSQL reais passaram: agendamento completo e consulta do assistente com slot ocupado e recusa de escrita. O frontend teve 31 cenários aprovados antes da correção adicional de paginação identificada na revisão; essa correção tem regressão própria e seu resultado final fica registrado no README do front. O ambiente local usa API em `http://localhost:3001/api/v1`, Swagger em `http://localhost:3001/docs` e UI em `http://127.0.0.1:5173`.
+As duas jornadas de navegador com API/PostgreSQL reais passaram: agendamento completo e consulta do assistente com slot ocupado e recusa de escrita. O frontend integrado passou nos 32 cenários, incluindo a regressão de paginação identificada na revisão independente, e em lint/build. O CI do backend também passou no GitHub, incluindo as avaliações fixas. O ambiente local usa API em `http://localhost:3001/api/v1`, Swagger em `http://localhost:3001/docs` e UI em `http://127.0.0.1:5173`.
+
+## Versionamento por feature
+
+Os commits dos implementadores foram integrados por cherry-pick. Os comandos abaixo são a referência de agrupamento para `git add`/`git commit` solicitada pelo projeto; os commits e pushes desta entrega já foram executados, não é necessário repeti-los.
+
+Backend, concorrência/invariantes/políticas:
+
+```bash
+git add prisma/schema.prisma prisma/migrations/20261018190000_appointment_optimistic_version src/appointments src/shared/application/providers/clock.ts test/appointment-concurrency.e2e-spec.ts test/booking-policies.e2e-spec.ts
+git commit -m "feat(appointments): enforce booking policies and serialize availability mutations"
+```
+
+Backend, assistente:
+
+```bash
+git add src/assistant src/app.module.ts package.json test/assistant.e2e-spec.ts docs/assistant
+git commit -m "feat(assistant): add simulated catalog tools and fixed evaluations"
+```
+
+Frontend, assistente e regressões:
+
+```bash
+git add src/pages/assistant src/routes src/components tests/e2e/assistant.spec.ts tests/integration/assistant.real.spec.ts
+git commit -m "feat(assistant): add simulated read-only consultation interface"
+```
+
+Frontend, políticas: os componentes ficam em `src/components`; agrupe seus diffs separadamente dos de navegação do assistente quando refizer uma entrega.
+
+```bash
+git add src/components/booking/BookingForm.tsx src/components/booking/AvailabilityManager.tsx src/components/appointments/AppointmentActionsClient.tsx tests/e2e/booking.spec.ts tests/e2e/README.md
+git commit -m "feat(booking): explain policies and enforce client cancellation deadline"
+```
+
+Documentação/CI têm commits separados. Para publicar cada checkout: `git push origin main`. Após ativar a proteção manual, use branch/PR e aguarde os checks em vez de push direto.

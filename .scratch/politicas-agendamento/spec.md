@@ -1,6 +1,6 @@
 # Políticas e invariantes de agendamento
 
-Status: em implementação com TDD. Decisões confirmadas pelo usuário nesta conversa:
+Status: concluído e validado; evidências em `docs/entrega-politicas-assistente.md`. Decisões confirmadas pelo usuário nesta conversa:
 
 - Novos agendamentos e remarcações precisam de pelo menos 30 minutos de antecedência e no máximo 60 dias (60 × 24 horas), calculados pelo instante real. Limites inclusivos.
 - Inícios seguem uma grade de 30 minutos no fuso da barbearia, com segundos/milissegundos zerados. O horário é exibido no fuso da loja.
