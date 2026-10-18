@@ -1,5 +1,21 @@
 # Estado verificado em 17/10/2026
 
+> **Atualização — skills e correção da agenda:** skills externas foram instaladas
+> em `.agents/skills`, com revisões e hashes em `.agents/skills-lock.json` e
+> restrições de compatibilidade em `.agents/README.md`. A reserva indisponível
+> agora responde `409 Conflict`; sete regressões com Fastify real cobrem essa
+> correção. Foram aprovados 128 testes unitários, 185 de integração e 16 e2e
+> (329 no total). A primeira execução de integração encontrou um flake de
+> endereço gerado pelo Faker; a segunda execução completa passou. O diagnóstico
+> inicial abaixo foi preservado como registro da retomada. Os dois `AGENTS.md`
+> agora exigem regressão automatizada para bugs e TDD, com exceção para fazer
+> primeiro o visual de telas do front e testá-lo antes da conclusão.
+
+Após integrar as correções, o smoke no navegador contra os servidores originais
+(front 5173 e API 3001, com CORS real) aprovou cadastro, login, restauração,
+loja, serviço, reserva pela API, conflito `409` e cancelamento pela interface.
+Não houve exceção JavaScript não tratada e os dados temporários foram removidos.
+
 Este é um retrato da retomada dos projetos de estudo como laboratório de IA.
 Os repositórios continuam separados: `Projeto_Barber_API` e
 `Frontend_Barber_API`. O histórico anterior e o backlog foram preservados.

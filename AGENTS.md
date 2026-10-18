@@ -21,6 +21,14 @@ Esta é uma API REST de barbearias em NestJS, TypeScript, Prisma e PostgreSQL. A
 
 ## Estrutura do projeto
 
+### Skills locais e compatibilidade
+
+- As skills externas ficam em `.agents/skills`; consulte `.agents/README.md` e `.agents/skills-lock.json` para o escopo e as revisões de origem.
+- `nestjs-best-practices` complementa estas convenções. Preserve Clean Architecture/DDD, o adaptador Fastify e os contratos existentes; exemplos de outros ORMs não autorizam trocar a persistência.
+- `security-best-practices` deve ser usada quando a tarefa pedir revisão ou implementação de segurança, dentro do escopo solicitado.
+- O projeto permanece no **Prisma 6.12**. A skill oficial `prisma-client-api` foi instalada como referência parcial: use apenas consultas CRUD, filtros, relações e transações compatíveis com a versão instalada. Preserve `@prisma/client`, o generator `prisma-client-js` e o `PrismaService` atuais.
+- Não copie os exemplos de construção/importação do cliente, adapters ou `sqlCommenter` voltados ao Prisma 7. A instalação dessa skill não autoriza migrar dependências, generator ou schema; confira tipos e documentação da versão 6 antes de aplicar uma API.
+
 Cada recurso (`users`, `barberShop`, `services`, `appointments`) separa responsabilidades assim:
 
 ```text
@@ -73,6 +81,14 @@ Use o alias `@/` para imports a partir de `src` (por exemplo, `@/shared/domain/e
 - Preserve as relações e regras atuais: uma barbearia tem um dono (`Role.barber`), serviços pertencem a uma barbearia e agendamentos ligam cliente, serviço e barbearia.
 
 ## Testes e verificação
+
+### TDD e regressões obrigatórios
+
+- Todo bug corrigido deve incluir um teste automatizado de regressão versionado que reproduza o defeito, falhe com o comportamento anterior e passe com a correção. Verificação manual e scripts temporários fora do repositório não substituem esse teste.
+- Use TDD para implementar ou alterar comportamento: escreva o teste, execute-o e confirme a falha esperada (RED), implemente a menor mudança que o faça passar (GREEN) e depois refatore mantendo os testes aprovados (REFACTOR). Uma falha de ambiente não vale como RED do requisito.
+- Cubra o comportamento no nível adequado; para bugs no contrato HTTP, inclua regressão com o adaptador Fastify real. Preserve a independência do domínio e use o banco de teste isolado quando a persistência participar do defeito.
+- A exceção autorizada pelo usuário vale apenas para trabalho visual de telas do frontend: a tela pode ser feita primeiro e testada depois, antes da conclusão. Ela não dispensa regressões de bugs e não se aplica ao código deste backend.
+- Na entrega, informe os cenários cobertos e os resultados das execuções. Só afirme TDD quando observou RED/GREEN; não contorne falhas removendo asserções, ignorando testes ou alterando regras de negócio fora do escopo.
 
 - Testes unitários ficam próximos ao código em `__tests__/unit`; testes com banco em `__tests__/integration` e usam `setupPrismaTests`/`DatabaseModule.forTest`.
 - Use os data builders do domínio para montar dados de teste. Em integração, limpe tabelas respeitando a ordem das chaves estrangeiras antes de cada cenário.
