@@ -7,8 +7,9 @@
     "skillInstructionsAndScriptsRead": true,
     "symlinksFound": false,
     "credentialLikeContentFound": false,
-    "installedScriptsExecuted": false,
-    "reviewIsNotASecurityAudit": true
+    "installedScriptsExecuted": true,
+    "reviewIsNotASecurityAudit": true,
+    "installedScriptsExecutionScope": "docs-sync-audit --help and disposable fixture only; no application docs audit"
   },
   "skills": [
     {
@@ -139,6 +140,180 @@
           "conclusion": "No Prisma 6-specific revision found in path history; the initial skill already targeted Prisma 7."
         }
       }
+    },
+    {
+      "directory": "grill-me",
+      "name": "grill-me",
+      "repository": "mattpocock/skills",
+      "sourcePath": "skills/productivity/grill-me",
+      "ref": "49dd158d1076134a641b33efb035946536778336",
+      "commitDate": "2026-10-09T10:56:49Z",
+      "sourceUrl": "https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336/skills/productivity/grill-me",
+      "installedOn": "2026-10-18",
+      "license": {
+        "declared": "MIT",
+        "evidence": "repository LICENSE copied to .agents/licenses/mattpocock-skills-LICENSE",
+        "sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5"
+      },
+      "fileCount": 2,
+      "sizeBytes": 294,
+      "filesSha256": {
+        "SKILL.md": "caaf8b8de1684f96e26b28f3c29189db5c89cce4b73e1c93d86164f66ef88637",
+        "agents/openai.yaml": "c061e39c3e0f9d865fb1b97556d485704af2a8a58f4b8221a8917a5c2074a32b"
+      },
+      "review": {
+        "skillInstructionsAndScriptsRead": true,
+        "symlinksFound": false,
+        "installedScriptsExecuted": false
+      },
+      "requiredSkills": [
+        "grilling"
+      ]
+    },
+    {
+      "directory": "grilling",
+      "name": "grilling",
+      "repository": "mattpocock/skills",
+      "sourcePath": "skills/productivity/grilling",
+      "ref": "49dd158d1076134a641b33efb035946536778336",
+      "commitDate": "2026-10-09T10:56:49Z",
+      "sourceUrl": "https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336/skills/productivity/grilling",
+      "installedOn": "2026-10-18",
+      "license": {
+        "declared": "MIT",
+        "evidence": "repository LICENSE copied to .agents/licenses/mattpocock-skills-LICENSE",
+        "sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5"
+      },
+      "fileCount": 2,
+      "sizeBytes": 2162,
+      "filesSha256": {
+        "SKILL.md": "befdff1e27a1dfe2a294d5871169ac1afe16d983911daa4f32627514a48c1e15",
+        "agents/openai.yaml": "1411d7df7d99b7e621a1ff8283c8133cc2464be63d064e52d8ce169c6800ee9b"
+      },
+      "review": {
+        "skillInstructionsAndScriptsRead": true,
+        "symlinksFound": false,
+        "installedScriptsExecuted": false
+      }
+    },
+    {
+      "directory": "to-spec",
+      "name": "to-spec",
+      "repository": "mattpocock/skills",
+      "sourcePath": "skills/engineering/to-spec",
+      "ref": "49dd158d1076134a641b33efb035946536778336",
+      "commitDate": "2026-10-09T10:56:49Z",
+      "sourceUrl": "https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336/skills/engineering/to-spec",
+      "installedOn": "2026-10-18",
+      "license": {
+        "declared": "MIT",
+        "evidence": "repository LICENSE copied to .agents/licenses/mattpocock-skills-LICENSE",
+        "sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5"
+      },
+      "fileCount": 2,
+      "sizeBytes": 3178,
+      "filesSha256": {
+        "SKILL.md": "43ad9cf318e5e7d3d1fa360253a37021796dc87a0c2e595ad262661a10f85088",
+        "agents/openai.yaml": "1c5b4d1e3d8e52287ef19cc2742fdbbfae1914ac75d33af3e4c8174f08cc55bb"
+      },
+      "review": {
+        "skillInstructionsAndScriptsRead": true,
+        "symlinksFound": false,
+        "installedScriptsExecuted": false
+      },
+      "configuration": [
+        "docs/agents/issue-tracker.md",
+        "docs/agents/domain.md"
+      ]
+    },
+    {
+      "directory": "to-tickets",
+      "name": "to-tickets",
+      "repository": "mattpocock/skills",
+      "sourcePath": "skills/engineering/to-tickets",
+      "ref": "49dd158d1076134a641b33efb035946536778336",
+      "commitDate": "2026-10-09T10:56:49Z",
+      "sourceUrl": "https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336/skills/engineering/to-tickets",
+      "installedOn": "2026-10-18",
+      "license": {
+        "declared": "MIT",
+        "evidence": "repository LICENSE copied to .agents/licenses/mattpocock-skills-LICENSE",
+        "sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5"
+      },
+      "fileCount": 2,
+      "sizeBytes": 5958,
+      "filesSha256": {
+        "SKILL.md": "56ec23c5b2782785d4e65bff9e315b6d3aeb4ef977c174a219e99489fada1995",
+        "agents/openai.yaml": "21bc6215fffcd7614e9f772bb1760e87cc5fc7dcc707e7d282bc9414267a6090"
+      },
+      "review": {
+        "skillInstructionsAndScriptsRead": true,
+        "symlinksFound": false,
+        "installedScriptsExecuted": false
+      },
+      "configuration": [
+        "docs/agents/issue-tracker.md",
+        "docs/agents/domain.md"
+      ]
+    },
+    {
+      "directory": "setup-matt-pocock-skills",
+      "name": "setup-matt-pocock-skills",
+      "repository": "mattpocock/skills",
+      "sourcePath": "skills/engineering/setup-matt-pocock-skills",
+      "ref": "49dd158d1076134a641b33efb035946536778336",
+      "commitDate": "2026-10-09T10:56:49Z",
+      "sourceUrl": "https://github.com/mattpocock/skills/tree/49dd158d1076134a641b33efb035946536778336/skills/engineering/setup-matt-pocock-skills",
+      "installedOn": "2026-10-18",
+      "license": {
+        "declared": "MIT",
+        "evidence": "repository LICENSE copied to .agents/licenses/mattpocock-skills-LICENSE",
+        "sha256": "0e7ac423bf2c6e223b7c5b156f8cf72da49d748e56a1641402c31f22ad07dbb5"
+      },
+      "fileCount": 7,
+      "sizeBytes": 19972,
+      "filesSha256": {
+        "SKILL.md": "f148858ffb7f63c03c06fca06e6fdb1d91a35c6b293244b8fdfacd5f4cc028c4",
+        "agents/openai.yaml": "9527de0110541c45712319025155aeab8dc7d77c6ed6e5e83271bab1851ab939",
+        "domain.md": "593a7042218689f1d24df89df14eaf0a20e19e0d0a7d479a01947ac78f0784b9",
+        "issue-tracker-github.md": "f0653fe106dd8ee7b33be27bd7fe3104b40555896cb45f61997aed20467020c3",
+        "issue-tracker-gitlab.md": "591a9e7057382aaccdfbed3f7ea3f2ad07e0cd29f012d18b82ee4e485fd81e24",
+        "issue-tracker-local.md": "7dcda20a2eb4bdc89b95d1143423c0691309921cadae3132e6424f371030506e",
+        "triage-labels.md": "ae512af838c78b8750471c42cd2b20fa32319553e61d84c9a23d171b40ce14aa"
+      },
+      "review": {
+        "skillInstructionsAndScriptsRead": true,
+        "symlinksFound": false,
+        "installedScriptsExecuted": false
+      }
+    },
+    {
+      "directory": "docs-sync-audit",
+      "name": "docs-sync-audit",
+      "repository": "github/awesome-copilot",
+      "sourcePath": "skills/docs-sync-audit",
+      "ref": "cb64ad12e32737ae764becd6885462e9b4c7cb00",
+      "commitDate": "2026-10-16T05:00:33Z",
+      "sourceUrl": "https://github.com/github/awesome-copilot/tree/cb64ad12e32737ae764becd6885462e9b4c7cb00/skills/docs-sync-audit",
+      "installedOn": "2026-10-18",
+      "license": {
+        "declared": "MIT",
+        "evidence": "repository LICENSE copied to .agents/licenses/awesome-copilot-skills-LICENSE",
+        "sha256": "e32449d23085399adc1222f7a17408b730550258e51627c153cb108ca9955823"
+      },
+      "fileCount": 2,
+      "sizeBytes": 34486,
+      "filesSha256": {
+        "SKILL.md": "c21b20dcc59ac43449ef02ed7f69bfa222a241cdf46b870675ac10aac736a203",
+        "scripts/docs_drift.py": "1af66a256a5ef8c86f30e3789c93eb609020d5cf2360871819df51fa99f27bfc"
+      },
+      "review": {
+        "skillInstructionsAndScriptsRead": true,
+        "symlinksFound": false,
+        "installedScriptsExecuted": true,
+        "executionScope": "--help and disposable fixture: valid docs, broken link, missing pnpm script; filesystem unchanged"
+      }
     }
-  ]
+  ],
+  "updatedOn": "2026-10-18"
 }

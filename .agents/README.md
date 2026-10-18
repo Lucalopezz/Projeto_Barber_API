@@ -57,3 +57,11 @@ As três skills instaladas são referências textuais: não fornecem scripts nem
 A skill OpenAI inclui seu `LICENSE.txt` Apache-2.0, preservado. NestJS declara MIT no frontmatter, mas essa revisão upstream não fornece arquivo `LICENSE` separado; não foi criado um texto de licença ou copyright em nome do autor. Prisma declara MIT e seu arquivo original `LICENSE`, com atribuição à Prisma, foi copiado para `licenses/prisma-skills-LICENSE`.
 
 Foram conferidos os `SKILL.md` e a estrutura de arquivos. Não foram encontrados scripts, links simbólicos, nomes de arquivos de credenciais ou padrões de segredos reais nas skills instaladas. Exemplos de código e recomendações de segurança permanecem como dados de referência. Isso não equivale a uma auditoria completa das recomendações ou do sistema.
+
+## PS — documentação, grilling e planejamento (18/10/2026)
+
+Foram adicionadas seis skills locais: `docs-sync-audit`, `grill-me`, `grilling`, `to-spec`, `to-tickets` e `setup-matt-pocock-skills`. O setup aprovado usa arquivos Markdown locais; consulte [o workflow e exemplos](../docs/agents/workflow.md), [o destino de specs/tarefas](../docs/agents/issue-tracker.md) e [as fontes de domínio](../docs/agents/domain.md).
+
+As cinco skills de Matt Pocock estão fixadas em `49dd158d1076134a641b33efb035946536778336`; `docs-sync-audit`, de `github/awesome-copilot`, em `cb64ad12e32737ae764becd6885462e9b4c7cb00`. Cada pasta preserva seus arquivos upstream. As licenças MIT originais estão em `licenses/mattpocock-skills-LICENSE` e `licenses/awesome-copilot-skills-LICENSE`; o lock registra origem, revisão e hashes.
+
+O auditor inclui um script Python somente leitura, revisado antes da execução de verificação. As demais skills são instruções e templates; não instalaram dependências da aplicação nem configuraram serviços. A regra de uso manual e as adaptações de escopo/idioma ficam em `AGENTS.md` e `docs/agents/workflow.md`, sem alterar os arquivos upstream. Nenhuma skill global ou plugin com atualização automática foi adicionado.
