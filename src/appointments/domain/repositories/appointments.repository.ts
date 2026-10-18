@@ -31,6 +31,11 @@ export namespace AppointmentsRepository {
     AppointmentsSearchParams,
     AppointmentsSearchResult
   > {
+    /** Persist only if the loaded revision is current; stale writes raise ConflictError.
+     * Callers must reload and revalidate before retrying a conflicting mutation.
+     */
+    update(entity: AppointmentEntity): Promise<void>;
+
     findOverlappingScheduled(
       startsAt: Date,
       endsAt: Date,

@@ -12,6 +12,8 @@ export class AppointmentsPrismaRepository
   constructor(
     private prismaService: PrismaService | Prisma.TransactionClient,
   ) {}
+  private readonly savedVersions = new WeakMap<AppointmentEntity, number>();
+
   sortableFields: string[] = ['date', 'createdAt', 'serviceId'];
 
   /**
@@ -132,10 +134,17 @@ export class AppointmentsPrismaRepository
   }
   async update(entity: AppointmentEntity): Promise<void> {
     try {
-      await this.prismaService.appointment.update({
-        data: entity.toJSON(),
-        where: { id: entity.id },
+      const data = entity.toJSON();
+      const expectedVersion =
+        this.savedVersions.get(entity) ?? data.version ?? 0;
+      const result = await this.prismaService.appointment.updateMany({
+        data: { ...data, version: { increment: 1 } },
+        where: { id: entity.id, version: expectedVersion },
       });
+      if (result.count !== 1) {
+        throw new ConflictError('Appointment changed; reload before retrying');
+      }
+      this.savedVersions.set(entity, expectedVersion + 1);
     } catch (error) {
       if (this.isAvailabilityConflict(error)) {
         throw new ConflictError('Appointment not available');

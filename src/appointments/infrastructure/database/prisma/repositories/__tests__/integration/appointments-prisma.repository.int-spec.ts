@@ -1,5 +1,7 @@
+import { BarberAvailabilityPrismaRepository } from '../../barber-availability-prisma.repository';
+import { BarberScheduleEntity } from '@/appointments/domain/entities/barber-schedule.entity';
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { AppointmentsPrismaRepository } from '../../appointments-prisma.repository';
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
@@ -358,5 +360,102 @@ describe('AppointmentsPrismaRepository integration tests', () => {
       expect(searchOutput.items[0]).toBeInstanceOf(AppointmentEntity);
       expect(searchOutput.total).toBe(3);
     });
+  });
+  it('serializes complete schedule replacements even when the initial schedule is empty', async () => {
+    const { ownerId } = await createBarberShopWithService();
+    const url = new URL(process.env.DATABASE_URL!);
+    url.searchParams.set(
+      'application_name',
+      'barber_schedule_concurrency_second',
+    );
+    const second = new PrismaClient({ datasourceUrl: url.toString() });
+    let releaseFirst!: () => void;
+    let firstDeleted!: () => void;
+    const resume = new Promise<void>((resolve) => {
+      releaseFirst = resolve;
+    });
+    const deleted = new Promise<void>((resolve) => {
+      firstDeleted = resolve;
+    });
+    const schedule = (startMinute: number, endMinute: number) =>
+      new BarberScheduleEntity({
+        barberId: ownerId,
+        dayOfWeek: 1,
+        startMinute,
+        endMinute,
+      });
+    const firstPayload = [schedule(540, 660), schedule(780, 840)];
+    const secondPayload = [schedule(600, 720)];
+    let secondFinished = false;
+    const firstWrite = prismaService.$transaction(
+      async (tx) => {
+        // Pause after the actual DELETE, retaining this transaction's database locks.
+        const wrapped = new Proxy(tx, {
+          get(target, prop) {
+            if (prop !== 'barberSchedule') return Reflect.get(target, prop);
+            return new Proxy(target.barberSchedule, {
+              get(delegate, method) {
+                if (method !== 'deleteMany')
+                  return Reflect.get(delegate, method);
+                return async (args: Prisma.BarberScheduleDeleteManyArgs) => {
+                  const result = await delegate.deleteMany(args);
+                  firstDeleted();
+                  await resume;
+                  return result;
+                };
+              },
+            });
+          },
+        });
+        await new BarberAvailabilityPrismaRepository(wrapped).replaceSchedules(
+          ownerId,
+          firstPayload,
+        );
+      },
+      { timeout: 15000 },
+    );
+    await deleted;
+    const secondWrite = second
+      .$transaction(
+        async (tx) => {
+          await new BarberAvailabilityPrismaRepository(tx).replaceSchedules(
+            ownerId,
+            secondPayload,
+          );
+        },
+        { timeout: 15000 },
+      )
+      .finally(() => {
+        secondFinished = true;
+      });
+    try {
+      // Wait for an explicit database lock barrier or for the unprotected transaction
+      // to finish. No sleeps or timing assumptions decide which write wins.
+      const deadline = Date.now() + 10000;
+      while (!secondFinished) {
+        const blocked = await prismaService.$queryRaw<{ blocked: boolean }[]>`
+          SELECT EXISTS(SELECT 1 FROM pg_stat_activity
+            WHERE application_name = 'barber_schedule_concurrency_second'
+              AND wait_event_type = 'Lock') AS blocked`;
+        if (blocked[0].blocked) break;
+        if (Date.now() > deadline)
+          throw new Error(
+            'Second replacement did not reach the database barrier',
+          );
+      }
+    } finally {
+      releaseFirst();
+    }
+    try {
+      await Promise.all([firstWrite, secondWrite]);
+      const rows = await prismaService.barberSchedule.findMany({
+        where: { barberId: ownerId },
+      });
+      expect(
+        rows.map(({ startMinute, endMinute }) => ({ startMinute, endMinute })),
+      ).toEqual([{ startMinute: 600, endMinute: 720 }]);
+    } finally {
+      await second.$disconnect();
+    }
   });
 });

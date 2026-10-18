@@ -41,19 +41,19 @@ export class BarberAvailabilityPrismaRepository
   ): Promise<void> {
     const data = schedules.map((schedule) => schedule.toJSON());
 
+    const replace = async (tx: Prisma.TransactionClient) => {
+      // A stable parent row also serializes replacements of an empty schedule.
+      // Keep the lock until the containing transaction commits.
+      await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${barberId} FOR UPDATE`;
+      await tx.barberSchedule.deleteMany({ where: { barberId } });
+      await tx.barberSchedule.createMany({ data });
+    };
     if (!('$transaction' in this.prismaService)) {
-      await this.prismaService.barberSchedule.deleteMany({
-        where: { barberId },
-      });
-      await this.prismaService.barberSchedule.createMany({ data });
+      await replace(this.prismaService);
       return;
     }
-
     const prisma = this.prismaService as PrismaClient;
-    await prisma.$transaction([
-      prisma.barberSchedule.deleteMany({ where: { barberId } }),
-      prisma.barberSchedule.createMany({ data }),
-    ]);
+    await prisma.$transaction(replace);
   }
 
   async findTimeOffs(barberId: string): Promise<BarberTimeOffEntity[]> {

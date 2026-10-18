@@ -9,4 +9,6 @@ export type AppointmentProps = {
   barberShopId: string;
   serviceId: string;
   createdAt?: Date;
+  /** Persistence revision used for optimistic concurrency; not part of the HTTP contract. */
+  version?: number;
 };

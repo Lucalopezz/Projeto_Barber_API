@@ -6,6 +6,7 @@ import { Appointment } from '@prisma/client';
 export class AppointmentModelMapper {
   static toEntity(model: Appointment) {
     const data = {
+      version: model.version,
       date: model.date,
       endDate: model.endDate,
       serviceId: model.serviceId,
