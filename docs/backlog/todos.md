@@ -29,3 +29,8 @@ Esta lista prioriza o que impede o fluxo de uma plataforma de barbearias, especi
 - [x] **Criar testes e2e para a jornada completa.** Cobrir cadastro/login, criação da barbearia, criação/listagem pública de serviço, agendamento pelo cliente, visualização/atualização pelo barbeiro e negação de acesso entre barbearias.
 - [x] **Tornar exclusões explícitas.** As rotas `DELETE` retornam `204 No Content`, sem corpo, e o contrato está documentado.
 - [x] **Melhorar a descoberta de horários.** `GET /barber-shops/:id/availability?date=...&serviceId=...` retorna slots utilizáveis para a data local da barbearia.
+
+## Estudos futuros — autenticação e cache (sem solução definida)
+
+- [ ] **Estudar e implementar refresh token como exercício.** Discutir primeiro o fluxo de access/refresh token, armazenamento no cliente e no servidor, expiração, rotação, detecção de reutilização, revogação/logout e múltiplas sessões. Definir contratos e cenários de teste antes de implementar, incluindo regressões de segurança e concorrência. A consulta atual do guard permanece até uma decisão explícita sobre a nova estratégia.
+- [ ] **Estudar cache e sua aplicação à autenticação/autorização.** Medir a base atual e comparar opções de armazenamento, TTL, invalidação após alteração de papel/exclusão de conta, consistência entre instâncias e comportamento quando o cache falhar. Definir o atraso aceitável para mudanças de permissão e testar expiração, invalidação e falhas antes de adotar uma solução. Não há escolha antecipada de Redis ou substituição da consulta ao banco.
