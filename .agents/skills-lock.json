@@ -315,5 +315,30 @@
       }
     }
   ],
-  "updatedOn": "2026-10-18"
+  "updatedOn": "2026-10-18",
+  "localSkills": [
+    {
+      "directory": "barber-local-setup",
+      "name": "barber-local-setup",
+      "source": "repository",
+      "createdOn": "2026-10-18",
+      "maintainedIn": [
+        "Frontend_Barber_API",
+        "Projeto_Barber_API"
+      ],
+      "fileCount": 4,
+      "sizeBytes": 11494,
+      "filesSha256": {
+        "SKILL.md": "950660570a819533b55290c7628fe0b7249be0d66f0699995ea4bfc6e4541070",
+        "agents/openai.yaml": "d463470945bc24fb1782e7c44caeeb7ff12d89b16a31bb3e9f2445bf43d4cd72",
+        "references/preparacao.md": "c679f0acc30d3ebb7f1a89321a95171a892aec99af7049452880d4695e7b02d6",
+        "references/verificacao.md": "e9fac43574860233447b800dcd683bccdb887362983b073f387430db3cce9734"
+      },
+      "validation": {
+        "format": "skill-creator/scripts/quick_validate.py",
+        "executableScripts": false,
+        "forwardTestReport": "docs/agents/setup-validation.md"
+      }
+    }
+  ]
 }

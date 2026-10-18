@@ -1,0 +1,3 @@
+interface:
+  display_name: "Barber Local Setup"
+  short_description: "Prepare e verifique front, API e banco locais"

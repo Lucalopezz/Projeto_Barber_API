@@ -44,3 +44,16 @@ python3 .agents/skills/docs-sync-audit/scripts/docs_drift.py --repo . --format j
 ```
 
 Revise os achados contra as fontes e o escopo antes de sugerir correções. Não registre valores de variáveis de ambiente. A revisão da instalação não equivale a uma auditoria completa do código ou da documentação da aplicação.
+
+## Preparar e verificar o laboratório
+
+O passo 3 é atendido pela skill própria `barber-local-setup`, descoberta automaticamente para pedidos de setup/diagnóstico do ambiente e também invocável explicitamente. Exemplos:
+
+- “Use $barber-local-setup para preparar e verificar este par de worktrees.”
+- “Use $barber-local-setup apenas para diagnosticar o ambiente, sem alterar nada.”
+
+Ela identifica front/API pelos arquivos e manifests, não pelo nome da pasta da worktree. Quando os projetos não forem irmãos com os nomes padrão, informe os dois caminhos; a integração real seleciona a API com `BARBER_API_DIR`. O modo de diagnóstico não instala dependências, aplica migrations ou encerra servidores.
+
+Os detalhes e comandos ficam em [SKILL.md](../../.agents/skills/barber-local-setup/SKILL.md), que direciona para preparação e verificação conforme o pedido. Esta skill não implementa o assistente de IA (passo 4).
+
+A [validação independente em worktrees novas](setup-validation.md) registra o procedimento executado, os resultados e suas limitações.

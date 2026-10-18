@@ -65,3 +65,9 @@ Foram adicionadas seis skills locais: `docs-sync-audit`, `grill-me`, `grilling`,
 As cinco skills de Matt Pocock estão fixadas em `49dd158d1076134a641b33efb035946536778336`; `docs-sync-audit`, de `github/awesome-copilot`, em `cb64ad12e32737ae764becd6885462e9b4c7cb00`. Cada pasta preserva seus arquivos upstream. As licenças MIT originais estão em `licenses/mattpocock-skills-LICENSE` e `licenses/awesome-copilot-skills-LICENSE`; o lock registra origem, revisão e hashes.
 
 O auditor inclui um script Python somente leitura, revisado antes da execução de verificação. As demais skills são instruções e templates; não instalaram dependências da aplicação nem configuraram serviços. A regra de uso manual e as adaptações de escopo/idioma ficam em `AGENTS.md` e `docs/agents/workflow.md`, sem alterar os arquivos upstream. Nenhuma skill global ou plugin com atualização automática foi adicionado.
+
+## PS — skill própria de setup/verificação (passo 3)
+
+`barber-local-setup` fica em `skills/barber-local-setup/` nos dois projetos. É uma skill mantida neste projeto, com instruções e referências em português para identificar checkouts, preparar pnpm/env/PostgreSQL, subir servidores e verificar a integração. Não tem scripts executáveis próprios nem instala ferramentas globais. Seus hashes ficam em `localSkills` no inventário, separados das cópias externas preservadas em `skills`.
+
+As cópias da skill no front e no back devem ser atualizadas juntas e permanecer idênticas; ao mudá-las, regenere os hashes de `localSkills` e execute o validador da `skill-creator`, além de verificar os comandos afetados. O procedimento real está no `SKILL.md` e nas referências, evitando outra lista de comandos que possa divergir.

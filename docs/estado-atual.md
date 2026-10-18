@@ -222,3 +222,7 @@ Os relatórios brutos desta sessão estão em `/tmp/barber-frontend-audit.json`,
 de persistência; os comandos acima regeneram o diagnóstico. Logs temporários
 do navegador e do e2e integrado: `/tmp/barber-browser-smoke.log` e
 `/tmp/barber-backend-e2e-integrated.log`.
+
+## PS — passo 3: skill de setup/verificação
+
+A skill própria `barber-local-setup` foi criada em `.agents/skills` nos dois projetos. Ela concentra o procedimento para diagnosticar, preparar e verificar checkouts locais/worktrees com pnpm, env, PostgreSQL e as suites existentes. Foi validada por um agente independente em duas worktrees novas: 351 testes da API, 21 cenários do front e uma jornada com API/PostgreSQL reais passaram, com lint/build aprovados após corrigir dois espaços em classes vazias do backend. O modo diagnóstico preservou os env e não repetiu instalações ou migrações. Consulte [o relatório e os limites da avaliação](agents/setup-validation.md) e [o workflow de uso](agents/workflow.md). O assistente de consultas (passo 4), refresh token e cache não foram implementados nesta entrega.

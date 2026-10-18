@@ -124,3 +124,5 @@ Use o alias `@/` para imports a partir de `src` (por exemplo, `@/shared/domain/e
 - Issue tracker: Markdown local em `.scratch/<feature-slug>/`; detalhes em `docs/agents/issue-tracker.md`. “Publicar” uma spec/tarefa significa escrever arquivo local, sem criar issues ou labels remotos. O setup já está concluído.
 - Fontes de domínio e convenção de contexto único: `docs/agents/domain.md`; glossários/ADRs ausentes não bloqueiam o trabalho.
 - Use `grill-me`/`grilling`, `to-spec` e `to-tickets` quando solicitados; não transforme ajustes pequenos em entrevistas. Quando a interface não tiver ferramenta `Skill`, carregue o `SKILL.md` local diretamente; `grill-me` carrega `grilling`.
+
+- Use a skill própria `barber-local-setup` em `.agents/skills/barber-local-setup/SKILL.md` para preparar/verificar o ambiente Barber, inclusive worktrees. Ela distingue diagnóstico sem mutações de preparação e verificação, preserva env existentes e coordena o schema compartilhado de testes.
