@@ -71,3 +71,5 @@ O auditor inclui um script Python somente leitura, revisado antes da execução 
 `barber-local-setup` fica em `skills/barber-local-setup/` nos dois projetos. É uma skill mantida neste projeto, com instruções e referências em português para identificar checkouts, preparar pnpm/env/PostgreSQL, subir servidores e verificar a integração. Não tem scripts executáveis próprios nem instala ferramentas globais. Seus hashes ficam em `localSkills` no inventário, separados das cópias externas preservadas em `skills`.
 
 As cópias da skill no front e no back devem ser atualizadas juntas e permanecer idênticas; ao mudá-las, regenere os hashes de `localSkills` e execute o validador da `skill-creator`, além de verificar os comandos afetados. O procedimento real está no `SKILL.md` e nas referências, evitando outra lista de comandos que possa divergir.
+
+PS: o fluxo da skill própria agora inclui `pnpm test:architecture` e `pnpm check:architecture` na API, antes de lint/build/testes. As duas cópias e os hashes de `localSkills` foram atualizados juntos.

@@ -21,6 +21,8 @@ As suites de integração/e2e da API limpam tabelas desse schema. A jornada real
 Depois da preparação:
 
 ```bash
+pnpm test:architecture
+pnpm check:architecture
 pnpm lint
 pnpm build
 pnpm test
@@ -29,6 +31,8 @@ pnpm test:e2e
 ```
 
 Pare na falha de um pré-requisito; não rode a etapa dependente como se ele tivesse passado. Leia os resumos finais de cada suite e registre contagens daquela execução. Jest usa VM modules devido ao Faker ESM; não remova as flags dos scripts nem faça downgrade para eliminar esse aviso.
+
+`test:architecture` verifica as regras de imports em fixtures temporárias sem banco; `check:architecture` analisa o código real. Falhas de fronteiras/ciclos não devem ser ignoradas para concluir o setup. A configuração e a matriz estão em `docs/arquitetura.md` da API.
 
 ## Front com API simulada
 
