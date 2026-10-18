@@ -1,3 +1,4 @@
+import { AppointmentBookingPolicy } from '../services/appointment-booking-policy';
 import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
 import {
   AppointmentOutput,
@@ -26,6 +27,7 @@ export namespace UpdateStatusUseCase {
       private appointmentRepository: AppointmentsRepository.Repository,
       private barberShopRepository: BarberShopRepository.Repository,
       private userRepository: UserRepository.Repository,
+      private bookingPolicy: AppointmentBookingPolicy = new AppointmentBookingPolicy(),
     ) {}
 
     async execute(input: Input): Promise<AppointmentOutput> {
@@ -66,6 +68,13 @@ export namespace UpdateStatusUseCase {
         );
       }
 
+      if (
+        isClient &&
+        !isAssignedProfessional &&
+        newStatus === AppointmentStatus.cancelled
+      ) {
+        this.bookingPolicy.ensureCustomerCancellationAllowed(appointment.date);
+      }
       appointment.updateStatus(newStatus);
 
       await this.appointmentRepository.update(appointment);

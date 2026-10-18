@@ -1,3 +1,5 @@
+import { ProfessionalBookingTransaction } from '@/appointments/application/ports/professional-booking-transaction';
+import { systemClock } from '@/shared/application/providers/clock';
 import { AppModule } from '@/app.module';
 import { AppointmentsPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/appointments-prisma.repository';
 import { applyGlobalConfig } from '@/global-config';
@@ -113,6 +115,9 @@ describe('Concurrent appointment writes (Fastify/PostgreSQL)', () => {
   });
 
   beforeEach(async () => {
+    jest
+      .spyOn(systemClock, 'now')
+      .mockReturnValue(new Date('2030-01-01T12:00:00Z'));
     await prisma.appointment.deleteMany();
     await prisma.barberTimeOff.deleteMany();
   });
@@ -137,20 +142,20 @@ describe('Concurrent appointment writes (Fastify/PostgreSQL)', () => {
       const booked = await book();
       expect(booked.statusCode).toBe(201);
       const id = booked.json().data.id;
-      const repository = app.get<AppointmentsPrismaRepository>(
-        'AppointmentRepository',
+      const repository = app.get<ProfessionalBookingTransaction>(
+        'ProfessionalBookingTransaction',
       );
       const reached = gate();
       const resume = gate();
-      const original = repository.update.bind(repository);
+      const original = repository.run.bind(repository);
       const spy = jest
-        .spyOn(repository, 'update')
-        .mockImplementation(async (entity) => {
-          if (entity.status === 'scheduled') {
+        .spyOn(repository, 'run')
+        .mockImplementation(async (barberId, work) => {
+          {
             reached.release();
             await resume.promise;
           }
-          return original(entity);
+          return original(barberId, work);
         });
       const pending = Promise.resolve(
         app.inject({
@@ -185,22 +190,22 @@ describe('Concurrent appointment writes (Fastify/PostgreSQL)', () => {
     const booked = await book('2030-01-07T15:00:00.000Z');
     expect(booked.statusCode).toBe(201);
     const id = booked.json().data.id;
-    const repository = app.get<AppointmentsPrismaRepository>(
-      'AppointmentRepository',
+    const repository = app.get<ProfessionalBookingTransaction>(
+      'ProfessionalBookingTransaction',
     );
     const reached = gate();
     const resume = gate();
-    const original = repository.update.bind(repository);
+    const original = repository.run.bind(repository);
     let intercepted = false;
     const spy = jest
-      .spyOn(repository, 'update')
-      .mockImplementation(async (entity) => {
+      .spyOn(repository, 'run')
+      .mockImplementation(async (barberId, work) => {
         if (!intercepted) {
           intercepted = true;
           reached.release();
           await resume.promise;
         }
-        return original(entity);
+        return original(barberId, work);
       });
     const update = (date: string) =>
       app.inject({

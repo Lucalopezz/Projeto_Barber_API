@@ -1,3 +1,6 @@
+import { ProfessionalBookingTransaction } from '../application/ports/professional-booking-transaction';
+import { ProfessionalBookingPrismaTransaction } from './database/prisma/professional-booking-prisma.transaction';
+import { AppointmentBookingPolicy } from '@/appointments/application/services/appointment-booking-policy';
 import { Module } from '@nestjs/common';
 import { AppointmentsController } from './appointments.controller';
 import { AuthModule } from '@/auth/auth.module';
@@ -27,6 +30,16 @@ import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barbe
   controllers: [AppointmentsController],
   imports: [AuthModule],
   providers: [
+    {
+      provide: 'ProfessionalBookingTransaction',
+      useFactory: (prisma: PrismaService, policy: AppointmentBookingPolicy) =>
+        new ProfessionalBookingPrismaTransaction(prisma, policy),
+      inject: ['PrismaService', AppointmentBookingPolicy],
+    },
+    {
+      provide: AppointmentBookingPolicy,
+      useFactory: () => new AppointmentBookingPolicy(),
+    },
     {
       provide: 'PrismaService',
       useClass: PrismaService,
@@ -70,12 +83,18 @@ import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barbe
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
         availabilityRepository: BarberAvailabilityRepository.Repository,
+        bookingPolicy: AppointmentBookingPolicy,
       ) =>
         new AppointmentAvailabilityService(
           appointmentRepository,
           availabilityRepository,
+          bookingPolicy,
         ),
-      inject: ['AppointmentRepository', 'BarberAvailabilityRepository'],
+      inject: [
+        'AppointmentRepository',
+        'BarberAvailabilityRepository',
+        AppointmentBookingPolicy,
+      ],
     },
     {
       provide: CreateAppointmentsUseCase.UseCase,
@@ -84,12 +103,14 @@ import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barbe
         servicesRepository: ServicesRepository.Repository,
         barberShopRepository: BarberShopRepository.Repository,
         availabilityService: AppointmentAvailabilityService,
+        bookingTransaction: ProfessionalBookingTransaction,
       ) => {
         return new CreateAppointmentsUseCase.UseCase(
           appointmentRepository,
           servicesRepository,
           barberShopRepository,
           availabilityService,
+          bookingTransaction,
         );
       },
       inject: [
@@ -97,6 +118,7 @@ import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barbe
         'ServicesRepository',
         'BarberShopRepository',
         AppointmentAvailabilityService,
+        'ProfessionalBookingTransaction',
       ],
     },
     {
@@ -172,17 +194,20 @@ import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barbe
         appointmentRepository: AppointmentsRepository.Repository,
         barberShopRepository: BarberShopRepository.Repository,
         userRepository: UserRepository.Repository,
+        bookingPolicy: AppointmentBookingPolicy,
       ) => {
         return new UpdateStatusUseCase.UseCase(
           appointmentRepository,
           barberShopRepository,
           userRepository,
+          bookingPolicy,
         );
       },
       inject: [
         'AppointmentRepository',
         'BarberShopRepository',
         'UserRepository',
+        AppointmentBookingPolicy,
       ],
     },
     {
@@ -206,6 +231,7 @@ import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barbe
         userRepository: UserRepository.Repository,
         barberShopRepository: BarberShopRepository.Repository,
         availabilityService: AppointmentAvailabilityService,
+        bookingTransaction: ProfessionalBookingTransaction,
       ) => {
         return new UpdateAppointmentUseCase.UseCase(
           appointmentRepository,
@@ -213,6 +239,7 @@ import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barbe
           userRepository,
           barberShopRepository,
           availabilityService,
+          bookingTransaction,
         );
       },
       inject: [
@@ -221,6 +248,7 @@ import { DeleteBarberTimeOffUseCase } from '../application/usecases/delete-barbe
         'UserRepository',
         'BarberShopRepository',
         AppointmentAvailabilityService,
+        'ProfessionalBookingTransaction',
       ],
     },
   ],

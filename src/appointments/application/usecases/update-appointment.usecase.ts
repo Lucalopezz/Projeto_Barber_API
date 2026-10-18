@@ -1,3 +1,7 @@
+import {
+  ProfessionalBookingTransaction,
+  BookingTransactionContext,
+} from '../ports/professional-booking-transaction';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import {
   AppointmentOutput,
@@ -32,6 +36,7 @@ export namespace UpdateAppointmentUseCase {
       private userRepository: UserRepository.Repository,
       private barberShopRepository: BarberShopRepository.Repository,
       private availabilityService: AppointmentAvailabilityService,
+      private bookingTransaction?: ProfessionalBookingTransaction,
     ) {}
     async execute(input: Input): Promise<AppointmentOutput> {
       const { id, userId, date, serviceId } = input;
@@ -90,18 +95,30 @@ export namespace UpdateAppointmentUseCase {
       const endDate = new Date(
         targetDate.getTime() + service.duration * 60 * 1000,
       );
-      await this.availabilityService.ensureAvailable({
-        barberId: appointment.barberId,
-        startsAt: targetDate,
-        endsAt: endDate,
-        timezone: barberShop.timezone,
-        excludeAppointmentId: appointment.id,
+      const work = async (
+        context: BookingTransactionContext,
+      ): Promise<Output> => {
+        await context.availability.ensureAvailable({
+          barberId: appointment.barberId,
+          startsAt: targetDate,
+          endsAt: endDate,
+          timezone: barberShop.timezone,
+          excludeAppointmentId: appointment.id,
+        });
+
+        appointment.update(targetDate, targetServiceId, endDate);
+
+        await context.appointments.update(appointment);
+        return AppointmentOutputMapper.toOutput(appointment);
+      };
+      if (this.bookingTransaction)
+        return this.bookingTransaction.run(appointment.barberId, work);
+      // Direct composition is retained for existing isolated application tests.
+      // The HTTP module always supplies the transactional production adapter.
+      return work({
+        appointments: this.appointmentRepository,
+        availability: this.availabilityService,
       });
-
-      appointment.update(targetDate, targetServiceId, endDate);
-
-      await this.appointmentRepository.update(appointment);
-      return AppointmentOutputMapper.toOutput(appointment);
     }
   }
 }

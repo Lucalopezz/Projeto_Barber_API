@@ -1,3 +1,4 @@
+import { systemClock } from '@/shared/application/providers/clock';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
@@ -53,6 +54,9 @@ describe('UpdateAppointmentUseCase integration tests', () => {
   });
 
   beforeEach(async () => {
+    jest
+      .spyOn(systemClock, 'now')
+      .mockReturnValue(new Date('2025-12-01T12:00:00Z'));
     sut = new UpdateAppointmentUseCase.UseCase(
       appointmentRepository,
       serviceRepository,
@@ -68,6 +72,8 @@ describe('UpdateAppointmentUseCase integration tests', () => {
     await prismaService.barberShop.deleteMany();
     await prismaService.user.deleteMany();
   });
+
+  afterEach(() => jest.restoreAllMocks());
 
   afterAll(async () => {
     await module.close();

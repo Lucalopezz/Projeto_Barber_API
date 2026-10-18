@@ -44,7 +44,9 @@ export namespace GetPublicAvailabilityUseCase {
       const slots: Output['slots'] = [];
       for (const schedule of schedules) {
         for (
-          let startMinute = schedule.startMinute;
+          let startMinute =
+            Math.ceil(schedule.startMinute / UseCase.SLOT_INTERVAL_MINUTES) *
+            UseCase.SLOT_INTERVAL_MINUTES;
           startMinute + service.duration <= schedule.endMinute;
           startMinute += UseCase.SLOT_INTERVAL_MINUTES
         ) {

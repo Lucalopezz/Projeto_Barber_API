@@ -1,3 +1,4 @@
+import { AppointmentBookingPolicy } from '../../appointment-booking-policy';
 import { AppointmentAvailabilityService } from '../../appointment-availability.service';
 import { ConflictError } from '@/shared/domain/errors/conflict-error';
 import { BarberScheduleEntity } from '@/appointments/domain/entities/barber-schedule.entity';
@@ -15,6 +16,9 @@ describe('AppointmentAvailabilityService', () => {
   const sut = new AppointmentAvailabilityService(
     appointmentsRepository as any,
     availabilityRepository as any,
+    new AppointmentBookingPolicy({
+      now: () => new Date('2026-07-01T00:00:00Z'),
+    }),
   );
 
   beforeEach(() => {
@@ -46,7 +50,7 @@ describe('AppointmentAvailabilityService', () => {
     await expect(
       sut.ensureAvailable({
         barberId,
-        startsAt: new Date('2026-07-27T13:30:01.000Z'),
+        startsAt: new Date('2026-07-27T13:30:00.000Z'),
         endsAt: new Date('2026-07-27T14:00:01.000Z'),
         timezone: 'America/Sao_Paulo',
       }),

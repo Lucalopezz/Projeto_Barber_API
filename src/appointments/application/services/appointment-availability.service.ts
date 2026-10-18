@@ -1,3 +1,4 @@
+import { AppointmentBookingPolicy } from './appointment-booking-policy';
 import { AppointmentsRepository } from '@/appointments/domain/repositories/appointments.repository';
 import { BarberAvailabilityRepository } from '@/appointments/domain/repositories/barber-availability.repository';
 import { ConflictError } from '@/shared/domain/errors/conflict-error';
@@ -16,6 +17,7 @@ export class AppointmentAvailabilityService {
   constructor(
     private appointmentsRepository: AppointmentsRepository.Repository,
     private availabilityRepository: BarberAvailabilityRepository.Repository,
+    private bookingPolicy: AppointmentBookingPolicy = new AppointmentBookingPolicy(),
   ) {}
 
   async ensureAvailable(input: {
@@ -25,6 +27,7 @@ export class AppointmentAvailabilityService {
     timezone: string;
     excludeAppointmentId?: string;
   }): Promise<void> {
+    this.bookingPolicy.ensureStartAllowed(input.startsAt, input.timezone);
     if (!(await this.isAvailable(input))) {
       throw new ConflictError('Appointment not available');
     }
@@ -39,6 +42,8 @@ export class AppointmentAvailabilityService {
   }): Promise<boolean> {
     const { barberId, startsAt, endsAt, timezone, excludeAppointmentId } =
       input;
+
+    if (!this.bookingPolicy.isStartAllowed(startsAt, timezone)) return false;
 
     const overlappingAppointment =
       await this.appointmentsRepository.findOverlappingScheduled(

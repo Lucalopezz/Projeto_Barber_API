@@ -93,9 +93,15 @@ export class BarberAvailabilityPrismaRepository
   }
 
   async insertTimeOff(timeOff: BarberTimeOffEntity): Promise<void> {
-    await this.prismaService.barberTimeOff.create({
-      data: timeOff.toJSON(),
-    });
+    const insert = async (tx: Prisma.TransactionClient) => {
+      await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${timeOff.barberId} FOR UPDATE`;
+      await tx.barberTimeOff.create({ data: timeOff.toJSON() });
+    };
+    if (!('$transaction' in this.prismaService)) {
+      await insert(this.prismaService);
+      return;
+    }
+    await (this.prismaService as PrismaClient).$transaction(insert);
   }
 
   async deleteTimeOff(id: string): Promise<void> {

@@ -1,3 +1,4 @@
+import { systemClock } from '@/shared/application/providers/clock';
 import { AppModule } from '@/app.module';
 import { AppointmentAvailabilityService } from '@/appointments/application/services/appointment-availability.service';
 import { AppointmentsPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/appointments-prisma.repository';
@@ -119,6 +120,9 @@ describe('Appointment availability HTTP contract (Fastify e2e)', () => {
   });
 
   beforeEach(async () => {
+    jest
+      .spyOn(systemClock, 'now')
+      .mockReturnValue(new Date('2030-01-01T12:00:00Z'));
     await prisma.appointment.deleteMany();
     await prisma.barberTimeOff.deleteMany();
   });
@@ -202,11 +206,8 @@ describe('Appointment availability HTTP contract (Fastify e2e)', () => {
   });
 
   it('keeps unexpected repository failures as 500 without exposing internal details', async () => {
-    const repository = app.get<AppointmentsPrismaRepository>(
-      'AppointmentRepository',
-    );
     jest
-      .spyOn(repository, 'findOverlappingScheduled')
+      .spyOn(AppointmentsPrismaRepository.prototype, 'findOverlappingScheduled')
       .mockRejectedValueOnce(new Error('private database connection details'));
 
     const response = await book();

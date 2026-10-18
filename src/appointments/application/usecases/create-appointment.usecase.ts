@@ -1,3 +1,7 @@
+import {
+  ProfessionalBookingTransaction,
+  BookingTransactionContext,
+} from '../ports/professional-booking-transaction';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import {
   AppointmentOutput,
@@ -27,6 +31,7 @@ export namespace CreateAppointmentsUseCase {
       private serviceRepository: ServicesRepository.Repository,
       private barberShopRepository: BarberShopRepository.Repository,
       private availabilityService: AppointmentAvailabilityService,
+      private bookingTransaction?: ProfessionalBookingTransaction,
     ) {}
 
     async execute(input: Input): Promise<AppointmentOutput> {
@@ -43,25 +48,37 @@ export namespace CreateAppointmentsUseCase {
         throw new BadRequestError('BarberShop not found');
       }
       const endDate = new Date(date.getTime() + service.duration * 60 * 1000);
-      await this.availabilityService.ensureAvailable({
-        barberId: barberShop.ownerId,
-        startsAt: date,
-        endsAt: endDate,
-        timezone: barberShop.timezone,
-      });
-      const entity = new AppointmentEntity({
-        clientId,
-        serviceId,
-        barberId: barberShop.ownerId,
-        barberShopId: barberShop.id,
-        date,
-        endDate,
-        status: AppointmentStatus.scheduled,
-      });
+      const work = async (
+        context: BookingTransactionContext,
+      ): Promise<Output> => {
+        await context.availability.ensureAvailable({
+          barberId: barberShop.ownerId,
+          startsAt: date,
+          endsAt: endDate,
+          timezone: barberShop.timezone,
+        });
+        const entity = new AppointmentEntity({
+          clientId,
+          serviceId,
+          barberId: barberShop.ownerId,
+          barberShopId: barberShop.id,
+          date,
+          endDate,
+          status: AppointmentStatus.scheduled,
+        });
 
-      await this.appointmentRepository.insert(entity);
+        await context.appointments.insert(entity);
 
-      return AppointmentOutputMapper.toOutput(entity);
+        return AppointmentOutputMapper.toOutput(entity);
+      };
+      if (this.bookingTransaction)
+        return this.bookingTransaction.run(barberShop.ownerId, work);
+      // Direct composition is retained for existing isolated application tests.
+      // The HTTP module always supplies the transactional production adapter.
+      return work({
+        appointments: this.appointmentRepository,
+        availability: this.availabilityService,
+      });
     }
   }
 }

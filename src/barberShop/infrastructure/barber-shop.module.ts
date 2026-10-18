@@ -1,3 +1,4 @@
+import { AppointmentBookingPolicy } from '@/appointments/application/services/appointment-booking-policy';
 import { Module } from '@nestjs/common';
 
 import { BarberShopController } from './barber-shop.controller';
@@ -27,6 +28,10 @@ import { ServicesPrismaRepository } from '@/services/infrastructure/database/pri
   controllers: [BarberShopController],
   imports: [AuthModule],
   providers: [
+    {
+      provide: AppointmentBookingPolicy,
+      useFactory: () => new AppointmentBookingPolicy(),
+    },
     {
       provide: 'PrismaService',
       useClass: PrismaService,
@@ -68,12 +73,18 @@ import { ServicesPrismaRepository } from '@/services/infrastructure/database/pri
       useFactory: (
         appointmentRepository: AppointmentsRepository.Repository,
         availabilityRepository: BarberAvailabilityRepository.Repository,
+        bookingPolicy: AppointmentBookingPolicy,
       ) =>
         new AppointmentAvailabilityService(
           appointmentRepository,
           availabilityRepository,
+          bookingPolicy,
         ),
-      inject: ['AppointmentRepository', 'BarberAvailabilityRepository'],
+      inject: [
+        'AppointmentRepository',
+        'BarberAvailabilityRepository',
+        AppointmentBookingPolicy,
+      ],
     },
     {
       provide: 'CreateBarberShopTransaction',

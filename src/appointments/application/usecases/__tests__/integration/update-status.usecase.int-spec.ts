@@ -1,3 +1,4 @@
+import { systemClock } from '@/shared/application/providers/clock';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaClient } from '@prisma/client';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
@@ -44,6 +45,9 @@ describe('UpdateStatusUseCase integration tests', () => {
   });
 
   beforeEach(async () => {
+    jest
+      .spyOn(systemClock, 'now')
+      .mockReturnValue(new Date('2030-01-01T12:00:00Z'));
     sut = new UpdateStatusUseCase.UseCase(
       appointmentRepository,
       barberShopRepository,
@@ -54,6 +58,8 @@ describe('UpdateStatusUseCase integration tests', () => {
     await prismaService.barberShop.deleteMany();
     await prismaService.user.deleteMany();
   });
+
+  afterEach(() => jest.restoreAllMocks());
 
   afterAll(async () => {
     await module.close();
@@ -141,6 +147,7 @@ describe('UpdateStatusUseCase integration tests', () => {
     const appointment = new AppointmentEntity(
       AppointmentDataBuilder({
         ...input,
+        date: new Date('2030-01-07T12:00:00Z'),
         status: input.status ?? AppointmentStatus.scheduled,
       }),
     );
