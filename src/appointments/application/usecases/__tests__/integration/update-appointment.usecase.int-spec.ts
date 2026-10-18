@@ -363,7 +363,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
     );
   });
 
-  it('should throw BadRequestError when new date is not available', async () => {
+  it('should throw ConflictError when new date is not available', async () => {
     // Arrange
     const { barber, barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
@@ -396,7 +396,7 @@ describe('UpdateAppointmentUseCase integration tests', () => {
 
     // Act & Assert
     await expect(sut.execute(input)).rejects.toThrow(
-      new BadRequestError('Appointment not available'),
+      new ConflictError('Appointment not available'),
     );
   });
 

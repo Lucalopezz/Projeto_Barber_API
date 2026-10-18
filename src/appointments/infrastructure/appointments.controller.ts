@@ -82,7 +82,11 @@ export class AppointmentsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Criar um agendamento' })
+  @ApiOperation({
+    summary: 'Criar um agendamento',
+    description:
+      'Responde 409 se o intervalo estiver ocupado, fora do expediente ou durante uma folga do profissional.',
+  })
   @ApiDataResponse(AppointmentPresenter, 201, 'Agendamento criado')
   @ApiProtected(403, 404, 409, 422)
   async create(
@@ -204,7 +208,11 @@ export class AppointmentsController {
   @Put(':id')
   @UseGuards(RoleGuard)
   @Roles([Role.owner, Role.barber])
-  @ApiOperation({ summary: 'Alterar data ou serviço de um agendamento' })
+  @ApiOperation({
+    summary: 'Alterar data ou serviço de um agendamento',
+    description:
+      'Responde 409 se o novo intervalo estiver ocupado, fora do expediente ou durante uma folga do profissional.',
+  })
   @ApiParam({ name: 'id', format: 'uuid', description: 'ID do agendamento' })
   @ApiDataResponse(AppointmentPresenter)
   @ApiProtected(403, 404, 409, 422)

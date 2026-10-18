@@ -1,5 +1,5 @@
 import { AppointmentAvailabilityService } from '../../appointment-availability.service';
-import { BadRequestError } from '@/shared/application/errors/bad-request-error';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
 import { BarberScheduleEntity } from '@/appointments/domain/entities/barber-schedule.entity';
 import { randomUUID } from 'node:crypto';
 
@@ -50,7 +50,7 @@ describe('AppointmentAvailabilityService', () => {
         endsAt: new Date('2026-07-27T14:00:01.000Z'),
         timezone: 'America/Sao_Paulo',
       }),
-    ).rejects.toThrow(new BadRequestError('Appointment not available'));
+    ).rejects.toThrow(new ConflictError('Appointment not available'));
   });
 
   it('should reject an interval that crosses a local day boundary', async () => {
@@ -70,7 +70,7 @@ describe('AppointmentAvailabilityService', () => {
         endsAt: new Date('2026-07-28T03:30:00.000Z'),
         timezone: 'America/Sao_Paulo',
       }),
-    ).rejects.toThrow(new BadRequestError('Appointment not available'));
+    ).rejects.toThrow(new ConflictError('Appointment not available'));
   });
 
   it('should accept midnight as the exclusive end of a local day', async () => {

@@ -1,6 +1,6 @@
 import { AppointmentsRepository } from '@/appointments/domain/repositories/appointments.repository';
 import { BarberAvailabilityRepository } from '@/appointments/domain/repositories/barber-availability.repository';
-import { BadRequestError } from '@/shared/application/errors/bad-request-error';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
 
 type ZonedDateParts = {
   year: number;
@@ -26,7 +26,7 @@ export class AppointmentAvailabilityService {
     excludeAppointmentId?: string;
   }): Promise<void> {
     if (!(await this.isAvailable(input))) {
-      throw new BadRequestError('Appointment not available');
+      throw new ConflictError('Appointment not available');
     }
   }
 

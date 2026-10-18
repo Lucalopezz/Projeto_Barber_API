@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { setupPrismaTests } from '@/shared/infrastructure/database/testing/setup-prisma-tests';
 import { DatabaseModule } from '@/shared/infrastructure/database/database.module';
 import { BadRequestError } from '@/shared/application/errors/bad-request-error';
+import { ConflictError } from '@/shared/domain/errors/conflict-error';
 import { CreateAppointmentsUseCase } from '../../create-appointment.usecase';
 import { AppointmentsPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/appointments-prisma.repository';
 import { ServicesPrismaRepository } from '@/services/infrastructure/database/prisma/services-prisma.repository';
@@ -186,7 +187,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
     );
   });
 
-  it('should throw BadRequestError when appointment is not available', async () => {
+  it('should throw ConflictError when appointment is not available', async () => {
     // Arrange
     const { barberShop } = await createBarberShopWithOwner();
     const service = await createService(barberShop._id);
@@ -212,7 +213,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
 
     // Act & Assert
     await expect(sut.execute(secondInput)).rejects.toThrow(
-      new BadRequestError('Appointment not available'),
+      new ConflictError('Appointment not available'),
     );
   });
 
@@ -236,7 +237,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
         serviceId: otherService.id,
         date: new Date('2025-12-15T10:30:00Z'),
       }),
-    ).rejects.toThrow(new BadRequestError('Appointment not available'));
+    ).rejects.toThrow(new ConflictError('Appointment not available'));
   });
 
   it('should not block a slot after an appointment is cancelled', async () => {
@@ -286,7 +287,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
         serviceId: service.id,
         date: new Date('2025-12-15T14:00:00Z'),
       }),
-    ).rejects.toThrow(new BadRequestError('Appointment not available'));
+    ).rejects.toThrow(new ConflictError('Appointment not available'));
   });
 
   it('should reject appointments during a barber time off', async () => {
@@ -309,7 +310,7 @@ describe('CreateAppointmentsUseCase integration tests', () => {
         serviceId: service.id,
         date: new Date('2025-12-15T13:00:00Z'),
       }),
-    ).rejects.toThrow(new BadRequestError('Appointment not available'));
+    ).rejects.toThrow(new ConflictError('Appointment not available'));
   });
 
   it('should create appointment and verify it is persisted in database', async () => {

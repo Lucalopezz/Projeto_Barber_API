@@ -73,6 +73,21 @@ Todas as rotas desta família exigem autenticação.
 Os endpoints estáticos de disponibilidade são declarados antes de
 `/appointments/:id`, evitando que `availability` seja interpretado como UUID.
 
+Criar ou remarcar uma reserva em um intervalo ocupado, fora do expediente local
+ou durante uma folga responde `409 Conflict`:
+
+```json
+{
+  "statusCode": 409,
+  "error": "Conflict",
+  "message": "Appointment not available"
+}
+```
+
+A pré-checagem de disponibilidade e a restrição de sobreposição do PostgreSQL
+usam essa mesma resposta, inclusive quando outra reserva ocupa o intervalo entre
+a consulta e a gravação. Falhas inesperadas continuam respondendo `500`.
+
 ## Formato das respostas
 
 Resposta comum:
