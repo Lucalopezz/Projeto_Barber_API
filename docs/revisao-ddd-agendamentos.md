@@ -51,7 +51,7 @@ Não tratar essas escolhas como bugs sem definir o contrato. Registre decisões 
 | 1. Estabilizar dependências, HTTP, sessão e lint | Entregue; manter as verificações nas próximas alterações. |
 | 2. Jornada de agendamento com implementação e revisão | Entregue; os riscos acima são a evolução identificada na revisão de modelagem. |
 | 3. Skill própria de setup/verificação | Entregue e validada em worktrees novas. |
-| Reforço de arquitetura solicitado depois | Regras/testes/CI/documentação implementados; primeira execução remota e proteção de branch ainda precisam ser verificadas/configuradas. |
+| Reforço de arquitetura solicitado depois | Regras/testes/CI/documentação implementados; primeira execução remota aprovada. Falta configurar a proteção da branch para exigir o check. |
 | 4. Assistente de catálogo/horários por ferramentas e avaliações fixas | Ainda não implementado. |
 
 Para a etapa 4, a próxima entrega sugerida é um assistente somente de consulta: definir contrato das ferramentas e perguntas de referência, começar com provedor simulado e dados sintéticos, testar seleção/argumentos/respostas e só depois ligar um provedor real, mantendo a chave no backend e medindo custo/latência/erros. Não é necessário autorizar reservas assistidas para esse primeiro exercício.
