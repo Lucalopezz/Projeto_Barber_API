@@ -1,5 +1,6 @@
 import { pathsToModuleNameMapper } from 'ts-jest';
-import { compilerOptions } from './tsconfig.json';
+import { readFileSync } from 'node:fs';
+const { compilerOptions } = JSON.parse(readFileSync('./tsconfig.json', 'utf8'));
 
 export default {
   moduleFileExtensions: ['js', 'json', 'ts'],
