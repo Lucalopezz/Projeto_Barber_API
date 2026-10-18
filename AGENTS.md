@@ -2,6 +2,17 @@
 
 ## Contexto e fontes de verdade
 
+> Atualização de 17/10/2026: o projeto incompleto também é um laboratório de
+> IA, skills, agentes e worktrees. Preserve o contexto de barbearias. Consulte
+> `docs/estado-atual.md` para o ambiente atual e `docs/laboratorio-ia.md` para o
+> workflow sugerido. Use pnpm e o lockfile versionado; os exemplos npm antigos
+> deste guia foram mantidos como histórico. `pnpm test` executa unidades,
+> `pnpm test:int` integração e `pnpm test:e2e` a configuração já existente em
+> `test/jest-e2e.json`. `pnpm lint` verifica; `pnpm lint:fix` altera arquivos.
+> Testes com banco usam exclusivamente o schema `barber_api_test`. Não rode
+> suites que limpam esse mesmo schema em paralelo. Quando houver delegação,
+> atribua worktree e responsabilidade explícitas a cada implementador.
+
 Esta é uma API REST de barbearias em NestJS, TypeScript, Prisma e PostgreSQL. A organização segue Clean Architecture/DDD: regras de negócio ficam isoladas de HTTP e do banco.
 
 - Antes de alterar comportamento HTTP, consulte `docs/api.md`, o Swagger e o contrato OpenAPI gerado.

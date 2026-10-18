@@ -1,5 +1,13 @@
 # Barber Shop API
 
+> **PS — mudança de foco em 17/10/2026:** este projeto de estudo estava
+> incompleto e, a partir deste ponto, passa a servir também como laboratório
+> para estudar IA, skills, agentes e Git worktrees. O domínio de barbearias e a
+> documentação original ficam como base dos experimentos. Consulte o
+> [estado verificado e ambiente atual](./docs/estado-atual.md) e o
+> [workflow de estudos com IA](./docs/laboratorio-ia.md). Os comandos com pnpm
+> nesses documentos são a referência atual de execução.
+
 API REST para uma plataforma de barbearias, construída com NestJS, TypeScript, Prisma e PostgreSQL. O projeto organiza as regras de negócio com princípios de Clean Architecture e DDD.
 
 ## Documentação

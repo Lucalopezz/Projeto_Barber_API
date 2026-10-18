@@ -1,5 +1,11 @@
 # Documentação da Barber Shop API
 
+> **PS — 17/10/2026:** o projeto incompleto de estudo passa a ser também um
+> laboratório de IA, skills, agentes e worktrees. A documentação abaixo foi
+> preservada. Para a configuração atual com pnpm, verificações executadas e
+> limitações da integração com o front, leia [Estado atual](./estado-atual.md).
+> Para os próximos experimentos, leia [Laboratório de IA](./laboratorio-ia.md).
+
 Esta pasta explica a aplicação por responsabilidade. O contrato HTTP detalhado
 é gerado pelo próprio código e fica no Swagger; os documentos abaixo explicam
 o contexto, as decisões e os fluxos que não são evidentes apenas olhando os

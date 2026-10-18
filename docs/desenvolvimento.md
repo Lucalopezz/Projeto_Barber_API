@@ -1,5 +1,10 @@
 # Desenvolvimento
 
+> **PS — 17/10/2026:** o ambiente passou a usar pnpm. Os comandos reproduzíveis
+> e os exemplos de env separados por ambiente estão em
+> [Estado atual](./estado-atual.md#execução-local). O conteúdo anterior abaixo
+> foi mantido como histórico do projeto de estudo.
+
 ## Pré-requisitos
 
 - Node.js compatível com o projeto;
