@@ -4,7 +4,7 @@
     "^@/(.*)$": "<rootDir>/src/$1"
   },
   "rootDir": "..",
-  "roots": ["<rootDir>/test"],
+  "roots": ["<rootDir>/test", "<rootDir>/src"],
   "testEnvironment": "node",
   "testRegex": ".*\\.e2e-spec\\.ts$",
   "testTimeout": 30000,
