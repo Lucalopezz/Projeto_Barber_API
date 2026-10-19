@@ -2,6 +2,7 @@ import { EnvConfigService } from '@/shared/infrastructure/env-config/env-config.
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@/users/domain/entities/role.enum';
+import { randomUUID } from 'node:crypto';
 
 type GenerateJwtProps = {
   accessToken: string;
@@ -26,7 +27,7 @@ export class AuthService {
       Math.floor(sessionExpiresAt.getTime() / 1000),
     );
     const accessToken = await this.jwtService.signAsync(
-      { id: userId, role, sid: sessionId, iat: now },
+      { id: userId, role, sid: sessionId, iat: now, jti: randomUUID() },
       { expiresIn: expiresAt - now },
     );
     return {
