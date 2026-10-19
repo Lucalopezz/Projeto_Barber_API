@@ -143,12 +143,33 @@ describe('CreateAppointmentsUseCase integration tests', () => {
     const client = new UserEntity(
       UserDataBuilder({
         role: Role.client,
-        email: `client${Date.now()}@test.com`,
+        email: `client${randomUUID()}@test.com`,
       }),
     );
     await userRepository.insert(client);
     return client;
   };
+
+  it('should persist clients with unique emails when created at the same timestamp', async () => {
+    jest.spyOn(Date, 'now').mockReturnValue(1764590400000);
+
+    const firstClient = await createClient();
+    const secondClient = await createClient();
+
+    expect(firstClient.id).not.toBe(secondClient.id);
+    expect(firstClient.email).not.toBe(secondClient.email);
+    const persistedClients = await prismaService.user.findMany({
+      where: { id: { in: [firstClient.id, secondClient.id] } },
+      select: { id: true, email: true },
+    });
+    expect(persistedClients).toHaveLength(2);
+    expect(persistedClients).toEqual(
+      expect.arrayContaining([
+        { id: firstClient.id, email: firstClient.email },
+        { id: secondClient.id, email: secondClient.email },
+      ]),
+    );
+  });
 
   it('should create an appointment successfully', async () => {
     // Arrange
