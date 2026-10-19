@@ -1,6 +1,21 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ErrorResponse {
+  @ApiPropertyOptional({
+    enum: [
+      'AUTHENTICATION_REQUIRED',
+      'AUTH_SESSION_INVALID',
+      'AUTH_SESSION_AMBIGUOUS',
+      'AUTH_ORIGIN_REJECTED',
+    ],
+  })
+  code?: string;
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Somente SIDs autenticados por cookies em bootstrap ambíguo; nunca identidades ou tokens.',
+  })
+  sessionIds?: string[];
   @ApiProperty({ example: 404 })
   statusCode: number;
 
@@ -34,4 +49,13 @@ export class AccessTokenResponse {
     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
   })
   accessToken: string;
+}
+
+export class SessionTokensResponse extends AccessTokenResponse {
+  @ApiProperty({ format: 'uuid' })
+  sessionId: string;
+  @ApiProperty({ format: 'date-time' })
+  accessTokenExpiresAt: string;
+  @ApiProperty({ format: 'date-time' })
+  sessionExpiresAt: string;
 }

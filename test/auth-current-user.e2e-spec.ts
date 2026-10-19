@@ -114,7 +114,14 @@ describe('Authoritative authenticated identity (Fastify + PostgreSQL)', () => {
       where: { id: userId },
       data: { role: Role.owner },
     });
-    const token = await app.get(AuthService).generateJwt(userId, Role.owner);
+    const token = await app
+      .get(AuthService)
+      .generateJwt(
+        userId,
+        Role.owner,
+        app.get(JwtService).decode(authorization.slice(7)).sid,
+        new Date(Date.now() + 900000),
+      );
     await prisma.user.update({
       where: { id: userId },
       data: { role: Role.client },
@@ -125,7 +132,14 @@ describe('Authoritative authenticated identity (Fastify + PostgreSQL)', () => {
   });
 
   it('ignores an owner claim when the persisted identity is a barber', async () => {
-    const token = await app.get(AuthService).generateJwt(userId, Role.owner);
+    const token = await app
+      .get(AuthService)
+      .generateJwt(
+        userId,
+        Role.owner,
+        app.get(JwtService).decode(authorization.slice(7)).sid,
+        new Date(Date.now() + 900000),
+      );
     expect((await schedule(`Bearer ${token.accessToken}`)).statusCode).toBe(
       403,
     );

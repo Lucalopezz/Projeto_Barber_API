@@ -49,8 +49,18 @@ export namespace UpdatePasswordUseCase {
         input.password,
       );
 
+      const expectedPasswordHash = entity.password;
       entity.updatePassword(hashedPassword);
-      await this.userRepository.update(entity);
+      if (
+        !(await this.userRepository.updatePasswordAndRevoke(
+          entity,
+          expectedPasswordHash,
+        ))
+      ) {
+        throw new InvalidPasswordError(
+          'Password changed concurrently; authenticate again',
+        );
+      }
       return UserOutputMapper.toOutput(entity);
     }
   }

@@ -56,7 +56,48 @@ describe('EnvConfigService', () => {
     const service = new EnvConfigService(configService);
 
     expect(() => service.getCorsAllowedOrigins()).toThrow(
-      'CORS_ALLOWED_ORIGINS cannot contain "*" outside development',
+      'CORS_ALLOWED_ORIGINS cannot contain "*" for session authentication',
     );
+  });
+});
+
+describe('Session configuration validation', () => {
+  const make = (values: Record<string, unknown>) =>
+    new EnvConfigService({
+      get: (key: string) => values[key],
+    } as ConfigService);
+  it('defaults access/session TTL to 900/604800 and Secure to production only', () => {
+    const config = make({ NODE_ENV: 'production' });
+    expect(config.getJtwExpiresInSeconds()).toBe(900);
+    expect(config.getAuthSessionTtlSeconds()).toBe(604800);
+    expect(config.getAuthCookieSecure()).toBe(true);
+    expect(make({ NODE_ENV: 'test' }).getAuthCookieSecure()).toBe(false);
+  });
+  it.each(['0', '-1', 'NaN', '1.5', 'Infinity', '2147483648'])(
+    'rejects invalid TTL %s',
+    (value) => {
+      expect(() =>
+        make({ JWT_EXPIRES_IN: value }).getJtwExpiresInSeconds(),
+      ).toThrow();
+      expect(() =>
+        make({ AUTH_SESSION_TTL_SECONDS: value }).getAuthSessionTtlSeconds(),
+      ).toThrow();
+    },
+  );
+  it('rejects wildcard even in development and noncanonical origins', () => {
+    expect(() =>
+      make({
+        NODE_ENV: 'development',
+        CORS_ALLOWED_ORIGINS: '*',
+      }).getCorsAllowedOrigins(),
+    ).toThrow();
+    expect(() =>
+      make({
+        CORS_ALLOWED_ORIGINS: 'https://example.com/path',
+      }).getCorsAllowedOrigins(),
+    ).toThrow();
+    expect(() =>
+      make({ AUTH_COOKIE_SECURE: 'yes' }).getAuthCookieSecure(),
+    ).toThrow();
   });
 });

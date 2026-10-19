@@ -31,7 +31,8 @@ export function applyGlobalConfig(
   app.enableCors({
     origin: corsAllowedOrigins.length > 0 ? corsAllowedOrigins : false,
     methods: 'GET,HEAD,POST,PUT,PATCH,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Authorization',
+    allowedHeaders: 'Content-Type, Authorization, X-Barber-Session',
+    credentials: true,
   });
   app.useGlobalInterceptors(
     new WrapperDataInterceptor(),

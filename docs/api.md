@@ -18,12 +18,36 @@ Rotas protegidas recebem:
 Authorization: Bearer <accessToken>
 ```
 
-O token é obtido em `POST /api/v1/users/login`. Na Swagger UI, use o botão
-**Authorize** e informe o token. A assinatura e a expiração do JWT são verificadas;
-a identidade e o papel usados na autorização vêm do banco a cada requisição. Após
-criar uma barbearia, o mesmo token passa a autorizar as operações de `owner`, sem
-novo login. Contas excluídas recebem `401`; rebaixamentos de papel têm efeito
-imediato. O formato de login e do token continua o mesmo.
+O token é obtido em `POST /api/v1/users/login`, com JSON `{email,password}`.
+Login mantém HTTP 201 e resposta sem envelope, agora `SessionTokens`:
+`{accessToken, sessionId, accessTokenExpiresAt, sessionExpiresAt}`. Datas ISO UTC.
+Também estabelece o cookie HttpOnly `barber_refresh_<sessionId>`, host-only,
+`Path=/api/v1/auth; SameSite=Lax`, Secure em produção. O valor de refresh nunca
+aparece no JSON. Access token dura 15 minutos por padrão; a sessão expira sete
+dias após login, sem extensão por renovação. JWT contém `id`, `role` e `sid`;
+o guard consulta sessão e usuário atuais, tornando logout e alterações de papel
+imediatos nas próximas requisições. Tokens legados sem sessão são rejeitados.
+
+- `POST /auth/refresh`, JSON `{sessionId?: UUID}`: 200 e `SessionTokens` sem
+  envelope; consome e substitui atomicamente o cookie da sessão. Sem SID, aceita
+  exatamente um cookie autenticando sessão ativa. Múltiplas sessões exigem seleção (401 `AUTH_SESSION_AMBIGUOUS`, `sessionIds`
+  apenas dos cookies comprovados). Esses metadados permitem encerrar as sessões
+  individualmente após logout pendente sem identidade local; nunca escolher conta automaticamente.
+- `POST /auth/logout`, JSON `{sessionId: UUID}`: 204 idempotente; revoga e expira
+  somente o cookie desse SID. Cookie consumido continua prova para logout.
+- `PATCH /users/:id`: troca de senha e revogação de todas as sessões são atômicas.
+
+Refresh e logout exigem JSON e `X-Barber-Session: 1`. Login exige JSON, mas o
+header permanece opcional para compatibilidade. Quando existe Origin, deve
+corresponder exatamente à allowlist; `null`, origem estrangeira e navegador
+identificado por Sec-Fetch-Site sem Origin recebem 403 `AUTH_ORIGIN_REJECTED`.
+Clientes HTTP sem Origin são aceitos com JSON e, em refresh/logout, header próprio.
+
+401 do guard inclui `code: AUTHENTICATION_REQUIRED`; 401 definitivo de refresh
+inclui `code: AUTH_SESSION_INVALID`. Erros de negócio/autorização preservam os
+contratos anteriores. Reutilização comprovada de cookie consumido revoga somente
+a sessão correspondente; valor aleatório não revoga sessão alheia. Falha de rede
+não é prova de expiração. Na Swagger UI, Bearer continua disponível em Authorize.
 
 ## Famílias de rotas
 
@@ -119,7 +143,7 @@ Coleção paginada:
 
 Exceções:
 
-- login retorna diretamente `{ "accessToken": "..." }`;
+- login e refresh retornam diretamente `SessionTokens`;
 - exclusões retornam `204 No Content`;
 - respostas já paginadas não recebem um segundo envelope.
 
@@ -157,7 +181,9 @@ como `500` com a mensagem genérica `Internal server error`, sem detalhes intern
 ## CORS
 
 `CORS_ALLOWED_ORIGINS` recebe origens separadas por vírgula. Sem configuração,
-CORS fica desabilitado. `*` só é aceito quando `NODE_ENV=development`.
+CORS fica desabilitado. wildcard `*` é rejeitado também em desenvolvimento. Origens são explícitas, com
+`credentials: true` e headers `Content-Type, Authorization, X-Barber-Session`.
+No browser, habilite credenciais e use o mesmo hostname na UI/API local.
 
 ## Políticas de agendamento (18/10/2026)
 

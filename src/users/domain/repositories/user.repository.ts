@@ -25,6 +25,11 @@ export namespace UserRepository {
     UserSearchParams,
     UserSearchResult
   > {
+    promoteToOwner(entity: UserEntity): Promise<void>;
+    updatePasswordAndRevoke(
+      entity: UserEntity,
+      expectedPasswordHash: string,
+    ): Promise<boolean>;
     findByEmail(email: string): Promise<UserEntity | null>;
     existsByEmail(email: string): Promise<boolean>;
   }

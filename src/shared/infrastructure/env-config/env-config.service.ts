@@ -18,9 +18,26 @@ export class EnvConfigService implements EnvConfig {
     return this.configService.get<string>('JWT_SECRET');
   }
   getJtwExpiresInSeconds(): number {
-    return Number(this.configService.get<number>('JWT_EXPIRES_IN'));
+    return this.positiveSeconds('JWT_EXPIRES_IN', 900);
   }
 
+  private positiveSeconds(key: string, fallback: number): number {
+    const value = this.configService.get<string | number>(key) ?? fallback;
+    const parsed = Number(value);
+    if (!Number.isSafeInteger(parsed) || parsed <= 0 || parsed > 2147483647)
+      throw new Error(`${key} must be positive integer seconds`);
+    return parsed;
+  }
+  getAuthSessionTtlSeconds() {
+    return this.positiveSeconds('AUTH_SESSION_TTL_SECONDS', 604800);
+  }
+  getAuthCookieSecure() {
+    const value = this.configService.get<string>('AUTH_COOKIE_SECURE');
+    if (value === undefined) return this.getNodeEnv() === 'production';
+    if (value !== 'true' && value !== 'false')
+      throw new Error('AUTH_COOKIE_SECURE must be true or false');
+    return value === 'true';
+  }
   getCorsAllowedOrigins(): string[] {
     const origins = (
       this.configService.get<string>('CORS_ALLOWED_ORIGINS') ?? ''
@@ -29,13 +46,20 @@ export class EnvConfigService implements EnvConfig {
       .map((origin) => origin.trim())
       .filter(Boolean);
 
-    // Check if the origins array contains "*" and the environment is not development
-    if (origins.includes('*') && this.getNodeEnv() !== 'development') {
+    if (origins.includes('*'))
       throw new Error(
-        'CORS_ALLOWED_ORIGINS cannot contain "*" outside development',
+        'CORS_ALLOWED_ORIGINS cannot contain "*" for session authentication',
       );
+    for (const origin of origins) {
+      try {
+        if (new URL(origin).origin !== origin || !/^https?:/.test(origin))
+          throw new Error();
+      } catch {
+        throw new Error(
+          'CORS_ALLOWED_ORIGINS must contain exact HTTP(S) origins',
+        );
+      }
     }
-
     return origins;
   }
 }
