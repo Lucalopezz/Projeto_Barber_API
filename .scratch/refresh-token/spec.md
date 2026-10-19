@@ -1,6 +1,6 @@
 # Sessões persistidas e refresh token
 
-Status: backend implementado e validado localmente em worktree; frontend e jornada integrada pendentes. Comportamento e estratégia de testes confirmados pelo usuário em 18/10/2026. Esta entrega conjunta ainda não está concluída.
+Status: entrega conjunta concluída, validada e integrada à `main` dos dois repositórios. Backend pelo [PR #3](https://github.com/Lucalopezz/Projeto_Barber_API/pull/3), merge `b761ab6`; frontend pelo [PR #5](https://github.com/Lucalopezz/Frontend_Barber_API/pull/5), merge `abfc1a1`. Checks remotos e jornada integrada foram aprovados. Comportamento e estratégia de testes confirmados pelo usuário em 18/10/2026.
 
 ## Problema
 

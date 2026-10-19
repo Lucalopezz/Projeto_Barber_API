@@ -2,9 +2,12 @@
 
 Data: 19/10/2026. Worktree `.worktrees/refresh-back`, branch
 `feat/refresh-sessions-api`, base `30578e14efa026874ff4e9fed68d7c4350bad682`.
-Backend implementado; aceite da entrega conjunta depende do frontend, navegador,
-integração dos dois checkouts e checks remotos coordenados pelo root. Não há
-publicação/merge feito por este implementador e a spec de cache não foi iniciada.
+Este relatório registra a validação local do backend antes da publicação. A entrega
+conjunta foi concluída posteriormente: backend integrado à `main` pelo
+[PR #3](https://github.com/Lucalopezz/Projeto_Barber_API/pull/3), frontend pelo
+[PR #5](https://github.com/Lucalopezz/Frontend_Barber_API/pull/5), com checks
+remotos aprovados e jornada real 7/7. O cache também foi concluído no frontend
+pelo [PR #6](https://github.com/Lucalopezz/Frontend_Barber_API/pull/6).
 
 ## Preparação e isolamento
 
