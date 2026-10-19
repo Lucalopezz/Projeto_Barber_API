@@ -24,7 +24,6 @@ export interface SessionRepository {
   rotate(
     proof: RefreshProof,
     nextHash: string,
-    now: Date,
   ): Promise<SessionIdentity | null>;
   revoke(proof: RefreshProof, now: Date): Promise<void>;
 }

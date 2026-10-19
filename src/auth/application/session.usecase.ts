@@ -57,7 +57,6 @@ export class SessionUseCase {
     const session = await this.repository.rotate(
       { sessionId: selected, hash: this.secrets.hash(token) },
       this.secrets.hash(refreshToken),
-      this.clock(),
     );
     return session ? { session, refreshToken } : null;
   }

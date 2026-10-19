@@ -55,6 +55,15 @@ implementados; não é alegada como RED individual para cada cenário. Unidades 
 clock injetado; testes de corrida usam Promise.all e barreira explícita no lock do
 usuário, sem sleeps longos nem grace period de refresh.
 
+5. **Prazo absoluto durante contenção de refresh:** revisão encontrou `now`
+   capturado antes do row lock. RED real PostgreSQL segura a sessão em outra
+   transação, inicia renovação e avança clock ao instante exato de expiração;
+   comportamento anterior retornou sessão quando esperava null. GREEN injeta
+   relógio no adapter e consulta o tempo após adquirir lock e ler a prova, antes
+   de qualquer consumo. O teste sinaliza a entrada na query de lock para tornar
+   a barreira determinística, sem sleep. Também confere que nenhum token foi
+   consumido/criado quando expira durante a espera. Contrato HTTP permanece igual.
+
 ## Comportamentos cobertos
 
 - Login201/rawJSON compatível, cookie por SID HttpOnly/SameSite/Path e Secure
@@ -89,7 +98,7 @@ logs completos temporários privados, resumo versionado aqui.
 | `pnpm lint` | Aprovado após formato final |
 | `pnpm build` | Aprovado após código final |
 | `pnpm test` | 32suites,183/183 aprovados na execução final |
-| `pnpm test:int` | 29 suites,193/193 aprovados na execução final com Faker controlado |
+| `pnpm test:int` | 29 suites,194/194 aprovados após correção do deadline; anterior193/193 |
 | `pnpm test:e2e` | 12 suites,81/81 aprovados na execução final (24 novos cenários HTTP) |
 | `git diff --check` | Aprovado |
 

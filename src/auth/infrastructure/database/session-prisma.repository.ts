@@ -9,7 +9,10 @@ import { Prisma } from '@prisma/client';
 import { Role } from '@/users/domain/entities/role.enum';
 
 export class SessionPrismaRepository implements SessionRepository {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private clock: () => Date = () => new Date(),
+  ) {}
   private identity(
     session: SessionRecord & { user: { role: string } },
   ): SessionIdentity {
@@ -58,7 +61,7 @@ export class SessionPrismaRepository implements SessionRepository {
   private async lock(tx: Prisma.TransactionClient, sid: string) {
     await tx.$queryRaw`SELECT id FROM "AuthSession" WHERE id=${sid} FOR UPDATE`;
   }
-  async rotate(proof: RefreshProof, nextHash: string, now: Date) {
+  async rotate(proof: RefreshProof, nextHash: string) {
     // Return null inside the transaction: throwing here would roll back replay revocation.
     return this.prisma.$transaction(async (tx) => {
       await this.lock(tx, proof.sessionId);
@@ -66,14 +69,16 @@ export class SessionPrismaRepository implements SessionRepository {
         where: { id: proof.sessionId },
         include: { user: true },
       });
-      if (!session || session.revokedAt || session.expiresAt <= now)
-        return null;
+      if (!session || session.revokedAt) return null;
       const token = await tx.authRefreshToken.findUnique({
         where: {
           sessionId_hash: { sessionId: proof.sessionId, hash: proof.hash },
         },
       });
       if (!token) return null;
+      // Waiting for another transaction must not freeze the absolute deadline.
+      const now = this.clock();
+      if (session.expiresAt <= now) return null;
       if (token.consumedAt) {
         await tx.authSession.update({
           where: { id: session.id },

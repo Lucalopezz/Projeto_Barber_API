@@ -20,7 +20,9 @@ Tokens utilizáveis não são persistidos. Uma nova migration aditiva cria essas
 tabelas; exclusão do usuário remove sessões e verificadores por cascade.
 
 Refresh adquire lock da sessão em uma transação PostgreSQL. Um token só é
-consumido uma vez; o próximo é registrado na mesma transação. Replay comprovado
+consumido uma vez; o próximo é registrado na mesma transação. O prazo absoluto
+é reavaliado com o relógio atual após adquirir o lock e ler a prova, evitando
+aceitar uma renovação que esperou outra transação até a sessão expirar. Replay comprovado
 revoga aquela sessão e confirma a transação antes da resposta 401. Token aleatório
 com SID conhecido não revoga a sessão. Histórico consumido também é prova para
 logout, inclusive após uma resposta de refresh perdida. Não existe grace period.

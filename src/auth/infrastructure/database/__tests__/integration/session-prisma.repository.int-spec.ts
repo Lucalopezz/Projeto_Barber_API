@@ -9,7 +9,8 @@ import { UserPrismaRepository } from '@/users/infrastructure/database/prisma/rep
 
 describe('Session persistence atomicity (PostgreSQL)', () => {
   const prisma = new PrismaService();
-  const repository = new SessionPrismaRepository(prisma);
+  let clockReading: Date;
+  const repository = new SessionPrismaRepository(prisma, () => clockReading);
   const now = new Date('2026-10-19T12:00:00Z');
   let userId: string;
   const hash = (value: string) =>
@@ -26,6 +27,7 @@ describe('Session persistence atomicity (PostgreSQL)', () => {
   };
   beforeAll(() => setupPrismaTests());
   beforeEach(async () => {
+    clockReading = now;
     await clearDatabase(prisma);
     userId = (
       await prisma.user.create({
@@ -55,11 +57,11 @@ describe('Session persistence atomicity (PostgreSQL)', () => {
     expect(
       await repository.active(session.id, userId, session.expiresAt),
     ).toBeNull();
+    clockReading = session.expiresAt;
     expect(
       await repository.rotate(
         { sessionId: session.id, hash: hash('initial') },
         hash('next'),
-        session.expiresAt,
       ),
     ).toBeNull();
     const stored = await prisma.authRefreshToken.findMany();
@@ -154,6 +156,63 @@ describe('Session persistence atomicity (PostgreSQL)', () => {
     expect(persisted.name).toBe('Updated profile');
     expect(await create()).toBeNull();
   });
+  it('rechecks the absolute deadline after waiting for a refresh row lock', async () => {
+    const session = await create();
+    let reading = now;
+    let attempting!: () => void;
+    const attemptStarted = new Promise<void>((r) => (attempting = r));
+    const observed = new Proxy(prisma, {
+      get(target, key) {
+        if (key === '$transaction')
+          return (callback: any) =>
+            target.$transaction((tx: any) =>
+              callback(
+                new Proxy(tx, {
+                  get(transaction, property) {
+                    if (property === '$queryRaw')
+                      return (...args: any[]) => {
+                        attempting();
+                        return Reflect.apply(
+                          transaction.$queryRaw,
+                          transaction,
+                          args,
+                        );
+                      };
+                    return transaction[property];
+                  },
+                }),
+              ),
+            );
+        return Reflect.get(target, key);
+      },
+    });
+    const clocked = new SessionPrismaRepository(observed, () => reading);
+    let locked!: () => void;
+    const acquired = new Promise<void>((r) => (locked = r));
+    let release!: () => void;
+    const barrier = new Promise<void>((r) => (release = r));
+    const holder = prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "AuthSession" WHERE id=${session.id} FOR UPDATE`;
+      locked();
+      await barrier;
+    });
+    await acquired;
+    const rotating = clocked.rotate(
+      { sessionId: session.id, hash: hash('initial') },
+      hash('next'),
+    );
+    // The renewal has entered its lock query while the holder still owns the row.
+    await attemptStarted;
+    reading = session.expiresAt;
+    release();
+    await holder;
+    expect(await rotating).toBeNull();
+    const tokens = await prisma.authRefreshToken.findMany({
+      where: { sessionId: session.id },
+    });
+    expect(tokens).toHaveLength(1);
+    expect(tokens[0].consumedAt).toBeNull();
+  });
   it('retains independent sessions and commits revocation caused by proven replay', async () => {
     const a = await create(),
       b = await create();
@@ -161,14 +220,12 @@ describe('Session persistence atomicity (PostgreSQL)', () => {
       await repository.rotate(
         { sessionId: a.id, hash: hash('initial') },
         hash('next'),
-        now,
       ),
     ).not.toBeNull();
     expect(
       await repository.rotate(
         { sessionId: a.id, hash: hash('initial') },
         hash('other'),
-        now,
       ),
     ).toBeNull();
     expect(
