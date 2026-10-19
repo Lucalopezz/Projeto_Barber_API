@@ -55,6 +55,9 @@ describe('Complete barber shop journey (e2e)', () => {
 
     expect(response.body).toEqual({
       accessToken: expect.any(String),
+      sessionId: expect.any(String),
+      accessTokenExpiresAt: expect.any(String),
+      sessionExpiresAt: expect.any(String),
     });
 
     return response.body.accessToken as string;

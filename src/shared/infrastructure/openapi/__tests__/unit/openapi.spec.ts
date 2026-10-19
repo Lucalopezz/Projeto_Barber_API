@@ -66,6 +66,33 @@ describe('OpenAPI document', () => {
     expect(new Set(operationIds).size).toBe(operationIds.length);
   });
 
+  it('publishes explicit session operations, raw token metadata and required CSRF header', () => {
+    const refresh = document.paths['/api/v1/auth/refresh'].post;
+    const logout = document.paths['/api/v1/auth/logout'].post;
+    expect(refresh.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          in: 'header',
+          name: 'X-Barber-Session',
+          required: true,
+        }),
+      ]),
+    );
+    expect(Object.keys(refresh.responses)).toEqual(
+      expect.arrayContaining(['200', '401', '403', '422']),
+    );
+    expect(logout.responses['204']).toBeDefined();
+    expect(document.components.schemas.SessionTokensResponse).toEqual(
+      expect.objectContaining({
+        required: expect.arrayContaining([
+          'accessToken',
+          'sessionId',
+          'accessTokenExpiresAt',
+          'sessionExpiresAt',
+        ]),
+      }),
+    );
+  });
   it('documents request schemas and examples from HTTP DTOs', () => {
     const schema = document.components?.schemas?.CreateUserDto as {
       required?: string[];

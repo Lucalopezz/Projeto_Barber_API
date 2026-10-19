@@ -32,6 +32,12 @@ describe('Removed assistant (AppModule and real Fastify, fake persistence)', () 
       .useValue({ user: { findUnique: jest.fn().mockResolvedValue(user) } })
       .overrideProvider('PrismaService')
       .useValue({ user: { findUnique: jest.fn().mockResolvedValue(user) } })
+      .overrideProvider('SessionRepository')
+      .useValue({
+        active: jest
+          .fn()
+          .mockResolvedValue({ userId: user.id, role: user.role }),
+      })
       .overrideProvider(GetUserUseCase.UseCase)
       .useValue({ execute: jest.fn().mockResolvedValue(user) })
       .compile();
@@ -42,8 +48,16 @@ describe('Removed assistant (AppModule and real Fastify, fake persistence)', () 
     applyGlobalConfig(app, app.get(EnvConfigService));
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
-    token = (await app.get(AuthService).generateJwt(user.id, user.role))
-      .accessToken;
+    token = (
+      await app
+        .get(AuthService)
+        .generateJwt(
+          user.id,
+          user.role,
+          '11111111-1111-4111-8111-111111111112',
+          new Date(Date.now() + 900000),
+        )
+    ).accessToken;
   });
 
   afterAll(async () => app?.close());

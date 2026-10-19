@@ -1,6 +1,6 @@
 # Sessões persistidas e refresh token
 
-Status: planejado; comportamento e estratégia de testes confirmados pelo usuário em 18/10/2026. Não implementado.
+Status: backend implementado e validado localmente em worktree; frontend e jornada integrada pendentes. Comportamento e estratégia de testes confirmados pelo usuário em 18/10/2026. Esta entrega conjunta ainda não está concluída.
 
 ## Problema
 

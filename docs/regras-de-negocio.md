@@ -12,8 +12,13 @@
 - `GET /users/me` apresenta a relação `owner`, `barber` ou nenhuma relação com
   barbearia.
 
-O JWT contém `id` e `role`, mas o `AuthGuard` consulta a identidade e o papel
-atuais no banco após validar o token. Uma alteração de papel passa a valer na
+O JWT contém `id`, `role` e `sid`. O `AuthGuard` valida assinatura/expiração e
+consulta a sessão persistida ativa e o papel atual do usuário no banco. Tokens
+legados sem SID são rejeitados. Sessões têm prazo absoluto de sete dias por
+padrão; access token dura até 15 minutos, limitado ao prazo restante. Logout e
+replay comprovado revogam somente a sessão alvo. Troca de senha revoga todas as
+sessões atomicamente com a alteração; atualizações de perfil não regravam senha
+ou papel capturados antes. Uma alteração de papel passa a valer na
 próxima requisição protegida, sem exigir novo login; uma conta excluída deixa
 de ser aceita mesmo que o token ainda não tenha expirado.
 

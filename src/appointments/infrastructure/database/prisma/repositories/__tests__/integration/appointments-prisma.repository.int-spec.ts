@@ -1,3 +1,4 @@
+import { faker } from '@faker-js/faker';
 import { BarberAvailabilityPrismaRepository } from '../../barber-availability-prisma.repository';
 import { BarberScheduleEntity } from '@/appointments/domain/entities/barber-schedule.entity';
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -30,6 +31,7 @@ describe('AppointmentsPrismaRepository integration tests', () => {
     }).compile();
   });
 
+  afterEach(() => jest.restoreAllMocks());
   beforeEach(async () => {
     sut = new AppointmentsPrismaRepository(prismaService as any);
     await prismaService.appointment.deleteMany();
@@ -269,6 +271,10 @@ describe('AppointmentsPrismaRepository integration tests', () => {
 
   describe('search method tests', () => {
     it('should apply only pagination when other params are null', async () => {
+      // Pagination fixtures must stay disjoint even if Faker repeats a timestamp.
+      jest
+        .spyOn(faker.date, 'future')
+        .mockReturnValue(new Date('2030-01-07T09:00:00.000Z'));
       const createdAt = new Date();
       const appointments: AppointmentEntity[] = [];
       const { barberShopId, ownerId, serviceId } =
@@ -284,6 +290,8 @@ describe('AppointmentsPrismaRepository integration tests', () => {
               serviceId,
               clientId: client.id,
               createdAt: new Date(createdAt.getTime() + i),
+              date: new Date(Date.UTC(2030, 0, 7, 9 + i)),
+              endDate: new Date(Date.UTC(2030, 0, 7, 9 + i, 30)),
             }),
           ),
         );

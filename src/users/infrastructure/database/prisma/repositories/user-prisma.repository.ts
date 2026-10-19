@@ -90,13 +90,42 @@ export class UserPrismaRepository implements UserRepository.Repository {
 
   async update(entity: UserEntity): Promise<void> {
     await this.prismaService.user.update({
-      data: entity.toJSON(),
+      // A stale profile entity must never restore a password/role changed concurrently.
+      data: { name: entity.name },
       where: {
         id: entity._id,
       },
     });
   }
 
+  async promoteToOwner(entity: UserEntity): Promise<void> {
+    await this.prismaService.user.update({
+      where: { id: entity.id },
+      data: { role: entity.role, barberShopId: entity.barberShopId },
+    });
+  }
+  async updatePasswordAndRevoke(
+    entity: UserEntity,
+    expectedPasswordHash: string,
+  ): Promise<boolean> {
+    const prisma = this.prismaService;
+    if (!('$transaction' in prisma))
+      throw new Error('Password mutation requires a transaction owner');
+    return prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "User" WHERE id=${entity.id} FOR UPDATE`;
+      const user = await tx.user.findUnique({ where: { id: entity.id } });
+      if (!user || user.password !== expectedPasswordHash) return false;
+      await tx.user.update({
+        where: { id: entity.id },
+        data: { password: entity.password },
+      });
+      await tx.authSession.updateMany({
+        where: { userId: entity.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      return true;
+    });
+  }
   async delete(id: string): Promise<void> {
     await this.prismaService.user.delete({
       where: {

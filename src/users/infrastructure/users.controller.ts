@@ -1,3 +1,5 @@
+import { FastifyRequest, FastifyReply } from 'fastify';
+import { SessionHttpService } from '@/auth/infrastructure/session-http.service';
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Controller,
@@ -13,6 +15,8 @@ import {
   Query,
   Put,
   UseGuards,
+  Req,
+  Res,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 
@@ -35,15 +39,21 @@ import { AuthGuard } from '@/auth/guard/auth.guard';
 import { CurrentUserId } from '@/shared/infrastructure/decorators/current-user.decorator';
 import { SigninDto } from './dto/signin.dto';
 import { SigninUseCase } from '../application/usecases/signin.usecase';
-import { AuthService } from '@/auth/auth.service';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiParam,
+  ApiResponse,
+  ApiTags,
+  ApiConsumes,
+  ApiHeader,
+} from '@nestjs/swagger';
 import {
   ApiDataResponse,
   ApiErrorResponses,
   ApiPaginatedResponse,
   ApiProtected,
 } from '@/shared/infrastructure/openapi/openapi.decorators';
-import { AccessTokenResponse } from '@/shared/infrastructure/openapi/openapi.models';
+import { SessionTokensResponse } from '@/shared/infrastructure/openapi/openapi.models';
 
 @Controller('users')
 @ApiTags('Usuários e autenticação')
@@ -69,8 +79,8 @@ export class UsersController {
   @Inject(SigninUseCase.UseCase)
   private signinUseCase: SigninUseCase.UseCase;
 
-  @Inject(AuthService)
-  private authService: AuthService;
+  @Inject(SessionHttpService)
+  private sessionHttp: SessionHttpService;
 
   static userToResponse(output: UserOutput) {
     return new UserPresenter(output);
@@ -94,16 +104,38 @@ export class UsersController {
   }
 
   @Post('login')
-  @ApiOperation({ summary: 'Autenticar e gerar um JWT' })
+  @ApiConsumes('application/json')
+  @ApiHeader({
+    name: 'X-Barber-Session',
+    required: false,
+    enum: ['1'],
+    description: 'Opcional no login; Origin exato quando presente.',
+  })
+  @ApiOperation({
+    summary: 'Autenticar, criar sessão absoluta e cookie HttpOnly por SID',
+  })
   @ApiResponse({
     status: 201,
-    description: 'Credenciais válidas',
-    type: AccessTokenResponse,
+    description:
+      'Credenciais válidas; cookie host-only por SID, HttpOnly, Path=/api/v1/auth, SameSite=Lax',
+    headers: {
+      'Set-Cookie': {
+        description:
+          'barber_refresh_<SID>; Secure conforme ambiente; prazo absoluto',
+        schema: { type: 'string' },
+      },
+    },
+    type: SessionTokensResponse,
   })
-  @ApiErrorResponses(400, 422)
-  async login(@Body() signinDto: SigninDto) {
+  @ApiErrorResponses(400, 401, 403, 422)
+  async login(
+    @Body() signinDto: SigninDto,
+    @Req() request: FastifyRequest,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
+    this.sessionHttp.validate(request, false);
     const output = await this.signinUseCase.execute(signinDto);
-    return this.authService.generateJwt(output.id, output.role);
+    return this.sessionHttp.login(request, reply, output);
   }
 
   @Get()

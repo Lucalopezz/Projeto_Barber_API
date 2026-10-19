@@ -58,7 +58,7 @@ export namespace CreateBarberShopUseCase {
         async ({ barberShopRepository, userRepository }) => {
           await barberShopRepository.insert(entity);
           owner.becomeOwner(entity.id);
-          await userRepository.update(owner);
+          await userRepository.promoteToOwner(owner);
         },
       );
 

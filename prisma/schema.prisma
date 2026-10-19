@@ -22,6 +22,7 @@ model User {
   appointmentsAsBarber Appointment[] @relation("BarberAppointments")
   schedules            BarberSchedule[]
   timeOffs             BarberTimeOff[]
+  authSessions         AuthSession[]
 }
 
 model BarberShop {
@@ -108,4 +109,24 @@ enum AppointmentStatus {
   scheduled
   completed
   cancelled
+}
+
+model AuthSession {
+  id String @id
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @db.Timestamptz(3)
+  expiresAt DateTime @db.Timestamptz(3)
+  revokedAt DateTime? @db.Timestamptz(3)
+  tokens AuthRefreshToken[]
+  @@index([userId])
+}
+
+model AuthRefreshToken {
+  id String @id @default(uuid())
+  sessionId String
+  session AuthSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  hash String
+  consumedAt DateTime? @db.Timestamptz(3)
+  @@unique([sessionId, hash])
 }
