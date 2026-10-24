@@ -6,10 +6,17 @@ import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import { NotFoundError } from '@/shared/domain/errors/not-found-error';
 import { ServicesRepository } from '@/services/domain/repositories/services.repository';
+import { UserRepository } from '@/users/domain/repositories/user.repository';
+import { Role } from '@/users/domain/entities/role.enum';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace GetPublicAvailabilityUseCase {
-  export type Input = { barberShopId: string; date: string; serviceId: string };
+  export type Input = {
+    barberShopId: string;
+    date: string;
+    serviceId: string;
+    barberId?: string;
+  };
   export type Output = PublicAvailabilityOutput;
   type LocalDate = { year: number; month: number; day: number };
 
@@ -21,6 +28,7 @@ export namespace GetPublicAvailabilityUseCase {
       private servicesRepository: ServicesRepository.Repository,
       private availabilityRepository: BarberAvailabilityRepository.Repository,
       private availabilityService: AppointmentAvailabilityService,
+      private userRepository?: UserRepository.Repository,
     ) {}
 
     async execute(input: Input): Promise<Output> {
@@ -33,12 +41,23 @@ export namespace GetPublicAvailabilityUseCase {
       if (!service || service.barberShopId !== barberShop.id) {
         throw new BadRequestError('Service does not belong to BarberShop');
       }
+      const barberId = input.barberId ?? barberShop.ownerId;
+      if (barberId !== barberShop.ownerId) {
+        const barber = await this.userRepository?.findById(barberId);
+        if (
+          !barber ||
+          barber.role !== Role.barber ||
+          barber.barberShopId !== barberShop.id
+        ) {
+          throw new BadRequestError('Barber does not belong to BarberShop');
+        }
+      }
 
       const dayOfWeek = new Date(
         Date.UTC(localDate.year, localDate.month - 1, localDate.day),
       ).getUTCDay();
       const schedules = await this.availabilityRepository.findSchedules(
-        barberShop.ownerId,
+        barberId,
         dayOfWeek,
       );
       const slots: Output['slots'] = [];
@@ -69,7 +88,7 @@ export namespace GetPublicAvailabilityUseCase {
           );
           if (
             await this.availabilityService.isAvailable({
-              barberId: barberShop.ownerId,
+              barberId,
               startsAt,
               endsAt,
               timezone: barberShop.timezone,

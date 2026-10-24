@@ -36,6 +36,17 @@ de ser aceita mesmo que o token ainda não tenha expirado.
 Embora `BarberShop.ownerId` permita uma relação de um proprietário para várias
 barbearias no schema, o caso de uso bloqueia a segunda criação.
 
+### Equipe
+
+- o proprietário também é profissional da própria barbearia;
+- o proprietário convida pelo email uma conta `barber` existente e sem vínculo;
+- o barbeiro só passa a integrar a equipe ao aceitar o convite na própria conta;
+- a aceitação é atômica e remove os demais convites pendentes daquele barbeiro;
+- o proprietário pode cancelar convites e desvincular outro barbeiro;
+- um barbeiro com reservas futuras `scheduled` não pode ser desvinculado;
+- ao desvincular, expediente e folgas são removidos; reservas históricas permanecem;
+- o proprietário não pode ser desvinculado da própria barbearia.
+
 ## Serviços
 
 - todo serviço pertence a exatamente uma barbearia;
@@ -85,9 +96,11 @@ Um agendamento sempre possui:
 - fim calculado (`endDate`);
 - status.
 
-Na criação pública atual, o proprietário da barbearia do serviço é escolhido
-como profissional. `barberShopId` nunca é recebido do cliente nessa operação;
-ele é derivado do serviço para evitar combinações inconsistentes.
+Na criação pública, o cliente pode escolher um profissional da equipe por
+`barberId`. O proprietário é o padrão para clientes antigos que omitem esse
+campo. `barberShopId` nunca é recebido do cliente nessa operação; ele é derivado
+do serviço. Um `barberId` de outra barbearia ou sem vínculo é rejeitado.
+Disponibilidade pública e criação validam o mesmo profissional selecionado.
 
 ### Disponibilidade
 
@@ -114,9 +127,10 @@ profissional.
 | Concluir `scheduled`    | Não                | Sim                    | Não           |
 | Remarcar/trocar serviço | Não                | Sim                    | Não           |
 
-O proprietário consegue consultar os agendamentos da própria barbearia. Para
+O proprietário consegue consultar os agendamentos da própria barbearia. Cada
+barbeiro vinculado lista seus próprios agendamentos. Para
 alterar uma reserva, ele também precisa ser o profissional atribuído — o que é
-verdade nos agendamentos criados pelo fluxo público atual.
+verdade para o proprietário apenas quando ele foi o profissional escolhido.
 
 Estados `completed` e `cancelled` são terminais. A API não permite voltar para
 `scheduled` e não expõe rota para exclusão.
@@ -154,4 +168,4 @@ Em caso de dúvida sobre integridade persistida, prevalecem
 - Folgas e mudanças de expediente preservam reservas existentes, sem cancelamento ou remarcação automática; bloqueiam apenas novas reservas/remarcações incompatíveis.
 - Operações concorrentes por profissional são serializadas desde a validação de disponibilidade até a gravação. Escritas de agendamento usam versão otimista para impedir que uma cópia antiga reverta cancelamento/conclusão.
 
-Essas regras substituem as indefinições históricas correspondentes. Limite de janelas e onboarding de profissionais adicionais continuam fora desta entrega.
+Essas regras substituem as indefinições históricas correspondentes. Limite de janelas permanece fora desta entrega. O onboarding de profissionais adicionais foi implementado posteriormente por convite e aceitação.

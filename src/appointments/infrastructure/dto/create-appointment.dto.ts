@@ -1,7 +1,13 @@
 import { CreateAppointmentsUseCase } from '@/appointments/application/usecases/create-appointment.usecase';
-import { IsDate, IsNotEmpty, IsString, IsUUID } from 'class-validator';
+import {
+  IsDate,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { ToUtcDate } from './utc-date.transform';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class CreateAppointmentDto implements Omit<
   CreateAppointmentsUseCase.Input,
   'clientId'
@@ -14,6 +20,14 @@ export class CreateAppointmentDto implements Omit<
   @IsUUID()
   @IsNotEmpty()
   serviceId: string;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Profissional escolhido; padrão: proprietário.',
+  })
+  @IsOptional()
+  @IsUUID()
+  barberId?: string;
 
   @ApiProperty({
     type: String,

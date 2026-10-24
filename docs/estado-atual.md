@@ -1,5 +1,11 @@
 # Estado verificado em 17/10/2026
 
+> **Atualização de 24/10/2026:** uma barbearia pode operar com vários barbeiros
+> por convite e aceitação. O cliente escolhe o profissional na disponibilidade e
+> no agendamento; o proprietário continua sendo o padrão para clientes antigos.
+> A pendência histórica de onboarding/seleção abaixo foi resolvida nesta entrega.
+> Consulte `docs/api.md` e `docs/regras-de-negocio.md`.
+
 > O assistente experimental foi removido em 18/10/2026, incluindo módulo, endpoint, avaliações e etapa exclusiva no CI. Catálogo, serviços, disponibilidade e agendamento permanecem ativos. As menções abaixo à implementação e à sequência do assistente são históricas e não descrevem o estado atual.
 
 > **PS — conclusão das partes 1 e 2 em 18/10/2026:** a base foi estabilizada e a

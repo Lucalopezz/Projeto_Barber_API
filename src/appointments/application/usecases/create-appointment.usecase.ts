@@ -14,6 +14,8 @@ import { BadRequestError } from '@/shared/application/errors/bad-request-error';
 import { AppointmentEntity } from '@/appointments/domain/entities/appointment.entity';
 import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
 import { AppointmentAvailabilityService } from '../services/appointment-availability.service';
+import { UserRepository } from '@/users/domain/repositories/user.repository';
+import { Role } from '@/users/domain/entities/role.enum';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace CreateAppointmentsUseCase {
@@ -21,6 +23,7 @@ export namespace CreateAppointmentsUseCase {
     clientId: string;
     serviceId: string;
     date: Date;
+    barberId?: string;
   };
 
   export type Output = AppointmentOutput;
@@ -32,6 +35,7 @@ export namespace CreateAppointmentsUseCase {
       private barberShopRepository: BarberShopRepository.Repository,
       private availabilityService: AppointmentAvailabilityService,
       private bookingTransaction?: ProfessionalBookingTransaction,
+      private userRepository?: UserRepository.Repository,
     ) {}
 
     async execute(input: Input): Promise<AppointmentOutput> {
@@ -47,12 +51,25 @@ export namespace CreateAppointmentsUseCase {
       if (!barberShop) {
         throw new BadRequestError('BarberShop not found');
       }
+      const barberId = input.barberId ?? barberShop.ownerId;
       const endDate = new Date(date.getTime() + service.duration * 60 * 1000);
       const work = async (
         context: BookingTransactionContext,
       ): Promise<Output> => {
+        // The booking transaction locks the selected barber's user row. Check
+        // membership after that lock so an owner cannot unlink them mid-booking.
+        if (barberId !== barberShop.ownerId) {
+          const barber = await this.userRepository?.findById(barberId);
+          if (
+            !barber ||
+            barber.role !== Role.barber ||
+            barber.barberShopId !== barberShop.id
+          ) {
+            throw new BadRequestError('Barber does not belong to BarberShop');
+          }
+        }
         await context.availability.ensureAvailable({
-          barberId: barberShop.ownerId,
+          barberId,
           startsAt: date,
           endsAt: endDate,
           timezone: barberShop.timezone,
@@ -60,7 +77,7 @@ export namespace CreateAppointmentsUseCase {
         const entity = new AppointmentEntity({
           clientId,
           serviceId,
-          barberId: barberShop.ownerId,
+          barberId,
           barberShopId: barberShop.id,
           date,
           endDate,
@@ -72,7 +89,7 @@ export namespace CreateAppointmentsUseCase {
         return AppointmentOutputMapper.toOutput(entity);
       };
       if (this.bookingTransaction)
-        return this.bookingTransaction.run(barberShop.ownerId, work);
+        return this.bookingTransaction.run(barberId, work);
       // Direct composition is retained for existing isolated application tests.
       // The HTTP module always supplies the transactional production adapter.
       return work({

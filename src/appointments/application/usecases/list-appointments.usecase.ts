@@ -9,6 +9,8 @@ import {
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 import { AppointmentsRepository } from '@/appointments/domain/repositories/appointments.repository';
 import { BarberShopRepository } from '@/barberShop/domain/repositories/barbershop.repository';
+import { UserRepository } from '@/users/domain/repositories/user.repository';
+import { Role } from '@/users/domain/entities/role.enum';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ListAppointmentsUseCase {
@@ -31,6 +33,7 @@ export namespace ListAppointmentsUseCase {
     constructor(
       private appointmentRepository: AppointmentsRepository.Repository,
       private barberShopRepository: BarberShopRepository.Repository,
+      private userRepository?: UserRepository.Repository,
     ) {}
     async execute(input: Input): Promise<Output> {
       const filter: AppointmentsRepository.Filter = {};
@@ -39,9 +42,15 @@ export namespace ListAppointmentsUseCase {
         input.userId,
       );
       if (barberShop) {
+        // Owners see the shop agenda; employees only see appointments assigned to them.
         filter.barberShopOwnerId = input.userId;
       } else {
-        filter.customerId = input.userId;
+        const user = await this.userRepository?.findById(input.userId);
+        if (user?.role === Role.barber && user.barberShopId) {
+          filter.barberId = input.userId;
+        } else {
+          filter.customerId = input.userId;
+        }
       }
       if (input.serviceId) {
         filter.serviceId = input.serviceId;
