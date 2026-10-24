@@ -78,7 +78,21 @@ implementação atual.
 - criação exige papel `barber`;
 - atualização e exclusão exigem papel `owner` e propriedade;
 - `GET /barber-shops/:id/availability` recebe uma data local e um serviço e
-  devolve slots UTC disponíveis.
+  devolve slots UTC disponíveis para `barberId` opcional (padrão: proprietário);
+- `GET /barber-shops/:id/barbers` lista publicamente o proprietário e os barbeiros
+  vinculados, com `id`, `name` e `role`;
+- o proprietário cria e lista convites pendentes em
+  `POST/GET /barber-shops/:id/invitations`, passando `{email}` no POST;
+- o proprietário cancela convites em
+  `DELETE /barber-shops/:id/invitations/:invitationId` e desvincula um barbeiro
+  sem reservas futuras em `DELETE /barber-shops/:id/barbers/:barberId`;
+- o barbeiro consulta os próprios convites em
+  `GET /barber-shops/invitations/me` e responde por
+  `POST /barber-shops/invitations/:invitationId/accept` ou `/decline`.
+
+Convites retornam `id`, `barberShopId`, `shopName`, `barberId`, `barberName`,
+`email` e `createdAt`. A aceitação vincula a conta à barbearia e cancela os
+outros convites pendentes; a recusa e o cancelamento retornam `204`.
 
 ### Serviços
 
@@ -92,7 +106,8 @@ implementação atual.
 Todas as rotas desta família exigem autenticação.
 
 - a coleção lista reservas visíveis conforme o contexto do usuário;
-- criação deriva cliente do token e barbearia/profissional do serviço;
+- criação deriva cliente do token e barbearia do serviço; aceita `barberId`
+  opcional para o profissional escolhido (padrão: proprietário);
 - alteração de status aceita cancelamento ou conclusão conforme a permissão;
 - alteração de data/serviço exige `owner` ou `barber` e vínculo com a reserva;
 - subrotas `/availability/me` controlam expediente e folgas do profissional.

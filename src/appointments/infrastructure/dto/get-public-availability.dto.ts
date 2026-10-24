@@ -1,6 +1,6 @@
 import { GetPublicAvailabilityUseCase } from '@/barberShop/application/usecases/get-public-availability.usecase';
-import { IsDateString, IsUUID } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsDateString, IsOptional, IsUUID } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class GetPublicAvailabilityDto implements Omit<
   GetPublicAvailabilityUseCase.Input,
@@ -20,4 +20,12 @@ export class GetPublicAvailabilityDto implements Omit<
   })
   @IsUUID()
   serviceId: string;
+
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Profissional escolhido; padrão: proprietário.',
+  })
+  @IsOptional()
+  @IsUUID()
+  barberId?: string;
 }

@@ -23,6 +23,7 @@ model User {
   schedules            BarberSchedule[]
   timeOffs             BarberTimeOff[]
   authSessions         AuthSession[]
+  barberShopInvitations BarberShopInvitation[]
 }
 
 model BarberShop {
@@ -37,6 +38,19 @@ model BarberShop {
   services     Service[]
   barbers      User[]        @relation("Barbers")
   appointments Appointment[]
+  invitations  BarberShopInvitation[]
+}
+
+model BarberShopInvitation {
+  id           String     @id @default(uuid())
+  barberShopId String
+  barberId     String
+  createdAt    DateTime   @default(now())
+  barberShop   BarberShop @relation(fields: [barberShopId], references: [id], onDelete: Cascade)
+  barber       User       @relation(fields: [barberId], references: [id], onDelete: Cascade)
+
+  @@unique([barberShopId, barberId])
+  @@index([barberId])
 }
 
 model Service {

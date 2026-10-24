@@ -23,6 +23,16 @@ import { BarberAvailabilityRepository } from '@/appointments/domain/repositories
 import { BarberAvailabilityPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/barber-availability-prisma.repository';
 import { ServicesRepository } from '@/services/domain/repositories/services.repository';
 import { ServicesPrismaRepository } from '@/services/infrastructure/database/prisma/services-prisma.repository';
+import { ListShopBarbersUseCase } from '../application/usecases/list-shop-barbers.usecase';
+import { ListShopInvitationsUseCase } from '../application/usecases/list-shop-invitations.usecase';
+import { ListMyShopInvitationsUseCase } from '../application/usecases/list-my-shop-invitations.usecase';
+import { InviteShopBarberUseCase } from '../application/usecases/invite-shop-barber.usecase';
+import { RevokeShopInvitationUseCase } from '../application/usecases/revoke-shop-invitation.usecase';
+import { AcceptShopInvitationUseCase } from '../application/usecases/accept-shop-invitation.usecase';
+import { DeclineShopInvitationUseCase } from '../application/usecases/decline-shop-invitation.usecase';
+import { RemoveShopBarberUseCase } from '../application/usecases/remove-shop-barber.usecase';
+import { BarberShopStaffRepository } from '../domain/repositories/barber-shop-staff.repository';
+import { BarberShopStaffPrismaRepository } from './database/prisma/repositories/barber-shop-staff-prisma.repository';
 
 @Module({
   controllers: [BarberShopController],
@@ -49,6 +59,77 @@ import { ServicesPrismaRepository } from '@/services/infrastructure/database/pri
         return new UserPrismaRepository(prismaService);
       },
       inject: ['PrismaService'],
+    },
+    {
+      provide: 'BarberShopStaffRepository',
+      useFactory: (prismaService: PrismaService) =>
+        new BarberShopStaffPrismaRepository(prismaService),
+      inject: ['PrismaService'],
+    },
+    {
+      provide: ListShopBarbersUseCase.UseCase,
+      useFactory: (
+        shops: BarberShopRepository.Repository,
+        staff: BarberShopStaffRepository.Repository,
+      ) => new ListShopBarbersUseCase.UseCase(shops, staff),
+      inject: ['BarberShopRepository', 'BarberShopStaffRepository'],
+    },
+    {
+      provide: ListShopInvitationsUseCase.UseCase,
+      useFactory: (
+        shops: BarberShopRepository.Repository,
+        staff: BarberShopStaffRepository.Repository,
+      ) => new ListShopInvitationsUseCase.UseCase(shops, staff),
+      inject: ['BarberShopRepository', 'BarberShopStaffRepository'],
+    },
+    {
+      provide: ListMyShopInvitationsUseCase.UseCase,
+      useFactory: (
+        users: UserRepository.Repository,
+        staff: BarberShopStaffRepository.Repository,
+      ) => new ListMyShopInvitationsUseCase.UseCase(users, staff),
+      inject: ['UserRepository', 'BarberShopStaffRepository'],
+    },
+    {
+      provide: InviteShopBarberUseCase.UseCase,
+      useFactory: (
+        shops: BarberShopRepository.Repository,
+        users: UserRepository.Repository,
+        staff: BarberShopStaffRepository.Repository,
+      ) => new InviteShopBarberUseCase.UseCase(shops, users, staff),
+      inject: [
+        'BarberShopRepository',
+        'UserRepository',
+        'BarberShopStaffRepository',
+      ],
+    },
+    {
+      provide: RevokeShopInvitationUseCase.UseCase,
+      useFactory: (
+        shops: BarberShopRepository.Repository,
+        staff: BarberShopStaffRepository.Repository,
+      ) => new RevokeShopInvitationUseCase.UseCase(shops, staff),
+      inject: ['BarberShopRepository', 'BarberShopStaffRepository'],
+    },
+    {
+      provide: AcceptShopInvitationUseCase.UseCase,
+      useFactory: (staff: BarberShopStaffRepository.Repository) =>
+        new AcceptShopInvitationUseCase.UseCase(staff),
+      inject: ['BarberShopStaffRepository'],
+    },
+    {
+      provide: DeclineShopInvitationUseCase.UseCase,
+      useFactory: (staff: BarberShopStaffRepository.Repository) =>
+        new DeclineShopInvitationUseCase.UseCase(staff),
+      inject: ['BarberShopStaffRepository'],
+    },
+    {
+      provide: RemoveShopBarberUseCase.UseCase,
+      useFactory: (
+        shops: BarberShopRepository.Repository,
+        staff: BarberShopStaffRepository.Repository,
+      ) => new RemoveShopBarberUseCase.UseCase(shops, staff),
+      inject: ['BarberShopRepository', 'BarberShopStaffRepository'],
     },
     {
       provide: 'AppointmentRepository',
@@ -147,18 +228,21 @@ import { ServicesPrismaRepository } from '@/services/infrastructure/database/pri
         servicesRepository: ServicesRepository.Repository,
         availabilityRepository: BarberAvailabilityRepository.Repository,
         availabilityService: AppointmentAvailabilityService,
+        userRepository: UserRepository.Repository,
       ) =>
         new GetPublicAvailabilityUseCase.UseCase(
           barberShopRepository,
           servicesRepository,
           availabilityRepository,
           availabilityService,
+          userRepository,
         ),
       inject: [
         'BarberShopRepository',
         'ServicesRepository',
         'BarberAvailabilityRepository',
         AppointmentAvailabilityService,
+        'UserRepository',
       ],
     },
   ],
