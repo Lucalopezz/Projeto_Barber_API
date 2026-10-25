@@ -1,6 +1,6 @@
 # Desenvolvimento
 
-## Notificações — execução das partes 1 a 3
+## Notificações — execução das partes 1 a 4
 
 O fluxo de confirmação usa PostgreSQL, Redis/BullMQ e um worker Nest separado
 da API. A API não abre conexão com Redis nem executa processors. A caixa pode
@@ -75,6 +75,39 @@ Um lembrete inválido recebe `processedAt` sem criar uma notificação; o marcad
 significa que o evento foi tratado, incluindo descarte. Eventos históricos dos
 outros tipos mantêm a entrega sem essa revalidação. Nenhum desses passos depende
 de a aplicação estar aberta no navegador.
+
+A parte 4 mantém as cinco tentativas com backoff exponencial e retenção de até
+1000 jobs que falharam. O worker registra as falhas com ID/nome do job, número
+de tentativas, estado terminal e classe do erro. Não grava payload, mensagem
+da exceção, tokens ou dados pessoais. O Nest fecha os workers ao receber
+SIGINT/SIGTERM e aguarda os jobs ativos antes de encerrar as conexões.
+
+Depois de compilar, consulte o estado da fila e da outbox com:
+
+```bash
+pnpm build
+pnpm notifications:ops status
+```
+
+O comando lista contagens por estado, quantidade de eventos da outbox ainda
+pendentes, ID e idade do evento mais antigo e os dez últimos jobs falhos com
+metadados seguros. Se Redis ou PostgreSQL estiver indisponível, o comando marca
+essa fonte como indisponível e mantém visíveis as métricas da outra. A lista de
+falhas é limitada à retenção BullMQ de 1000 jobs. Jobs de entrega listados
+incluem o `eventId` da outbox para o comando de replay.
+
+Após corrigir a causa da falha, reenvie um evento de outbox pelo ID:
+
+```bash
+pnpm notifications:ops replay <outbox-event-id>
+```
+
+O comando só aceita eventos existentes ainda não processados. Reutiliza o
+`jobId` estável; cria o job quando ele expirou do Redis, reabre um job `failed`
+ou `completed` com orçamento novo de tentativas, e informa quando ele já está
+aguardando ou ativo. O worker continua a criar a notificação na transação
+idempotente do evento. O replay não faz envio manual de notificações e pode ser
+repetido com segurança. Não remova jobs falhos para tentar reproduzir um evento.
 
 Para testes, PostgreSQL deve usar exclusivamente `barber_api_test`. O Redis
 usa por padrão banco `1` e prefixo `barber-test-notifications`; o worker recusa

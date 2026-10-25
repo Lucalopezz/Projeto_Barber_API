@@ -25,6 +25,7 @@ import { ScheduleAppointmentRemindersUseCase } from '../../../../application/use
 import { AppointmentReminderPrismaRepository } from '../../../database/prisma/appointment-reminder-prisma.repository';
 import { NotificationBullMqQueue } from '../../notification-bullmq.queue';
 import { NotificationProcessor } from '../../notification.processor';
+import { NotificationQueueOperations } from '../../notification-queue-operations';
 import { NotificationScheduler } from '../../notification-scheduler';
 import {
   DELIVER_NOTIFICATION_JOB,
@@ -169,6 +170,34 @@ describe('Publicação, recuperação e entrega (Redis e PostgreSQL reais)', () 
         })
       ).processedAt,
     ).toBeNull();
+  });
+
+  it('replay usa o jobId estável, não duplica um job aguardando e recusa evento processado', async () => {
+    const operations = new NotificationQueueOperations(queue, prisma, {
+      now: () => now,
+    });
+
+    await expect(operations.replayEvent(eventId)).resolves.toEqual({
+      eventId,
+      jobId: `notification-${eventId}`,
+      action: 'enqueued',
+    });
+    await expect(operations.replayEvent(eventId)).resolves.toEqual({
+      eventId,
+      jobId: `notification-${eventId}`,
+      action: 'already-queued',
+      state: 'waiting',
+    });
+    expect(await queue.getJobs(['wait'])).toHaveLength(1);
+
+    await startWorker();
+    await eventually(async () => {
+      expect(await prisma.notification.count()).toBe(2);
+      expect(await queue.getJob(`notification-${eventId}`)).toBeUndefined();
+    });
+    await expect(operations.replayEvent(eventId)).rejects.toThrow(
+      'Notification event already processed',
+    );
   });
 
   it('recupera evento pendente ao iniciar o worker e não duplica após reinício e remoção do job', async () => {

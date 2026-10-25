@@ -11,6 +11,7 @@ export function isAppointmentReminderDue(
   const createdAtMs = createdAt.getTime();
   const nowMs = now.getTime();
   const dueAtMs = startsAtMs - REMINDER_LEAD_TIME_MS;
+  // Include the exact 24-hour boundary, but never remind after the appointment starts.
   return (
     Number.isFinite(startsAtMs) &&
     Number.isFinite(createdAtMs) &&

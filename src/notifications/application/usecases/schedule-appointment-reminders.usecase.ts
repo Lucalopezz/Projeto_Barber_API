@@ -15,6 +15,7 @@ export namespace ScheduleAppointmentRemindersUseCase {
     ) {}
 
     async execute(): Promise<Output> {
+      // A single scan uses one time boundary so later pages do not shift during catch-up.
       const now = this.clock.now();
       let afterId: string | undefined;
       for (;;) {
@@ -24,6 +25,8 @@ export namespace ScheduleAppointmentRemindersUseCase {
           100,
         );
         if (!candidates.length) return;
+        // The repository bounds dates for efficiency; this policy also excludes bookings
+        // created less than 24 hours before their current start time.
         const due = candidates.filter((candidate) =>
           isAppointmentReminderDue(
             candidate.startsAt,

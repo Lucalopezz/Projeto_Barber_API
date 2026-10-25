@@ -33,7 +33,8 @@
     "db:stop": "docker compose stop",
     "lint:check": "pnpm lint",
     "test:architecture": "node --test test/architecture/*.test.mjs",
-    "check:architecture": "depcruise --config .dependency-cruiser.cjs --output-type err-long src"
+    "check:architecture": "depcruise --config .dependency-cruiser.cjs --output-type err-long src",
+    "notifications:ops": "dotenv -e .env.development -- node dist/notifications/notification-ops.js"
   },
   "dependencies": {
     "@fastify/static": "^10.1.6",

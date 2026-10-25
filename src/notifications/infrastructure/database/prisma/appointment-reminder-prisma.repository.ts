@@ -19,11 +19,14 @@ export class AppointmentReminderPrismaRepository implements AppointmentReminderR
   ): Promise<AppointmentReminderCandidate[]> {
     const rows = await this.prisma.appointment.findMany({
       where: {
+        // Scan the whole due window, not a one-minute slice, so a stopped worker
+        // can catch up on reminders that are still useful.
         status: 'scheduled',
         date: { gt: now, lte: new Date(now.getTime() + REMINDER_LEAD_TIME_MS) },
         ...(afterId && { id: { gt: afterId } }),
       },
       orderBy: { id: 'asc' },
+      // Keyset paging keeps progress stable while bookings change concurrently.
       take: limit,
       select: {
         id: true,
@@ -51,7 +54,8 @@ export class AppointmentReminderPrismaRepository implements AppointmentReminderR
     candidates: AppointmentReminderCandidate[],
   ): Promise<void> {
     if (!candidates.length) return;
-    // Concurrent scans may see the same version. The durable event key makes both safe.
+    // The key includes version and start time: concurrent scans may race, while a
+    // later reschedule can still create a distinct reminder event.
     await this.prisma.notificationOutbox.createMany({
       skipDuplicates: true,
       data: candidates.map((candidate) => ({
