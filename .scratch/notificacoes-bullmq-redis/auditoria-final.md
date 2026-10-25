@@ -33,7 +33,7 @@ antes de liberar o merge.
   notificação por destinatário após recuperação e repetição.
 - **CI do PR #6:** install falhava com ERR_PNPM_IGNORED_BUILDS para o acelerador
   opcional msgpackr-extract. A política de build agora recusa explicitamente o
-  addon opcional; BullMQ usa o caminho JavaScript de msgpackr. Lockfile e
+  addon opcional; msgpackr oferece fallback JavaScript sem exigir esse build. Lockfile e
   versões foram preservados; instalação congelada aprovada.
 - **Lint:** corrigida a indentação da lista de mensagens permitidas do CLI.
 - **CI integrado:** atualizado o pin para o workflow publicado do frontend que
@@ -44,19 +44,19 @@ antes de liberar o merge.
 
 ## Execuções locais de fechamento
 
-| Verificação                    | Resultado                                                              |
-| ------------------------------ | ---------------------------------------------------------------------- |
-| pnpm install --frozen-lockfile | Aprovado                                                               |
-| pnpm prisma:migrate:test       | 18 migrations existentes, nenhuma pendente                             |
-| pnpm prisma:generate           | Prisma 6.19.3 gerado                                                   |
-| pnpm lint e pnpm build         | Aprovados                                                              |
-| pnpm test                      | 48 suites, 333 testes aprovados                                        |
-| pnpm test:int                  | 31 suites, 228 testes aprovados                                        |
-| pnpm test:e2e                  | 13suites,84 testes aprovados                                           |
-| pnpm test:architecture         | 35 testes aprovados                                                    |
-| pnpm check:architecture        | 315 módulos, 1611 dependências, sem violações                          |
-| CLI compilado                  | Uso inválido→código 2; Redis indisponível→outbox PostgreSQL disponível |
-| Frontend                       | 100 UI, 4 Node e 2 jornadas reais de notificações aprovados            |
+| Verificação                    | Resultado                                                                      |
+| ------------------------------ | ------------------------------------------------------------------------------ |
+| pnpm install --frozen-lockfile | Aprovado                                                                       |
+| pnpm prisma:migrate:test       | 18 migrations existentes, nenhuma pendente                                     |
+| pnpm prisma:generate           | Prisma 6.19.3 gerado                                                           |
+| pnpm lint e pnpm build         | Aprovados                                                                      |
+| pnpm test                      | 48 suites, 333 testes aprovados                                                |
+| pnpm test:int                  | 31 suites, 228 testes aprovados                                                |
+| pnpm test:e2e                  | 13suites,84 testes aprovados                                                   |
+| pnpm test:architecture         | 35 testes aprovados                                                            |
+| pnpm check:architecture        | 315 módulos, 1611 dependências, sem violações                                  |
+| CLI compilado                  | Uso inválido→código 2; Redis indisponível→outbox PostgreSQL disponível         |
+| Frontend                       | 100 UI, 4 Node, 2 jornadas de notificações e 7 jornadas gerais reais aprovados |
 
 O schema barber_api_test foi validado antes dos testes e é separado de public.
 Suites com limpeza desse schema e jornadas reais rodaram sequencialmente. O env
