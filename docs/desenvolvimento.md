@@ -1,5 +1,135 @@
 # Desenvolvimento
 
+## Notificações — execução das partes 1 a 4
+
+O fluxo de confirmação usa PostgreSQL, Redis/BullMQ e um worker Nest separado
+da API. A API não abre conexão com Redis nem executa processors. A caixa pode
+ser consultada em `/notifications` no frontend autenticado.
+
+Use Node e pnpm nas versões de `package.json`. Preserve os arquivos de env
+existentes; novos ambientes partem de `.env.example` e `.env.test.example`.
+Os comandos atuais, na raiz da API, são:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm db:up
+pnpm prisma:generate
+pnpm prisma:migrate:deploy
+pnpm build
+```
+
+Em terminais separados:
+
+```bash
+pnpm start:dev
+pnpm start:worker:dev
+```
+
+Ou, após o build, `pnpm start:worker` inicia o worker com `.env.development`.
+Em produção, `pnpm start:worker:prod` usa as variáveis fornecidas pelo ambiente.
+O frontend continua usando `pnpm dev` no seu próprio repositório.
+
+O Compose publica PostgreSQL em `127.0.0.1:5450` e Redis em `127.0.0.1:6380`,
+com healthchecks. Redis usa AOF e política `noeviction`. Configure o worker com
+`REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_PASSWORD` (opcional) e
+`NOTIFICATIONS_QUEUE_PREFIX`. Os padrões locais são banco Redis `0` e prefixo
+`barber-notifications`. A API não precisa dessas variáveis para aceitar reservas.
+
+O worker registra por upsert um scheduler de publicação a cada cinco segundos
+em UTC. Ele pagina a outbox pendente e envia apenas IDs ao Redis. A entrega dos
+destinatários e o marcador `processedAt` são gravados na mesma transação; a
+restrição única `(eventKey, userId)` impede duplicação após retry ou reinício.
+Se a API registrar eventos com o worker parado, iniciar o worker permite
+recuperá-los. Encerre o worker com SIGINT/SIGTERM para aguardar jobs ativos e
+fechar conexões. Não remova volumes para reiniciar o ambiente.
+
+A parte 2 acrescenta eventos de remarcação/troca de serviço e cancelamento,
+leitura de notificações e contagem de não lidas. Aplique também a migration
+`20261025120000_add_notification_changes` antes de iniciar essa versão da API e
+do worker. Ela amplia os tipos de notificação, inclui snapshots anteriores e
+um índice para o contador. Os comandos de execução e as variáveis permanecem
+os mesmos. A interface consulta o contador e a listagem a cada 30 segundos em
+primeiro plano; WebSocket permanece fora do escopo.
+
+A parte 3 exige também `20261025180000_add_appointment_reminders`. Ela adiciona
+o tipo `appointment_reminder`, a versão da reserva na outbox e um índice
+`Appointment(status, date, id)` para a busca. Aplique as migrations antes de
+iniciar a API e o worker atualizados; gere novamente o Prisma Client.
+
+O worker registra um segundo scheduler estável,
+`notification-appointment-reminders-v1`, com cron `* * * * *` em UTC. A cada
+minuto, ele pagina reservas futuras `scheduled` em lotes de 100. São elegíveis
+as criadas até `startsAt - 24h`, inclusive, quando esse instante já passou.
+A busca usa o instante atual fixado no início da execução e recupera atrasos
+até antes do início da reserva. Reservas criadas com menos de 24 horas de
+antecedência não geram esse lembrete. A regra usa a criação original da reserva
+e o horário atual da versão consultada.
+
+O scanner grava somente o cliente como destinatário. A chave única inclui
+reserva, cliente, versão e horário; execuções repetidas ou concorrentes não
+criam novos eventos para a mesma chave. O publicador existente envia seus IDs
+à fila. Na entrega, uma transação bloqueia a linha da reserva e revalida status,
+versão, horário, cliente e elegibilidade antes de criar a notificação. Assim,
+remarcação/cancelamento e entrega não passam pela validação simultaneamente.
+Um lembrete inválido recebe `processedAt` sem criar uma notificação; o marcador
+significa que o evento foi tratado, incluindo descarte. Eventos históricos dos
+outros tipos mantêm a entrega sem essa revalidação. Nenhum desses passos depende
+de a aplicação estar aberta no navegador.
+
+A parte 4 mantém as cinco tentativas com backoff exponencial e retenção de até
+1000 jobs que falharam. O worker registra as falhas com ID/nome do job, número
+de tentativas, estado terminal e classe do erro. Não grava payload, mensagem
+da exceção, tokens ou dados pessoais. O Nest fecha os workers ao receber
+SIGINT/SIGTERM e aguarda os jobs ativos antes de encerrar as conexões.
+
+Depois de compilar, consulte o estado da fila e da outbox com:
+
+```bash
+pnpm build
+pnpm notifications:ops status
+```
+
+O comando lista contagens por estado, quantidade de eventos da outbox ainda
+pendentes, ID e idade do evento mais antigo e os dez últimos jobs falhos com
+metadados seguros. Se Redis ou PostgreSQL estiver indisponível, o comando marca
+essa fonte como indisponível e mantém visíveis as métricas da outra. A lista de
+falhas é limitada à retenção BullMQ de 1000 jobs. Jobs de entrega listados
+incluem o `eventId` da outbox para o comando de replay.
+
+Após corrigir a causa da falha, reenvie um evento de outbox pelo ID:
+
+```bash
+pnpm notifications:ops replay <outbox-event-id>
+```
+
+O comando só aceita eventos existentes ainda não processados. Reutiliza o
+`jobId` estável; cria o job quando ele expirou do Redis, reabre um job `failed`
+ou `completed` com orçamento novo de tentativas, e informa quando ele já está
+aguardando ou ativo. O worker continua a criar a notificação na transação
+idempotente do evento. O replay não faz envio manual de notificações e pode ser
+repetido com segurança. Não remova jobs falhos para tentar reproduzir um evento.
+
+Para testes, PostgreSQL deve usar exclusivamente `barber_api_test`. O Redis
+usa por padrão banco `1` e prefixo `barber-test-notifications`; o worker recusa
+configuração de teste com banco `0` ou prefixo sem `barber-test-`. As integrações
+podem usar um sufixo exclusivo e limpam somente a própria fila, sem `FLUSHDB`.
+Execute as suítes com limpeza de banco sequencialmente:
+
+```bash
+pnpm prisma:migrate:test
+pnpm test
+pnpm test:int
+pnpm test:e2e
+pnpm test:architecture
+pnpm check:architecture
+pnpm lint
+pnpm build
+```
+
+As seções abaixo preservam as instruções históricas anteriores à adoção de
+pnpm. Para alterações no fluxo, consulte o
+[plano de notificações](../.scratch/notificacoes-bullmq-redis/spec.md).
+
 > **PS — 17/10/2026:** o ambiente passou a usar pnpm. Os comandos reproduzíveis
 > e os exemplos de env separados por ambiente estão em
 > [Estado atual](./estado-atual.md#execução-local). O conteúdo anterior abaixo

@@ -1,7 +1,6 @@
 import { ProfessionalBookingTransaction } from '@/appointments/application/ports/professional-booking-transaction';
 import { systemClock } from '@/shared/application/providers/clock';
 import { AppModule } from '@/app.module';
-import { AppointmentsPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/appointments-prisma.repository';
 import { applyGlobalConfig } from '@/global-config';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import {
@@ -148,10 +147,12 @@ describe('Concurrent appointment writes (Fastify/PostgreSQL)', () => {
       const reached = gate();
       const resume = gate();
       const original = repository.run.bind(repository);
+      let intercepted = false;
       const spy = jest
         .spyOn(repository, 'run')
         .mockImplementation(async (barberId, work) => {
-          {
+          if (!intercepted) {
+            intercepted = true;
             reached.release();
             await resume.promise;
           }
@@ -183,6 +184,19 @@ describe('Concurrent appointment writes (Fastify/PostgreSQL)', () => {
       expect(
         (await prisma.appointment.findUniqueOrThrow({ where: { id } })).status,
       ).toBe(terminal);
+      const events = await prisma.notificationOutbox.findMany({
+        where: { appointmentId: id },
+      });
+      expect(
+        events.filter((event) =>
+          event.eventKey.startsWith('appointment-updated-'),
+        ),
+      ).toHaveLength(0);
+      expect(
+        events.filter((event) =>
+          event.eventKey.startsWith('appointment-cancelled-'),
+        ),
+      ).toHaveLength(terminal === 'cancelled' ? 1 : 0);
     },
   );
 
@@ -229,26 +243,37 @@ describe('Concurrent appointment writes (Fastify/PostgreSQL)', () => {
         await prisma.appointment.findUniqueOrThrow({ where: { id } })
       ).date.toISOString(),
     ).toBe('2030-01-07T17:00:00.000Z');
+    const events = await prisma.notificationOutbox.findMany({
+      where: {
+        appointmentId: id,
+        eventKey: { startsWith: 'appointment-updated-' },
+      },
+    });
+    expect(events).toHaveLength(1);
+    expect(events[0].eventKey).toBe(`appointment-updated-${id}-v1`);
+    expect(events[0].startsAt.toISOString()).toBe('2030-01-07T17:00:00.000Z');
   });
   it('rejects stale cancellation after concurrent completion', async () => {
     const booked = await book();
     expect(booked.statusCode).toBe(201);
     expect(booked.json().data).not.toHaveProperty('version');
     const id = booked.json().data.id;
-    const repository = app.get<AppointmentsPrismaRepository>(
-      'AppointmentRepository',
+    const repository = app.get<ProfessionalBookingTransaction>(
+      'ProfessionalBookingTransaction',
     );
     const reached = gate();
     const resume = gate();
-    const original = repository.update.bind(repository);
+    const original = repository.run.bind(repository);
+    let intercepted = false;
     const spy = jest
-      .spyOn(repository, 'update')
-      .mockImplementation(async (entity) => {
-        if (entity.status === 'cancelled') {
+      .spyOn(repository, 'run')
+      .mockImplementation(async (barberId, work) => {
+        if (!intercepted) {
+          intercepted = true;
           reached.release();
           await resume.promise;
         }
-        return original(entity);
+        return original(barberId, work);
       });
     const change = (newStatus: string) =>
       app.inject({
@@ -270,5 +295,64 @@ describe('Concurrent appointment writes (Fastify/PostgreSQL)', () => {
     expect(
       (await prisma.appointment.findUniqueOrThrow({ where: { id } })).status,
     ).toBe('completed');
+    expect(
+      await prisma.notificationOutbox.count({
+        where: {
+          appointmentId: id,
+          eventKey: { startsWith: 'appointment-cancelled-' },
+        },
+      }),
+    ).toBe(0);
+  });
+
+  it('only the winning cancellation produces an event when two stale copies compete', async () => {
+    const booked = await book();
+    expect(booked.statusCode).toBe(201);
+    const id = booked.json().data.id;
+    const repository = app.get<ProfessionalBookingTransaction>(
+      'ProfessionalBookingTransaction',
+    );
+    const reached = gate();
+    const resume = gate();
+    const original = repository.run.bind(repository);
+    let intercepted = false;
+    const spy = jest
+      .spyOn(repository, 'run')
+      .mockImplementation(async (barberId, work) => {
+        if (!intercepted) {
+          intercepted = true;
+          reached.release();
+          await resume.promise;
+        }
+        return original(barberId, work);
+      });
+    const cancel = () =>
+      app.inject({
+        method: 'PATCH',
+        url: `${api}/appointments/${id}`,
+        headers: { authorization: ownerAuthorization },
+        payload: { newStatus: 'cancelled' },
+      });
+    const pending = Promise.resolve(cancel());
+    try {
+      await reached.promise;
+      expect((await cancel()).statusCode).toBe(200);
+    } finally {
+      resume.release();
+    }
+    const loser = await pending;
+    spy.mockRestore();
+    expect(loser.statusCode).toBe(409);
+    const events = await prisma.notificationOutbox.findMany({
+      where: {
+        appointmentId: id,
+        eventKey: { startsWith: 'appointment-cancelled-' },
+      },
+    });
+    expect(events).toHaveLength(1);
+    expect(events[0].eventKey).toBe(`appointment-cancelled-${id}-v1`);
+    expect(
+      (await prisma.appointment.findUniqueOrThrow({ where: { id } })).status,
+    ).toBe('cancelled');
   });
 });

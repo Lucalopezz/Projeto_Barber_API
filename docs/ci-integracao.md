@@ -1,8 +1,8 @@
 # Integração automatizada entre frontend e API
 
-O workflow `Integrated CI` executa a jornada real do frontend contra esta API e
-um PostgreSQL 15 exclusivo do job. Ele complementa o `Backend CI`: não substitui
-os testes unitários, de integração e HTTP da API. Não há mocks HTTP na jornada.
+O workflow `Integrated CI` executa as jornadas reais do frontend contra esta API,
+um PostgreSQL 15 e Redis exclusivos do job. Ele complementa o `Backend CI`: não
+substitui os testes unitários, de integração e HTTP da API. Não há mocks HTTP.
 
 ## Gatilhos e revisões
 
@@ -79,6 +79,14 @@ os envs são exclusivos do runner e recebem um segredo JWT aleatório. A jornada
 usa API na porta 3002 e frontend na 5175, com um worker, zero retries e sem
 reaproveitar servidores existentes. Os testes da API que limpam o schema não
 são executados junto da jornada. Jobs separados têm seus próprios bancos.
+
+A jornada de notificações roda em seguida à jornada geral, quando o checkout
+exato do frontend fornece `playwright.notifications.config.ts`. Ela inicia um
+worker separado e usa Redis DB 1 com prefixo próprio. Confirmações, alterações,
+cancelamentos, leitura e o lembrete disparado pelo cron UTC são verificados
+pela API e pela interface. O wrapper fixa uma revisão publicada desse workflow;
+para uma entrega coordenada, valide o par com `peer_sha`, integre primeiro a API
+e repita o check padrão do frontend contra a nova main da API.
 
 Este fluxo depende de os dois repositórios serem públicos e permite apenas
 `Lucalopezz/Frontend_Barber_API` e `Lucalopezz/Projeto_Barber_API`. Ele usa

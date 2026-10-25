@@ -19,6 +19,6 @@ jobs:
   integration:
     name: Frontend and API
     # Workflow compartilhado fixado no commit publicado do frontend; atualizar explicitamente após revisão.
-    uses: Lucalopezz/Frontend_Barber_API/.github/workflows/integration.yml@af10e0d74b4649bb3f2d397ffe55587c2976fc29
+    uses: Lucalopezz/Frontend_Barber_API/.github/workflows/integration.yml@d03eda249b023e5d52abeb2d8448d601bb142a7c
     with:
       peer_sha: ${{ inputs.peer_sha || '' }}

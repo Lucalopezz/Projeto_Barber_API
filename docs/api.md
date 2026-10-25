@@ -57,6 +57,7 @@ não é prova de expiração. Na Swagger UI, Bearer continua disponível em Auth
 | `/api/v1/barber-shops` | leitura pública; escrita protegida  | Vitrine, gestão do estabelecimento e horários públicos. |
 | `/api/v1/services`     | leitura pública; escrita de `owner` | Catálogo e administração dos serviços.                  |
 | `/api/v1/appointments` | autenticado                         | Reservas, status, agenda semanal e folgas.              |
+| `/api/v1/notifications` | autenticado                        | Notificações persistentes dos próprios agendamentos.   |
 
 ### Usuários
 
@@ -163,6 +164,69 @@ Exceções:
 - respostas já paginadas não recebem um segundo envelope.
 
 ## Paginação e filtros
+
+### Notificações de agendamentos
+
+`GET /api/v1/notifications?page=1&perPage=15` lista somente notificações do
+usuário autenticado, da mais recente para a mais antiga, com desempate por ID.
+`page` deve ser inteiro positivo; `perPage` aceita de 1 a 100. A rota não aceita
+`userId`, filtros ou ordenação pela query. Autenticação inválida retorna `401`;
+query inválida ou com campos extras retorna `422`.
+
+A resposta segue `{data: [...], meta: {currentPage, perPage, lastPage, total}}`.
+Cada item expõe `id`, `appointmentId`, `type`, `serviceName`, `barberShopName`,
+`startsAt`, `timezone`, `createdAt`, `readAt` (inicialmente `null`),
+`previousStartsAt` e `previousServiceName` (nulos quando não houver alteração).
+As datas são ISO UTC; `timezone` identifica o fuso IANA
+da barbearia para apresentação. IDs da outbox, chaves de evento e destinatários
+não integram o contrato público.
+
+| Tipo | Destinatários | Conteúdo |
+| --- | --- | --- |
+| `appointment_created` | Cliente e profissional atribuído | Confirmação com serviço e horário da reserva |
+| `appointment_updated` | Cliente e profissional atribuído | Novos serviço/horário e os valores anteriores |
+| `appointment_cancelled` | A outra parte, excluindo quem cancelou | Serviço e horário da reserva cancelada |
+| `appointment_reminder` | Cliente | Lembrete com serviço e horário da reserva |
+
+O dono só recebe se for o profissional da reserva. Um destinatário que acumule
+os dois papéis recebe uma confirmação/alteração; ao cancelar a própria reserva
+como cliente e profissional, não há outra pessoa a avisar. Uma atualização sem
+mudança real de data ou serviço preserva o comportamento atual do agendamento,
+mas não gera aviso. Concluir um atendimento também não gera esses eventos.
+
+A entrega é assíncrona: reserva/alteração e evento da outbox são atômicos no
+PostgreSQL; o worker entrega os avisos depois. Redis indisponível não impede a
+operação. A chave de evento de alteração inclui tipo, agendamento e revisão
+persistida; uma operação rejeitada por conflito otimista não produz aviso.
+Reprocessar o mesmo evento não duplica notificações. Os valores são snapshots
+da operação e continuam como histórico mesmo após alterações futuras.
+
+`GET /api/v1/notifications/unread-count` retorna `{data: {count: number}}`,
+contando somente os registros do usuário autenticado com `readAt` nulo.
+
+`PATCH /api/v1/notifications/:id/read` marca uma notificação própria como lida
+e retorna `{data: Notification}`. Não exige body. O horário da primeira leitura
+é definido pelo servidor e preservado em repetição ou concorrência. Um ID
+inexistente ou pertencente a outro usuário retorna `404`; UUID inválido retorna
+`422`; autenticação inválida retorna `401`. Nenhuma dessas rotas permite
+selecionar outro destinatário.
+
+O frontend consulta listagem e contador a cada 30 segundos enquanto está em
+primeiro plano. Após leitura confirmada, atualiza os dados da sessão corrente
+e revalida contador/listas.
+
+Os lembretes são procurados a cada minuto, sem depender do cliente conectado.
+São elegíveis reservas `scheduled` futuras, criadas com pelo menos 24 horas
+de antecedência, cujo instante `startsAt - 24h` já passou. Se o worker estiver
+parado, a busca recupera os lembretes atrasados enquanto a reserva ainda for
+futura; no instante do início ou depois dele, o lembrete é descartado.
+Antes da entrega, o worker confere novamente status, data, versão e cliente.
+Remarcações e cancelamentos invalidam lembretes pendentes antigos. Cada
+versão/data válida gera no máximo uma notificação por cliente; confirmações,
+alterações e cancelamentos permanecem como histórico. O horário exibido usa
+o fuso da barbearia. Não há novos endpoints nesta etapa.
+
+### Coleções
 
 As coleções paginadas seguem, quando aplicável:
 

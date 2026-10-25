@@ -7,6 +7,7 @@ import { AppointmentBookingPolicy } from '@/appointments/application/services/ap
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { AppointmentsPrismaRepository } from './repositories/appointments-prisma.repository';
 import { BarberAvailabilityPrismaRepository } from './repositories/barber-availability-prisma.repository';
+import { NotificationOutboxPrismaWriter } from '@/notifications/infrastructure/database/prisma/notification-outbox-prisma.repository';
 
 export class ProfessionalBookingPrismaTransaction implements ProfessionalBookingTransaction {
   constructor(
@@ -26,7 +27,11 @@ export class ProfessionalBookingPrismaTransaction implements ProfessionalBooking
         new BarberAvailabilityPrismaRepository(tx),
         this.policy,
       );
-      return work({ appointments, availability });
+      return work({
+        appointments,
+        availability,
+        notificationOutbox: new NotificationOutboxPrismaWriter(tx),
+      });
     });
   }
 }

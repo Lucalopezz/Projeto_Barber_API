@@ -46,6 +46,12 @@ Código reutilizável pertence a `src/shared/`:
 
 Use o alias `@/` para imports a partir de `src` (por exemplo, `@/shared/domain/entities/entity`). Mantenha nomes e capitalização já usados no recurso que está sendo alterado; há nomes legados como `barberShop`, `barbershop.repository.ts` e `barberShopOwnerId`.
 
+## Comentários no código
+
+- Comente decisões, limites e invariantes que não fiquem claros pela leitura do código, explicando o motivo e o efeito de uma mudança futura nessa regra.
+- Prefira explicar por que uma sequência, transação, chave ou condição existe; não repita em palavras o que a linha já expressa.
+- Mantenha os comentários curtos e junto do trecho que esclarecem. Atualize-os quando a lógica mudar e remova os que ficarem redundantes ou desatualizados.
+
 ## Como implementar uma mudança
 
 1. Modele ou ajuste primeiro o domínio: entidade/value object, validação e contrato de repositório.
