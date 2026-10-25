@@ -17,6 +17,7 @@ import { NotificationScheduler } from './queue/notification-scheduler';
 import { ScheduleAppointmentRemindersUseCase } from '../application/usecases/schedule-appointment-reminders.usecase';
 import { AppointmentReminderRepository } from '../application/ports/appointment-reminder.repository';
 import { AppointmentReminderPrismaRepository } from './database/prisma/appointment-reminder-prisma.repository';
+import { NotificationWorkerLifecycle } from './notification-worker-lifecycle';
 
 @Module({
   imports: [
@@ -61,6 +62,7 @@ import { AppointmentReminderPrismaRepository } from './database/prisma/appointme
     },
     NotificationProcessor,
     NotificationScheduler,
+    NotificationWorkerLifecycle,
   ],
 })
 export class NotificationWorkerModule {}

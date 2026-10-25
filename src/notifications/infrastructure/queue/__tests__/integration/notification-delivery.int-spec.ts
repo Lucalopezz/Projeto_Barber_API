@@ -200,6 +200,75 @@ describe('Publicação, recuperação e entrega (Redis e PostgreSQL reais)', () 
     );
   });
 
+  it('mantém a falha definitiva visível e recupera pelo replay real sem duplicar destinatários', async () => {
+    const jobId = `notification-${eventId}`;
+    const operations = new NotificationQueueOperations(queue, prisma, {
+      now: () => now,
+    });
+    await queue.add(
+      DELIVER_NOTIFICATION_JOB,
+      { eventId },
+      {
+        jobId,
+        // Exercise all five configured attempts without waiting 15 seconds for
+        // the production backoff; the queue's retry and retention stay real.
+        backoff: { type: 'fixed', delay: 1 },
+      },
+    );
+    worker = new Worker(
+      NOTIFICATIONS_QUEUE,
+      async () => {
+        throw new Error('Fixture: delivery unavailable until operator repair');
+      },
+      {
+        connection: options.connection,
+        prefix: options.prefix,
+        concurrency: 1,
+      },
+    );
+    await worker.waitUntilReady();
+    await eventually(async () => {
+      const failed = await queue.getJob(jobId);
+      expect(await failed.getState()).toBe('failed');
+      expect(failed.attemptsMade).toBe(5);
+    });
+
+    const status = await operations.getStatus();
+    expect(status.queue.failed).toBe(1);
+    expect(status.failedJobs).toEqual([
+      expect.objectContaining({
+        jobId,
+        eventId,
+        attemptsMade: 5,
+        maxAttempts: 5,
+      }),
+    ]);
+    expect(status.outbox.pending).toBe(1);
+    expect(await prisma.notification.count()).toBe(0);
+    await worker.close();
+    worker = undefined;
+
+    await expect(operations.replayEvent(eventId)).resolves.toEqual({
+      eventId,
+      jobId,
+      action: 'retried',
+      previousState: 'failed',
+    });
+    expect((await queue.getJob(jobId)).attemptsMade).toBe(0);
+    await startWorker();
+    await eventually(async () => {
+      expect(await prisma.notification.count()).toBe(2);
+      expect(await outbox.findPending(undefined, 100)).toEqual([]);
+      expect(await queue.getJob(jobId)).toBeUndefined();
+    });
+
+    await new NotificationBullMqQueue(queue).enqueue(eventId);
+    await eventually(async () =>
+      expect(await queue.getJob(jobId)).toBeUndefined(),
+    );
+    expect(await prisma.notification.count()).toBe(2);
+  });
+
   it('recupera evento pendente ao iniciar o worker e não duplica após reinício e remoção do job', async () => {
     await publish.execute();
     await startWorker();
