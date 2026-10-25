@@ -1,14 +1,13 @@
 # Validação — notificações, parte 4
 
-Implementação operacional em andamento na `feat/notificacoes`; ainda sem commit,
-para revisão. A parte 3 foi commitada antes de iniciar esta etapa:
+Implementação operacional concluída na `feat/notificacoes` e enviada para
+`origin/feat/notificacoes`:
 
-- API: `850492a` — `feat(notifications): schedule and validate appointment reminders`.
-- Frontend: `efc0912` — `feat(notifications): display appointment reminders`.
+- API: `ff2123b` — `feat(notifications): add queue operations and safe replay`.
+- Frontend: `ad774b5` — `docs: explain notification cache safeguards`.
 
-Os commits até a parte 3 foram enviados com sucesso para `origin/feat/notificacoes`
-nos dois repositórios. A parte 4 continua apenas no diretório de trabalho: não
-foi commitada nem enviada.
+Os commits da parte 3 também estão enviados na mesma branch: API `850492a` e
+frontend `efc0912`.
 
 ## O que a parte 4 acrescenta
 
