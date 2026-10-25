@@ -37,6 +37,8 @@ describe('NotificationEntity', () => {
     { startsAt: new Date('invalid') },
     { timezone: 'invalid' },
     { readAt: new Date('invalid') },
+    { previousStartsAt: new Date('invalid') },
+    { previousServiceName: '' },
   ])('rejeita dados inválidos: %p', (invalid) => {
     expect(
       () =>

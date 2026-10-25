@@ -22,6 +22,8 @@ class NotificationRules {
   @IsString() @IsNotEmpty() barberShopName: string;
   @IsDate() startsAt: Date;
   @IsTimeZone() timezone: string;
+  @IsOptional() @IsDate() previousStartsAt?: Date | null;
+  @IsOptional() @IsString() @IsNotEmpty() previousServiceName?: string | null;
   @IsOptional() @IsDate() createdAt?: Date;
   @IsOptional() @IsDate() readAt?: Date | null;
 

@@ -20,10 +20,16 @@ import { AppointmentDataBuilder } from '@/appointments/domain/helpers/appointmen
 import { AppointmentBookingPolicy } from '@/appointments/application/services/appointment-booking-policy';
 import { AppointmentAvailabilityService } from '@/appointments/application/services/appointment-availability.service';
 import { CreateAppointmentsUseCase } from '@/appointments/application/usecases/create-appointment.usecase';
+import { UpdateAppointmentUseCase } from '@/appointments/application/usecases/update-appointment.usecase';
+import { UpdateStatusUseCase } from '@/appointments/application/usecases/update-status.usecase';
+import { AppointmentStatus } from '@/appointments/domain/entities/appointmentStatus.enum';
 import { AppointmentsPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/appointments-prisma.repository';
 import { BarberAvailabilityPrismaRepository } from '@/appointments/infrastructure/database/prisma/repositories/barber-availability-prisma.repository';
 import { ProfessionalBookingPrismaTransaction } from '@/appointments/infrastructure/database/prisma/professional-booking-prisma.transaction';
-import { NotificationOutboxPrismaRepository } from '../../notification-outbox-prisma.repository';
+import {
+  NotificationOutboxPrismaRepository,
+  NotificationOutboxPrismaWriter,
+} from '../../notification-outbox-prisma.repository';
 import { NotificationPrismaRepository } from '../../notification-prisma.repository';
 
 describe('Confirmações transacionais e idempotência (PostgreSQL real)', () => {
@@ -35,6 +41,8 @@ describe('Confirmações transacionais e idempotência (PostgreSQL real)', () =>
   let shopId: string;
   let serviceId: string;
   let create: CreateAppointmentsUseCase.UseCase;
+  let reschedule: UpdateAppointmentUseCase.UseCase;
+  let changeStatus: UpdateStatusUseCase.UseCase;
   let transaction: ProfessionalBookingPrismaTransaction;
   let outbox: NotificationOutboxPrismaRepository;
   const startsAt = new Date('2030-01-07T12:00:00.000Z');
@@ -102,7 +110,29 @@ describe('Confirmações transacionais e idempotência (PostgreSQL real)', () =>
       users,
     );
     outbox = new NotificationOutboxPrismaRepository(prisma);
+    reschedule = new UpdateAppointmentUseCase.UseCase(
+      appointments,
+      services,
+      users,
+      shops,
+      new AppointmentAvailabilityService(
+        appointments,
+        new BarberAvailabilityPrismaRepository(prisma),
+        policy,
+      ),
+      transaction,
+    );
+    changeStatus = Reflect.construct(UpdateStatusUseCase.UseCase, [
+      appointments,
+      shops,
+      users,
+      policy,
+      transaction,
+      services,
+    ]);
   });
+
+  afterEach(() => jest.restoreAllMocks());
 
   afterAll(async () => {
     if (ready) await clearDatabase(prisma);
@@ -276,5 +306,267 @@ describe('Confirmações transacionais e idempotência (PostgreSQL real)', () =>
     const owner = await repository.listByUser(ownerId, new SearchParams());
     expect(owner.total).toBe(0);
     expect(owner.items).toEqual([]);
+  });
+
+  it('remarcação e troca de serviço gravam evento da revisão com snapshots anterior e novo', async () => {
+    const appointment = await book();
+    const nextService = new ServiceEntity(
+      ServiceDataBuilder({
+        barberShopId: shopId,
+        name: 'Barba',
+        duration: 30,
+      }),
+    );
+    await prisma.service.create({ data: nextService.toJSON() });
+    const nextDate = new Date('2030-01-07T14:00:00.000Z');
+    await reschedule.execute({
+      id: appointment.id,
+      userId: barberId,
+      date: nextDate,
+      serviceId: nextService.id,
+    });
+    const event = await prisma.notificationOutbox.findUniqueOrThrow({
+      where: { eventKey: `appointment-updated-${appointment.id}-v1` },
+    });
+    expect(event).toEqual(
+      expect.objectContaining({
+        type: 'appointment_updated',
+        recipientIds: [clientId, barberId],
+        serviceName: 'Barba',
+        previousServiceName: 'Corte',
+        startsAt: nextDate,
+        previousStartsAt: startsAt,
+        timezone: 'America/Sao_Paulo',
+        processedAt: null,
+      }),
+    );
+    expect(
+      (
+        await prisma.appointment.findUniqueOrThrow({
+          where: { id: appointment.id },
+        })
+      ).version,
+    ).toBe(1);
+    await Promise.all([outbox.deliver(event.id), outbox.deliver(event.id)]);
+    expect(
+      await prisma.notification.count({ where: { eventKey: event.eventKey } }),
+    ).toBe(2);
+    expect(
+      await prisma.notification.findFirst({ where: { userId: ownerId } }),
+    ).toBeNull();
+  });
+
+  it('cada remarcação confirmada usa sua própria revisão e mantém a confirmação original', async () => {
+    const appointment = await book();
+    for (const date of [
+      '2030-01-07T13:00:00.000Z',
+      '2030-01-07T14:00:00.000Z',
+    ]) {
+      await reschedule.execute({
+        id: appointment.id,
+        userId: barberId,
+        date: new Date(date),
+      });
+    }
+    const events = await prisma.notificationOutbox.findMany({
+      where: { appointmentId: appointment.id },
+    });
+    expect(events.map((event) => event.eventKey).sort()).toEqual(
+      [
+        `appointment-created-${appointment.id}`,
+        `appointment-updated-${appointment.id}-v1`,
+        `appointment-updated-${appointment.id}-v2`,
+      ].sort(),
+    );
+    for (const event of events) await outbox.deliver(event.id);
+    expect(
+      await prisma.notification.count({
+        where: { appointmentId: appointment.id },
+      }),
+    ).toBe(6);
+    expect(
+      await prisma.notification.findFirst({
+        where: { eventKey: `appointment-created-${appointment.id}` },
+      }),
+    ).toEqual(expect.objectContaining({ startsAt, serviceName: 'Corte' }));
+  });
+
+  it.each(['cliente', 'profissional'])(
+    'cancelamento pelo %s entrega somente para a outra parte',
+    async (actor) => {
+      const appointment = await book();
+      const actorId = actor === 'cliente' ? clientId : barberId;
+      const recipientId = actor === 'cliente' ? barberId : clientId;
+      await changeStatus.execute({
+        id: appointment.id,
+        userId: actorId,
+        newStatus: AppointmentStatus.cancelled,
+      });
+      const event = await prisma.notificationOutbox.findUniqueOrThrow({
+        where: { eventKey: `appointment-cancelled-${appointment.id}-v1` },
+      });
+      expect(event.recipientIds).toEqual([recipientId]);
+      expect(event.type).toBe('appointment_cancelled');
+      expect(
+        (
+          await prisma.appointment.findUniqueOrThrow({
+            where: { id: appointment.id },
+          })
+        ).status,
+      ).toBe('cancelled');
+      await Promise.all([outbox.deliver(event.id), outbox.deliver(event.id)]);
+      const notifications = await prisma.notification.findMany({
+        where: { eventKey: event.eventKey },
+      });
+      expect(notifications).toHaveLength(1);
+      expect(notifications[0].userId).toBe(recipientId);
+    },
+  );
+
+  it('um update sem mudança não cria evento e a próxima mudança usa a revisão correta', async () => {
+    const appointment = await book();
+    await reschedule.execute({
+      id: appointment.id,
+      userId: barberId,
+      date: startsAt,
+      serviceId,
+    });
+    expect(await prisma.notificationOutbox.count()).toBe(1);
+    await reschedule.execute({
+      id: appointment.id,
+      userId: barberId,
+      date: new Date('2030-01-07T14:00:00.000Z'),
+    });
+    expect(
+      await prisma.notificationOutbox.findUnique({
+        where: { eventKey: `appointment-updated-${appointment.id}-v2` },
+      }),
+    ).not.toBeNull();
+  });
+
+  it('a conclusão não acrescenta evento de cancelamento ou remarcação', async () => {
+    const appointment = await book();
+    await changeStatus.execute({
+      id: appointment.id,
+      userId: barberId,
+      newStatus: AppointmentStatus.completed,
+    });
+    expect(await prisma.notificationOutbox.count()).toBe(1);
+    expect(
+      (
+        await prisma.appointment.findUniqueOrThrow({
+          where: { id: appointment.id },
+        })
+      ).status,
+    ).toBe('completed');
+  });
+
+  it.each(['remarcação', 'cancelamento'])(
+    'falha da outbox na %s reverte a reserva e sua revisão',
+    async (operation) => {
+      const appointment = await book();
+      const method =
+        operation === 'remarcação' ? 'recordUpdated' : 'recordCancelled';
+      jest
+        .spyOn(NotificationOutboxPrismaWriter.prototype as any, method)
+        .mockRejectedValueOnce(new Error('Falha de persistência na outbox'));
+      const result =
+        operation === 'remarcação'
+          ? reschedule.execute({
+              id: appointment.id,
+              userId: barberId,
+              date: new Date('2030-01-07T14:00:00.000Z'),
+            })
+          : changeStatus.execute({
+              id: appointment.id,
+              userId: barberId,
+              newStatus: AppointmentStatus.cancelled,
+            });
+      await expect(result).rejects.toThrow('Falha de persistência na outbox');
+      const saved = await prisma.appointment.findUniqueOrThrow({
+        where: { id: appointment.id },
+      });
+      expect(saved.date).toEqual(startsAt);
+      expect(saved.status).toBe('scheduled');
+      expect(saved.version).toBe(0);
+      expect(await prisma.notificationOutbox.count()).toBe(1);
+    },
+  );
+  it('conta somente não lidas do destinatário e preserva a primeira leitura nos retries', async () => {
+    await book();
+    await book(new Date('2030-01-07T13:00:00.000Z'));
+    for (const eventId of await outbox.findPending(undefined, 100))
+      await outbox.deliver(eventId);
+    const repository = new NotificationPrismaRepository(prisma);
+    const notification = await prisma.notification.findFirstOrThrow({
+      where: { userId: clientId },
+    });
+    expect(await repository.countUnread(clientId)).toBe(2);
+    expect(await repository.countUnread(barberId)).toBe(2);
+    expect(await repository.countUnread(ownerId)).toBe(0);
+    const firstReadAt = new Date('2030-01-01T13:00:00.000Z');
+    const first = await repository.markAsRead(
+      clientId,
+      notification.id,
+      firstReadAt,
+    );
+    const retry = await repository.markAsRead(
+      clientId,
+      notification.id,
+      new Date('2030-01-02T13:00:00.000Z'),
+    );
+    expect(first.toJSON().readAt).toEqual(firstReadAt);
+    expect(retry.toJSON().readAt).toEqual(firstReadAt);
+    expect(await repository.countUnread(clientId)).toBe(1);
+    expect(await repository.countUnread(barberId)).toBe(2);
+  });
+
+  it('não lê nem modifica notificação alheia e trata ID inexistente da mesma forma', async () => {
+    await book();
+    const event = await prisma.notificationOutbox.findFirstOrThrow();
+    await outbox.deliver(event.id);
+    const repository = new NotificationPrismaRepository(prisma);
+    const notification = await prisma.notification.findFirstOrThrow({
+      where: { userId: clientId },
+    });
+    expect(
+      await repository.markAsRead(barberId, notification.id, new Date()),
+    ).toBeNull();
+    expect(
+      await repository.markAsRead(clientId, randomUUID(), new Date()),
+    ).toBeNull();
+    expect(
+      (
+        await prisma.notification.findUniqueOrThrow({
+          where: { id: notification.id },
+        })
+      ).readAt,
+    ).toBeNull();
+    expect(await repository.countUnread(clientId)).toBe(1);
+  });
+
+  it('duas leituras concorrentes retornam a mesma primeira data sem sobrescrita', async () => {
+    await book();
+    const event = await prisma.notificationOutbox.findFirstOrThrow();
+    await outbox.deliver(event.id);
+    const repository = new NotificationPrismaRepository(prisma);
+    const notification = await prisma.notification.findFirstOrThrow({
+      where: { userId: clientId },
+    });
+    const firstDate = new Date('2030-01-01T13:00:00.000Z');
+    const otherDate = new Date('2030-01-02T13:00:00.000Z');
+    const [first, second] = await Promise.all([
+      repository.markAsRead(clientId, notification.id, firstDate),
+      repository.markAsRead(clientId, notification.id, otherDate),
+    ]);
+    const saved = await prisma.notification.findUniqueOrThrow({
+      where: { id: notification.id },
+    });
+    expect([firstDate.getTime(), otherDate.getTime()]).toContain(
+      saved.readAt.getTime(),
+    );
+    expect(first.toJSON().readAt).toEqual(saved.readAt);
+    expect(second.toJSON().readAt).toEqual(saved.readAt);
+    expect(await repository.countUnread(clientId)).toBe(0);
   });
 });

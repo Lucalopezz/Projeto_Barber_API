@@ -16,6 +16,13 @@ export class NotificationPresenter {
   @ApiProperty({ type: String, format: 'date-time' })
   @Transform(({ value }: { value: Date }) => value.toISOString())
   startsAt: Date;
+  @ApiProperty({ type: String, format: 'date-time', nullable: true })
+  @Transform(
+    ({ value }: { value: Date | null }) => value?.toISOString() ?? null,
+  )
+  previousStartsAt: Date | null;
+  @ApiProperty({ type: String, nullable: true, example: 'Barba' })
+  previousServiceName: string | null;
   @ApiProperty({ example: 'America/Sao_Paulo' }) timezone: string;
   @ApiProperty({ type: String, format: 'date-time' })
   @Transform(({ value }: { value: Date }) => value.toISOString())
@@ -28,6 +35,15 @@ export class NotificationPresenter {
 
   constructor(output: NotificationOutput) {
     Object.assign(this, output);
+  }
+}
+
+export class UnreadNotificationsCountPresenter {
+  @ApiProperty({ minimum: 0, example: 2 })
+  count: number;
+
+  constructor(output: { count: number }) {
+    this.count = output.count;
   }
 }
 

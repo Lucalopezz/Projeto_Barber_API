@@ -1,5 +1,7 @@
 export enum NotificationType {
   appointmentCreated = 'appointment_created',
+  appointmentUpdated = 'appointment_updated',
+  appointmentCancelled = 'appointment_cancelled',
 }
 
 export type NotificationProps = {
@@ -11,6 +13,8 @@ export type NotificationProps = {
   barberShopName: string;
   startsAt: Date;
   timezone: string;
+  previousStartsAt?: Date | null;
+  previousServiceName?: string | null;
   createdAt?: Date;
   readAt?: Date | null;
 };

@@ -2,21 +2,60 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import {
   AppointmentCreatedNotification,
+  AppointmentUpdatedNotification,
+  AppointmentCancelledNotification,
   NotificationOutboxRepository,
+  NotificationOutboxWriter,
 } from '../../../application/ports/notification-outbox.repository';
 import { NotificationEntity } from '../../../domain/entities/notification.entity';
 import { NotificationType } from '../../../domain/entities/notification.props';
 import { NotificationModelMapper } from './notification-model.mapper';
 
-export class NotificationOutboxPrismaWriter {
+export class NotificationOutboxPrismaWriter implements NotificationOutboxWriter {
   constructor(private readonly client: Prisma.TransactionClient) {}
-  async recordCreated(event: AppointmentCreatedNotification): Promise<void> {
+  recordCreated(event: AppointmentCreatedNotification): Promise<void> {
+    return this.record(
+      NotificationType.appointmentCreated,
+      event,
+      `appointment-created-${event.appointmentId}`,
+    );
+  }
+
+  recordUpdated(event: AppointmentUpdatedNotification): Promise<void> {
+    const { revision, ...snapshot } = event;
+    return this.record(
+      NotificationType.appointmentUpdated,
+      snapshot,
+      `appointment-updated-${event.appointmentId}-v${revision}`,
+    );
+  }
+
+  recordCancelled(event: AppointmentCancelledNotification): Promise<void> {
+    const { revision, ...snapshot } = event;
+    return this.record(
+      NotificationType.appointmentCancelled,
+      snapshot,
+      `appointment-cancelled-${event.appointmentId}-v${revision}`,
+    );
+  }
+
+  private async record(
+    type: NotificationType,
+    event: AppointmentCreatedNotification & {
+      previousStartsAt?: Date;
+      previousServiceName?: string;
+    },
+    eventKey: string,
+  ): Promise<void> {
+    if (!event.recipientIds.length) return;
     // This adapter receives the booking's transaction, never a standalone connection.
+    // The revision belongs to the successful optimistic update, making each change unique.
     await this.client.notificationOutbox.create({
       data: {
         ...event,
-        eventKey: `appointment-created-${event.appointmentId}`,
-        type: NotificationType.appointmentCreated,
+        recipientIds: [...new Set(event.recipientIds)],
+        eventKey,
+        type,
       },
     });
   }
@@ -55,6 +94,8 @@ export class NotificationOutboxPrismaRepository implements NotificationOutboxRep
         barberShopName,
         startsAt,
         timezone,
+        previousStartsAt,
+        previousServiceName,
       } = event;
       const data = [...new Set(event.recipientIds)].map((userId) =>
         NotificationModelMapper.toModel(
@@ -66,6 +107,8 @@ export class NotificationOutboxPrismaRepository implements NotificationOutboxRep
             barberShopName,
             startsAt,
             timezone,
+            previousStartsAt,
+            previousServiceName,
             type: event.type as NotificationType,
           }),
         ),

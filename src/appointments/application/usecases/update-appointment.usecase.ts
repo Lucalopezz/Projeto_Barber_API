@@ -59,6 +59,12 @@ export namespace UpdateAppointmentUseCase {
 
       const targetDate = date ?? appointment.date;
       const targetServiceId = serviceId ?? appointment.serviceId;
+      const previousStartsAt = appointment.date;
+      const previousServiceId = appointment.serviceId;
+      const revision = (appointment.toJSON().version ?? 0) + 1;
+      const changed =
+        targetDate.getTime() !== previousStartsAt.getTime() ||
+        targetServiceId !== previousServiceId;
       const service = await this.serviceRepository.findById(targetServiceId);
       if (!service) {
         throw new NotFoundError('Service not found');
@@ -106,9 +112,32 @@ export namespace UpdateAppointmentUseCase {
           excludeAppointmentId: appointment.id,
         });
 
+        const previousService =
+          changed &&
+          context.notificationOutbox &&
+          targetServiceId !== previousServiceId
+            ? await this.serviceRepository.findById(previousServiceId)
+            : service;
+        if (!previousService) throw new NotFoundError('Service not found');
+
         appointment.update(targetDate, targetServiceId, endDate);
 
         await context.appointments.update(appointment);
+        if (changed && context.notificationOutbox) {
+          await context.notificationOutbox.recordUpdated({
+            appointmentId: appointment.id,
+            recipientIds: [
+              ...new Set([appointment.clientId, appointment.barberId]),
+            ],
+            serviceName: service.name,
+            barberShopName: barberShop.name,
+            startsAt: appointment.date,
+            timezone: barberShop.timezone,
+            previousStartsAt,
+            previousServiceName: previousService.name,
+            revision,
+          });
+        }
         return AppointmentOutputMapper.toOutput(appointment);
       };
       if (this.bookingTransaction)

@@ -8,6 +8,23 @@ import { NotificationModelMapper } from './notification-model.mapper';
 
 export class NotificationPrismaRepository implements NotificationRepository {
   constructor(private readonly prisma: PrismaService) {}
+  countUnread(userId: string): Promise<number> {
+    return this.prisma.notification.count({ where: { userId, readAt: null } });
+  }
+
+  async markAsRead(userId: string, id: string, readAt: Date) {
+    return this.prisma.$transaction(async (tx) => {
+      // Conditional update preserves the first read timestamp across concurrent retries.
+      // Both operations are scoped to the recipient; absent and foreign IDs look identical.
+      await tx.notification.updateMany({
+        where: { id, userId, readAt: null },
+        data: { readAt },
+      });
+      const row = await tx.notification.findFirst({ where: { id, userId } });
+      return row ? NotificationModelMapper.toEntity(row) : null;
+    });
+  }
+
   async listByUser(userId: string, params: SearchParams) {
     const where = { userId };
     const [total, rows] = await this.prisma.$transaction([

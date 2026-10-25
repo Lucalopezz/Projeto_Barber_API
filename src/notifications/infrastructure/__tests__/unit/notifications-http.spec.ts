@@ -12,6 +12,8 @@ import { EnvConfigService } from '@/shared/infrastructure/env-config/env-config.
 import { createOpenApiDocument } from '@/shared/infrastructure/openapi/openapi';
 import { SearchResult } from '@/shared/domain/repositories/searchable.repository';
 import { ListNotificationsUseCase } from '../../../application/usecases/list-notifications.usecase';
+import { CountUnreadNotificationsUseCase } from '../../../application/usecases/count-unread-notifications.usecase';
+import { MarkNotificationReadUseCase } from '../../../application/usecases/mark-notification-read.usecase';
 import { NotificationEntity } from '../../../domain/entities/notification.entity';
 import { NotificationType } from '../../../domain/entities/notification.props';
 import { NotificationsController } from '../../notifications.controller';
@@ -23,9 +25,14 @@ describe('GET /notifications com Fastify e guard reais, sem banco', () => {
   const otherId = randomUUID();
   const sessionId = randomUUID();
   const appointmentId = randomUUID();
+  const notificationId = randomUUID();
   const startsAt = new Date('2030-01-07T12:00:00.000Z');
   const createdAt = new Date('2030-01-01T10:00:00.000Z');
   const listByUser = jest.fn();
+  const countUnread = jest.fn();
+  const markAsRead = jest.fn();
+  let storedReadAt: Date | null;
+  const repository = { listByUser, countUnread, markAsRead };
   const active = jest.fn(async (_sessionId: string, userId: string) => ({
     userId,
     role: userId === professionalId ? 'barber' : 'client',
@@ -51,8 +58,16 @@ describe('GET /notifications com Fastify e guard reais, sem banco', () => {
         { provide: 'SessionRepository', useValue: { active } },
         {
           provide: ListNotificationsUseCase.UseCase,
+          useFactory: () => new ListNotificationsUseCase.UseCase(repository),
+        },
+        {
+          provide: CountUnreadNotificationsUseCase.UseCase,
           useFactory: () =>
-            new ListNotificationsUseCase.UseCase({ listByUser }),
+            new CountUnreadNotificationsUseCase.UseCase(repository),
+        },
+        {
+          provide: MarkNotificationReadUseCase.UseCase,
+          useFactory: () => new MarkNotificationReadUseCase.UseCase(repository),
         },
       ],
     }).compile();
@@ -70,10 +85,33 @@ describe('GET /notifications com Fastify e guard reais, sem banco', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    storedReadAt = null;
     active.mockImplementation(async (_sid, userId) => ({
       userId,
       role: userId === professionalId ? 'barber' : 'client',
     }));
+    countUnread.mockImplementation(async (userId) =>
+      userId === otherId ? 0 : userId === clientId && storedReadAt ? 1 : 2,
+    );
+    markAsRead.mockImplementation(async (userId, id, readAt) => {
+      if (userId !== clientId || id !== notificationId) return null;
+      storedReadAt ??= readAt;
+      return new NotificationEntity(
+        {
+          userId,
+          appointmentId,
+          eventKey: 'created-event',
+          type: NotificationType.appointmentCreated,
+          serviceName: 'Corte',
+          barberShopName: 'Barbearia Escola',
+          startsAt,
+          timezone: 'America/Sao_Paulo',
+          createdAt,
+          readAt: storedReadAt,
+        },
+        notificationId,
+      );
+    });
     listByUser.mockImplementation(async (userId, params) => {
       const entity = new NotificationEntity({
         userId,
@@ -125,6 +163,181 @@ describe('GET /notifications com Fastify e guard reais, sem banco', () => {
     );
   });
 
+  it('expõe a contagem autenticada de não lidas no envelope canônico', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/notifications/unread-count',
+      headers: { authorization: `Bearer ${clientId}` },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ data: { count: 2 } });
+    expect(countUnread).toHaveBeenCalledWith(clientId);
+  });
+
+  it('publica leitura e contador autenticados com schemas e erros no OpenAPI', () => {
+    const document = createOpenApiDocument(app);
+    const count = document.paths['/api/v1/notifications/unread-count'].get;
+    const read = document.paths['/api/v1/notifications/{id}/read'].patch;
+    expect(count.security).toEqual([{ bearer: [] }]);
+    expect(read.security).toEqual([{ bearer: [] }]);
+    expect(Object.keys(count.responses)).toEqual(
+      expect.arrayContaining(['200', '401']),
+    );
+    expect(Object.keys(read.responses)).toEqual(
+      expect.arrayContaining(['200', '401', '404', '422']),
+    );
+    expect(read.parameters).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'id',
+          in: 'path',
+          required: true,
+          schema: expect.objectContaining({ format: 'uuid' }),
+        }),
+      ]),
+    );
+    expect(
+      document.components.schemas.UnreadNotificationsCountPresenter,
+    ).toEqual(expect.objectContaining({ required: ['count'] }));
+    expect(document.components.schemas.NotificationPresenter).toEqual(
+      expect.objectContaining({
+        properties: expect.objectContaining({
+          previousStartsAt: expect.objectContaining({
+            nullable: true,
+            format: 'date-time',
+          }),
+          previousServiceName: expect.objectContaining({ nullable: true }),
+        }),
+      }),
+    );
+  });
+
+  it('permite marcar a própria notificação como lida sem expor campos internos', async () => {
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/notifications/${notificationId}/read`,
+      headers: { authorization: `Bearer ${clientId}` },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().data).toEqual(
+      expect.objectContaining({
+        id: notificationId,
+        readAt: expect.any(String),
+      }),
+    );
+    expect(response.json().data).not.toHaveProperty('userId');
+    expect(response.json().data).not.toHaveProperty('eventKey');
+    expect(markAsRead).toHaveBeenCalledWith(
+      clientId,
+      notificationId,
+      expect.any(Date),
+    );
+  });
+
+  it('rejeita UUID inválido na ação de leitura com 422', async () => {
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/v1/notifications/invalid/read',
+      headers: { authorization: `Bearer ${clientId}` },
+    });
+    expect(response.statusCode).toBe(422);
+    expect(markAsRead).not.toHaveBeenCalled();
+  });
+
+  it('repetir a leitura mantém o primeiro timestamp e decrementa o contador uma única vez', async () => {
+    const call = () =>
+      app.inject({
+        method: 'PATCH',
+        url: `/api/v1/notifications/${notificationId}/read`,
+        headers: { authorization: `Bearer ${clientId}` },
+      });
+    const first = await call();
+    const second = await call();
+    expect(first.statusCode).toBe(200);
+    expect(second.statusCode).toBe(200);
+    expect(second.json().data.readAt).toBe(first.json().data.readAt);
+    const count = await app.inject({
+      method: 'GET',
+      url: '/api/v1/notifications/unread-count',
+      headers: { authorization: `Bearer ${clientId}` },
+    });
+    expect(count.json()).toEqual({ data: { count: 1 } });
+  });
+
+  it('não aceita escolher o destinatário por query na contagem', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: `/api/v1/notifications/unread-count?userId=${otherId}`,
+      headers: { authorization: `Bearer ${clientId}` },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ data: { count: 2 } });
+    expect(countUnread).toHaveBeenCalledWith(clientId);
+  });
+
+  it('outra conta recebe somente sua própria contagem', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/v1/notifications/unread-count',
+      headers: { authorization: `Bearer ${otherId}` },
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ data: { count: 0 } });
+    expect(countUnread).toHaveBeenCalledWith(otherId);
+  });
+
+  it.each([otherId, professionalId])(
+    'não permite que outra conta marque a notificação (%s)',
+    async (userId) => {
+      const response = await app.inject({
+        method: 'PATCH',
+        url: `/api/v1/notifications/${notificationId}/read`,
+        headers: { authorization: `Bearer ${userId}` },
+      });
+      expect(response.statusCode).toBe(404);
+      expect(response.json()).toEqual({
+        statusCode: 404,
+        error: 'Not Found',
+        message: 'Notification not found',
+      });
+      expect(markAsRead).toHaveBeenCalledWith(
+        userId,
+        notificationId,
+        expect.any(Date),
+      );
+    },
+  );
+
+  it('ID inexistente recebe o mesmo 404 de uma notificação alheia', async () => {
+    const response = await app.inject({
+      method: 'PATCH',
+      url: `/api/v1/notifications/${randomUUID()}/read`,
+      headers: { authorization: `Bearer ${clientId}` },
+    });
+    expect(response.statusCode).toBe(404);
+    expect(response.json()).toEqual({
+      statusCode: 404,
+      error: 'Not Found',
+      message: 'Notification not found',
+    });
+  });
+
+  it.each([
+    { method: 'GET' as const, url: '/api/v1/notifications/unread-count' },
+    {
+      method: 'PATCH' as const,
+      url: `/api/v1/notifications/${notificationId}/read`,
+    },
+  ])(
+    'protege o novo endpoint $method $url com o guard real',
+    async ({ method, url }) => {
+      const response = await app.inject({ method, url });
+      expect(response.statusCode).toBe(401);
+      expect(countUnread).not.toHaveBeenCalled();
+      expect(markAsRead).not.toHaveBeenCalled();
+    },
+  );
+
   it.each([clientId, professionalId])(
     'lista somente a identidade autenticada (%s) com datas e envelope canônicos',
     async (userId) => {
@@ -151,6 +364,8 @@ describe('GET /notifications com Fastify e guard reais, sem banco', () => {
             timezone: 'America/Sao_Paulo',
             createdAt: createdAt.toISOString(),
             readAt: null,
+            previousStartsAt: null,
+            previousServiceName: null,
           },
         ],
         meta: { currentPage: 2, perPage: 1, lastPage: 2, total: 2 },

@@ -1,5 +1,8 @@
 import { NotificationRepository } from '../../domain/repositories/notification.repository';
-import { NotificationProps } from '../../domain/entities/notification.props';
+import {
+  NotificationOutput,
+  NotificationOutputMapper,
+} from '../dto/notification-output.dto';
 import { SearchParams } from '@/shared/domain/repositories/searchable.repository';
 import {
   PaginationOutput,
@@ -7,10 +10,7 @@ import {
 } from '@/shared/application/dtos/pagination-output';
 import { UseCaseContract } from '@/shared/application/usecases/use-case';
 
-export type NotificationOutput = Omit<
-  NotificationProps,
-  'eventKey' | 'userId'
-> & { id: string };
+export type { NotificationOutput } from '../dto/notification-output.dto';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace ListNotificationsUseCase {
@@ -27,30 +27,7 @@ export namespace ListNotificationsUseCase {
           perPage: Math.min(input.perPage ?? 15, 100),
         }),
       );
-      const items = result.items.map((entity): NotificationOutput => {
-        const {
-          id,
-          appointmentId,
-          type,
-          serviceName,
-          barberShopName,
-          startsAt,
-          timezone,
-          createdAt,
-          readAt,
-        } = entity.toJSON();
-        return {
-          id,
-          appointmentId,
-          type,
-          serviceName,
-          barberShopName,
-          startsAt,
-          timezone,
-          createdAt,
-          readAt,
-        };
-      });
+      const items = result.items.map(NotificationOutputMapper.toOutput);
       return PaginationOutputMapper.toOutput(items, result);
     }
   }

@@ -9,4 +9,10 @@ export interface NotificationRepository {
     userId: string,
     params: SearchParams,
   ): Promise<SearchResult<NotificationEntity>>;
+  countUnread(userId: string): Promise<number>;
+  markAsRead(
+    userId: string,
+    id: string,
+    readAt: Date,
+  ): Promise<NotificationEntity | null>;
 }

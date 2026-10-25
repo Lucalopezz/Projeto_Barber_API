@@ -13,6 +13,8 @@ export class NotificationEntity extends Entity<NotificationProps> {
         ...props,
         createdAt: props.createdAt ?? new Date(),
         readAt: props.readAt ?? null,
+        previousStartsAt: props.previousStartsAt ?? null,
+        previousServiceName: props.previousServiceName ?? null,
       },
       id,
     );

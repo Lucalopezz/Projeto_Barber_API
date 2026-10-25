@@ -150,6 +150,8 @@ model AuthRefreshToken {
 
 enum NotificationType {
   appointment_created
+  appointment_updated
+  appointment_cancelled
 }
 
 model Notification {
@@ -164,11 +166,14 @@ model Notification {
   barberShopName String
   startsAt       DateTime         @db.Timestamptz(3)
   timezone       String
+  previousStartsAt DateTime?       @db.Timestamptz(3)
+  previousServiceName String?
   createdAt      DateTime         @default(now()) @db.Timestamptz(3)
   readAt         DateTime?        @db.Timestamptz(3)
 
   @@unique([eventKey, userId])
   @@index([userId, createdAt, id])
+  @@index([userId, readAt])
   @@index([appointmentId])
 }
 
@@ -183,6 +188,8 @@ model NotificationOutbox {
   barberShopName String
   startsAt       DateTime         @db.Timestamptz(3)
   timezone       String
+  previousStartsAt DateTime?       @db.Timestamptz(3)
+  previousServiceName String?
   createdAt      DateTime         @default(now()) @db.Timestamptz(3)
   processedAt    DateTime?        @db.Timestamptz(3)
 

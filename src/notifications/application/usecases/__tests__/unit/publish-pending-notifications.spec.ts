@@ -5,7 +5,7 @@ describe('Publicação da outbox', () => {
   const enqueue = jest.fn();
   const deliver = jest.fn();
   const sut = new PublishPendingNotificationsUseCase.UseCase(
-    { findPending, deliver, recordCreated: jest.fn() },
+    { findPending, deliver },
     { enqueue },
   );
   beforeEach(() => {

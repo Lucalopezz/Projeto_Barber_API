@@ -1,6 +1,6 @@
 # Desenvolvimento
 
-## Notificações — execução da parte 1
+## Notificações — execução das partes 1 e 2
 
 O fluxo de confirmação usa PostgreSQL, Redis/BullMQ e um worker Nest separado
 da API. A API não abre conexão com Redis nem executa processors. A caixa pode
@@ -42,6 +42,14 @@ restrição única `(eventKey, userId)` impede duplicação após retry ou rein�
 Se a API registrar eventos com o worker parado, iniciar o worker permite
 recuperá-los. Encerre o worker com SIGINT/SIGTERM para aguardar jobs ativos e
 fechar conexões. Não remova volumes para reiniciar o ambiente.
+
+A parte 2 acrescenta eventos de remarcação/troca de serviço e cancelamento,
+leitura de notificações e contagem de não lidas. Aplique também a migration
+`20261025120000_add_notification_changes` antes de iniciar essa versão da API e
+do worker. Ela amplia os tipos de notificação, inclui snapshots anteriores e
+um índice para o contador. Os comandos de execução e as variáveis permanecem
+os mesmos. A interface consulta o contador e a listagem a cada 30 segundos em
+primeiro plano; WebSocket e lembretes não fazem parte desta etapa.
 
 Para testes, PostgreSQL deve usar exclusivamente `barber_api_test`. O Redis
 usa por padrão banco `1` e prefixo `barber-test-notifications`; o worker recusa

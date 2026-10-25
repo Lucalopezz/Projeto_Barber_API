@@ -16,7 +16,10 @@ import { ServiceEntity } from '@/services/domain/entities/services.entity';
 import { ServiceDataBuilder } from '@/services/domain/helpers/service-data-builder';
 import { AppointmentEntity } from '@/appointments/domain/entities/appointment.entity';
 import { AppointmentDataBuilder } from '@/appointments/domain/helpers/appointment-data-builder';
-import { NotificationOutboxPrismaRepository } from '../../../database/prisma/notification-outbox-prisma.repository';
+import {
+  NotificationOutboxPrismaRepository,
+  NotificationOutboxPrismaWriter,
+} from '../../../database/prisma/notification-outbox-prisma.repository';
 import { PublishPendingNotificationsUseCase } from '../../../../application/usecases/publish-pending-notifications.usecase';
 import { NotificationBullMqQueue } from '../../notification-bullmq.queue';
 import { NotificationProcessor } from '../../notification.processor';
@@ -220,5 +223,83 @@ describe('Publicação, recuperação e entrega (Redis e PostgreSQL reais)', () 
     await eventually(async () =>
       expect(await prisma.notification.count()).toBe(2),
     );
+  });
+
+  it('entrega remarcação e cancelamento com snapshots e destinatários corretos após reiniciar', async () => {
+    const original = await prisma.notificationOutbox.findUniqueOrThrow({
+      where: { id: eventId },
+    });
+    const [clientId, professionalId] = original.recipientIds;
+    const newDate = new Date('2030-01-07T14:00:00.000Z');
+    const snapshot = {
+      appointmentId: original.appointmentId,
+      serviceName: original.serviceName,
+      barberShopName: original.barberShopName,
+      timezone: original.timezone,
+      startsAt: newDate,
+    };
+    await prisma.$transaction(async (tx) => {
+      await tx.appointment.update({
+        where: { id: original.appointmentId },
+        data: {
+          date: newDate,
+          endDate: new Date(newDate.getTime() + 30 * 60_000),
+          version: { increment: 1 },
+        },
+      });
+      await new NotificationOutboxPrismaWriter(tx).recordUpdated({
+        ...snapshot,
+        recipientIds: [clientId, professionalId],
+        revision: 1,
+        previousStartsAt: original.startsAt,
+        previousServiceName: original.serviceName,
+      });
+    });
+    await prisma.$transaction(async (tx) => {
+      await tx.appointment.update({
+        where: { id: original.appointmentId },
+        data: { status: 'cancelled', version: { increment: 1 } },
+      });
+      await new NotificationOutboxPrismaWriter(tx).recordCancelled({
+        ...snapshot,
+        recipientIds: [professionalId],
+        revision: 2,
+      });
+    });
+    await publish.execute();
+    expect(await prisma.notification.count()).toBe(0);
+    await startWorker();
+    await eventually(async () => {
+      expect(await prisma.notification.count()).toBe(5);
+      expect(await outbox.findPending(undefined, 100)).toEqual([]);
+    });
+    const changed = await prisma.notification.findMany({
+      where: { eventKey: `appointment-updated-${original.appointmentId}-v1` },
+    });
+    expect(changed).toHaveLength(2);
+    expect(changed[0]).toEqual(
+      expect.objectContaining({
+        type: 'appointment_updated',
+        startsAt: newDate,
+        previousStartsAt: original.startsAt,
+        previousServiceName: original.serviceName,
+      }),
+    );
+    const cancelled = await prisma.notification.findMany({
+      where: { eventKey: `appointment-cancelled-${original.appointmentId}-v2` },
+    });
+    expect(cancelled).toHaveLength(1);
+    expect(cancelled[0].userId).toBe(professionalId);
+    await worker.close();
+    worker = undefined;
+    const events = await prisma.notificationOutbox.findMany();
+    for (const event of events)
+      await new NotificationBullMqQueue(queue).enqueue(event.id);
+    await startWorker();
+    await eventually(async () => {
+      for (const event of events)
+        expect(await queue.getJob(`notification-${event.id}`)).toBeUndefined();
+    });
+    expect(await prisma.notification.count()).toBe(5);
   });
 });
