@@ -85,6 +85,14 @@ export namespace CreateAppointmentsUseCase {
         });
 
         await context.appointments.insert(entity);
+        await context.notificationOutbox?.recordCreated({
+          appointmentId: entity.id,
+          recipientIds: [...new Set([clientId, barberId])],
+          serviceName: service.name,
+          barberShopName: barberShop.name,
+          startsAt: entity.date,
+          timezone: barberShop.timezone,
+        });
 
         return AppointmentOutputMapper.toOutput(entity);
       };

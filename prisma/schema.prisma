@@ -24,6 +24,7 @@ model User {
   timeOffs             BarberTimeOff[]
   authSessions         AuthSession[]
   barberShopInvitations BarberShopInvitation[]
+  notifications        Notification[]
 }
 
 model BarberShop {
@@ -82,6 +83,8 @@ model Appointment {
   barberShop   BarberShop        @relation(fields: [barberShopId], references: [id], onDelete: Restrict)
   serviceId    String
   service      Service           @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  notifications Notification[]
+  notificationOutbox NotificationOutbox[]
 
   @@index([clientId])
   @@index([barberId])
@@ -143,4 +146,46 @@ model AuthRefreshToken {
   hash String
   consumedAt DateTime? @db.Timestamptz(3)
   @@unique([sessionId, hash])
+}
+
+enum NotificationType {
+  appointment_created
+}
+
+model Notification {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointmentId  String
+  appointment    Appointment      @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  eventKey       String
+  type           NotificationType
+  serviceName    String
+  barberShopName String
+  startsAt       DateTime         @db.Timestamptz(3)
+  timezone       String
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+  readAt         DateTime?        @db.Timestamptz(3)
+
+  @@unique([eventKey, userId])
+  @@index([userId, createdAt, id])
+  @@index([appointmentId])
+}
+
+model NotificationOutbox {
+  id             String           @id @default(uuid())
+  eventKey       String           @unique
+  type           NotificationType
+  appointmentId  String
+  appointment    Appointment      @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  recipientIds   String[]
+  serviceName    String
+  barberShopName String
+  startsAt       DateTime         @db.Timestamptz(3)
+  timezone       String
+  createdAt      DateTime         @default(now()) @db.Timestamptz(3)
+  processedAt    DateTime?        @db.Timestamptz(3)
+
+  @@index([processedAt, id])
+  @@index([appointmentId])
 }

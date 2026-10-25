@@ -57,6 +57,7 @@ não é prova de expiração. Na Swagger UI, Bearer continua disponível em Auth
 | `/api/v1/barber-shops` | leitura pública; escrita protegida  | Vitrine, gestão do estabelecimento e horários públicos. |
 | `/api/v1/services`     | leitura pública; escrita de `owner` | Catálogo e administração dos serviços.                  |
 | `/api/v1/appointments` | autenticado                         | Reservas, status, agenda semanal e folgas.              |
+| `/api/v1/notifications` | autenticado                        | Confirmações persistentes dos próprios agendamentos.   |
 
 ### Usuários
 
@@ -163,6 +164,34 @@ Exceções:
 - respostas já paginadas não recebem um segundo envelope.
 
 ## Paginação e filtros
+
+### Notificações de confirmação
+
+`GET /api/v1/notifications?page=1&perPage=15` lista somente notificações do
+usuário autenticado, da mais recente para a mais antiga, com desempate por ID.
+`page` deve ser inteiro positivo; `perPage` aceita de 1 a 100. A rota não aceita
+`userId`, filtros ou ordenação pela query. Autenticação inválida retorna `401`;
+query inválida ou com campos extras retorna `422`.
+
+A resposta segue `{data: [...], meta: {currentPage, perPage, lastPage, total}}`.
+Cada item expõe `id`, `appointmentId`, `type` (`appointment_created`),
+`serviceName`, `barberShopName`, `startsAt`, `timezone`, `createdAt` e `readAt`
+(inicialmente `null`). As datas são ISO UTC; `timezone` identifica o fuso IANA
+da barbearia para apresentação. IDs da outbox, chaves de evento e destinatários
+não integram o contrato público.
+
+Uma criação confirmada gera um aviso para o cliente e outro para o profissional
+atribuído. O dono só recebe se for o profissional da reserva. A entrega é
+assíncrona: a reserva e o evento da outbox são atômicos no PostgreSQL; o worker
+entrega os avisos depois. Redis indisponível não impede a reserva. Reprocessar
+o mesmo evento não duplica os avisos. O conteúdo registra o serviço, nome e
+horário da barbearia no instante da criação, preservando o histórico.
+
+Esta primeira entrega inclui a listagem. Remarcação, cancelamento, leitura,
+contagem de não lidas e lembretes serão implementados nas próximas partes do
+[plano](../.scratch/notificacoes-bullmq-redis/spec.md).
+
+### Coleções
 
 As coleções paginadas seguem, quando aplicável:
 

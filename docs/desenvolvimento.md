@@ -1,5 +1,69 @@
 # Desenvolvimento
 
+## Notificações — execução da parte 1
+
+O fluxo de confirmação usa PostgreSQL, Redis/BullMQ e um worker Nest separado
+da API. A API não abre conexão com Redis nem executa processors. A caixa pode
+ser consultada em `/notifications` no frontend autenticado.
+
+Use Node e pnpm nas versões de `package.json`. Preserve os arquivos de env
+existentes; novos ambientes partem de `.env.example` e `.env.test.example`.
+Os comandos atuais, na raiz da API, são:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm db:up
+pnpm prisma:generate
+pnpm prisma:migrate:deploy
+pnpm build
+```
+
+Em terminais separados:
+
+```bash
+pnpm start:dev
+pnpm start:worker:dev
+```
+
+Ou, após o build, `pnpm start:worker` inicia o worker com `.env.development`.
+Em produção, `pnpm start:worker:prod` usa as variáveis fornecidas pelo ambiente.
+O frontend continua usando `pnpm dev` no seu próprio repositório.
+
+O Compose publica PostgreSQL em `127.0.0.1:5450` e Redis em `127.0.0.1:6380`,
+com healthchecks. Redis usa AOF e política `noeviction`. Configure o worker com
+`REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_PASSWORD` (opcional) e
+`NOTIFICATIONS_QUEUE_PREFIX`. Os padrões locais são banco Redis `0` e prefixo
+`barber-notifications`. A API não precisa dessas variáveis para aceitar reservas.
+
+O worker registra por upsert um scheduler de publicação a cada cinco segundos
+em UTC. Ele pagina a outbox pendente e envia apenas IDs ao Redis. A entrega dos
+destinatários e o marcador `processedAt` são gravados na mesma transação; a
+restrição única `(eventKey, userId)` impede duplicação após retry ou reinício.
+Se a API registrar eventos com o worker parado, iniciar o worker permite
+recuperá-los. Encerre o worker com SIGINT/SIGTERM para aguardar jobs ativos e
+fechar conexões. Não remova volumes para reiniciar o ambiente.
+
+Para testes, PostgreSQL deve usar exclusivamente `barber_api_test`. O Redis
+usa por padrão banco `1` e prefixo `barber-test-notifications`; o worker recusa
+configuração de teste com banco `0` ou prefixo sem `barber-test-`. As integrações
+podem usar um sufixo exclusivo e limpam somente a própria fila, sem `FLUSHDB`.
+Execute as suítes com limpeza de banco sequencialmente:
+
+```bash
+pnpm prisma:migrate:test
+pnpm test
+pnpm test:int
+pnpm test:e2e
+pnpm test:architecture
+pnpm check:architecture
+pnpm lint
+pnpm build
+```
+
+As seções abaixo preservam as instruções históricas anteriores à adoção de
+pnpm. Para alterações no fluxo, consulte o
+[plano de notificações](../.scratch/notificacoes-bullmq-redis/spec.md).
+
 > **PS — 17/10/2026:** o ambiente passou a usar pnpm. Os comandos reproduzíveis
 > e os exemplos de env separados por ambiente estão em
 > [Estado atual](./estado-atual.md#execução-local). O conteúdo anterior abaixo

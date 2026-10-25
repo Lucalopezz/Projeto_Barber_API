@@ -5,6 +5,7 @@ import { DatabaseModule } from './shared/infrastructure/database/database.module
 import { BarberShopModule } from './barberShop/infrastructure/barber-shop.module';
 import { ServicesModule } from './services/infrastructure/services.module';
 import { AppointmentsModule } from './appointments/infrastructure/appointments.module';
+import { NotificationsModule } from './notifications/infrastructure/notifications.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AppointmentsModule } from './appointments/infrastructure/appointments.m
     BarberShopModule,
     ServicesModule,
     AppointmentsModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
