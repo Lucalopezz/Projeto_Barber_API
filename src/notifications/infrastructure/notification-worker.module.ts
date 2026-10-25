@@ -14,6 +14,9 @@ import {
 } from './queue/notification-queue.config';
 import { NotificationProcessor } from './queue/notification.processor';
 import { NotificationScheduler } from './queue/notification-scheduler';
+import { ScheduleAppointmentRemindersUseCase } from '../application/usecases/schedule-appointment-reminders.usecase';
+import { AppointmentReminderRepository } from '../application/ports/appointment-reminder.repository';
+import { AppointmentReminderPrismaRepository } from './database/prisma/appointment-reminder-prisma.repository';
 
 @Module({
   imports: [
@@ -26,6 +29,18 @@ import { NotificationScheduler } from './queue/notification-scheduler';
     BullModule.registerQueue({ name: NOTIFICATIONS_QUEUE }),
   ],
   providers: [
+    {
+      provide: 'AppointmentReminderRepository',
+      useFactory: (prisma: PrismaService) =>
+        new AppointmentReminderPrismaRepository(prisma),
+      inject: [PrismaService],
+    },
+    {
+      provide: ScheduleAppointmentRemindersUseCase.UseCase,
+      useFactory: (repository: AppointmentReminderRepository) =>
+        new ScheduleAppointmentRemindersUseCase.UseCase(repository),
+      inject: ['AppointmentReminderRepository'],
+    },
     {
       provide: 'NotificationOutboxRepository',
       useFactory: (prisma: PrismaService) =>

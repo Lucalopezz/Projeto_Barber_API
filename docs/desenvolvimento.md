@@ -1,6 +1,6 @@
 # Desenvolvimento
 
-## Notificações — execução das partes 1 e 2
+## Notificações — execução das partes 1 a 3
 
 O fluxo de confirmação usa PostgreSQL, Redis/BullMQ e um worker Nest separado
 da API. A API não abre conexão com Redis nem executa processors. A caixa pode
@@ -49,7 +49,32 @@ leitura de notificações e contagem de não lidas. Aplique também a migration
 do worker. Ela amplia os tipos de notificação, inclui snapshots anteriores e
 um índice para o contador. Os comandos de execução e as variáveis permanecem
 os mesmos. A interface consulta o contador e a listagem a cada 30 segundos em
-primeiro plano; WebSocket e lembretes não fazem parte desta etapa.
+primeiro plano; WebSocket permanece fora do escopo.
+
+A parte 3 exige também `20261025180000_add_appointment_reminders`. Ela adiciona
+o tipo `appointment_reminder`, a versão da reserva na outbox e um índice
+`Appointment(status, date, id)` para a busca. Aplique as migrations antes de
+iniciar a API e o worker atualizados; gere novamente o Prisma Client.
+
+O worker registra um segundo scheduler estável,
+`notification-appointment-reminders-v1`, com cron `* * * * *` em UTC. A cada
+minuto, ele pagina reservas futuras `scheduled` em lotes de 100. São elegíveis
+as criadas até `startsAt - 24h`, inclusive, quando esse instante já passou.
+A busca usa o instante atual fixado no início da execução e recupera atrasos
+até antes do início da reserva. Reservas criadas com menos de 24 horas de
+antecedência não geram esse lembrete. A regra usa a criação original da reserva
+e o horário atual da versão consultada.
+
+O scanner grava somente o cliente como destinatário. A chave única inclui
+reserva, cliente, versão e horário; execuções repetidas ou concorrentes não
+criam novos eventos para a mesma chave. O publicador existente envia seus IDs
+à fila. Na entrega, uma transação bloqueia a linha da reserva e revalida status,
+versão, horário, cliente e elegibilidade antes de criar a notificação. Assim,
+remarcação/cancelamento e entrega não passam pela validação simultaneamente.
+Um lembrete inválido recebe `processedAt` sem criar uma notificação; o marcador
+significa que o evento foi tratado, incluindo descarte. Eventos históricos dos
+outros tipos mantêm a entrega sem essa revalidação. Nenhum desses passos depende
+de a aplicação estar aberta no navegador.
 
 Para testes, PostgreSQL deve usar exclusivamente `barber_api_test`. O Redis
 usa por padrão banco `1` e prefixo `barber-test-notifications`; o worker recusa

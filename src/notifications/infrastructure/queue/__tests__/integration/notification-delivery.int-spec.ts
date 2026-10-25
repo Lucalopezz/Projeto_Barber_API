@@ -21,6 +21,8 @@ import {
   NotificationOutboxPrismaWriter,
 } from '../../../database/prisma/notification-outbox-prisma.repository';
 import { PublishPendingNotificationsUseCase } from '../../../../application/usecases/publish-pending-notifications.usecase';
+import { ScheduleAppointmentRemindersUseCase } from '../../../../application/usecases/schedule-appointment-reminders.usecase';
+import { AppointmentReminderPrismaRepository } from '../../../database/prisma/appointment-reminder-prisma.repository';
 import { NotificationBullMqQueue } from '../../notification-bullmq.queue';
 import { NotificationProcessor } from '../../notification.processor';
 import { NotificationScheduler } from '../../notification-scheduler';
@@ -28,6 +30,9 @@ import {
   DELIVER_NOTIFICATION_JOB,
   NOTIFICATIONS_QUEUE,
   OUTBOX_SCHEDULER_ID,
+  PUBLISH_OUTBOX_JOB,
+  SCHEDULE_REMINDERS_JOB,
+  REMINDER_SCHEDULER_ID,
   notificationQueueConfig,
 } from '../../notification-queue.config';
 
@@ -52,6 +57,8 @@ describe('Publicação, recuperação e entrega (Redis e PostgreSQL reais)', () 
   let eventId: string;
   let outbox: NotificationOutboxPrismaRepository;
   let publish: PublishPendingNotificationsUseCase.UseCase;
+  let schedule: ScheduleAppointmentRemindersUseCase.UseCase;
+  let now: Date;
   let options: ReturnType<typeof notificationQueueConfig>;
 
   beforeAll(async () => {
@@ -62,6 +69,7 @@ describe('Publicação, recuperação e entrega (Redis e PostgreSQL reais)', () 
 
   beforeEach(async () => {
     await clearDatabase(prisma);
+    now = new Date('2030-01-06T12:00:00.000Z');
     // Never FLUSHDB or reuse another suite's queue. Cleanup is limited to this UUID prefix.
     options = notificationQueueConfig(
       new ConfigService({
@@ -90,9 +98,15 @@ describe('Publicação, recuperação e entrega (Redis e PostgreSQL reais)', () 
         barberShopId: shop.id,
         serviceId: service.id,
         date: new Date('2030-01-07T12:00:00.000Z'),
+        createdAt: new Date('2030-01-01T12:00:00.000Z'),
       }),
     );
-    outbox = new NotificationOutboxPrismaRepository(prisma);
+    const clock = { now: () => now };
+    outbox = new NotificationOutboxPrismaRepository(prisma, clock);
+    schedule = new ScheduleAppointmentRemindersUseCase.UseCase(
+      new AppointmentReminderPrismaRepository(prisma),
+      clock,
+    );
     await prisma.$transaction(async (tx) => {
       await tx.appointment.create({ data: appointment.toJSON() });
       await tx.notificationOutbox.create({
@@ -130,7 +144,7 @@ describe('Publicação, recuperação e entrega (Redis e PostgreSQL reais)', () 
   });
 
   function startWorker() {
-    const processor = new NotificationProcessor(outbox, publish);
+    const processor = new NotificationProcessor(outbox, publish, schedule);
     worker = new Worker(NOTIFICATIONS_QUEUE, (job) => processor.process(job), {
       connection: options.connection,
       prefix: options.prefix,
@@ -186,10 +200,21 @@ describe('Publicação, recuperação e entrega (Redis e PostgreSQL reais)', () 
     const scheduler = new NotificationScheduler(queue);
     await Promise.all([scheduler.onModuleInit(), scheduler.onModuleInit()]);
     const schedulers = await queue.getJobSchedulers();
-    expect(schedulers).toHaveLength(1);
-    expect(schedulers[0].key).toBe(OUTBOX_SCHEDULER_ID);
-    expect(schedulers[0].pattern).toBe('*/5 * * * * *');
-    expect(schedulers[0].tz).toBe('UTC');
+    expect(schedulers).toHaveLength(2);
+    expect(schedulers).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: OUTBOX_SCHEDULER_ID,
+          pattern: '*/5 * * * * *',
+          tz: 'UTC',
+        }),
+        expect.objectContaining({
+          key: REMINDER_SCHEDULER_ID,
+          pattern: '* * * * *',
+          tz: 'UTC',
+        }),
+      ]),
+    );
   });
 
   it('preserva a outbox quando Redis falha após o commit e recupera na tentativa seguinte', async () => {
@@ -301,5 +326,97 @@ describe('Publicação, recuperação e entrega (Redis e PostgreSQL reais)', () 
         expect(await queue.getJob(`notification-${event.id}`)).toBeUndefined();
     });
     expect(await prisma.notification.count()).toBe(5);
+  });
+
+  it('recupera lembrete atrasado por dois scans concorrentes e mantém uma entrega após reinício', async () => {
+    now = new Date('2030-01-07T11:59:59.999Z');
+    await queue.add(SCHEDULE_REMINDERS_JOB, {}, { jobId: 'scan-first' });
+    await queue.add(SCHEDULE_REMINDERS_JOB, {}, { jobId: 'scan-second' });
+    await startWorker();
+    await eventually(async () => {
+      expect(await queue.getJob('scan-first')).toBeUndefined();
+      expect(await queue.getJob('scan-second')).toBeUndefined();
+      expect(
+        await prisma.notificationOutbox.count({
+          where: { type: 'appointment_reminder' },
+        }),
+      ).toBe(1);
+    });
+    await queue.add(PUBLISH_OUTBOX_JOB, {});
+    await eventually(async () =>
+      expect(await prisma.notification.count()).toBe(3),
+    );
+    const event = await prisma.notificationOutbox.findFirstOrThrow({
+      where: { type: 'appointment_reminder' },
+    });
+    const reminder = await prisma.notification.findFirstOrThrow({
+      where: { eventKey: event.eventKey },
+    });
+    const appointment = await prisma.appointment.findUniqueOrThrow({
+      where: { id: event.appointmentId },
+    });
+    expect(reminder.userId).toBe(appointment.clientId);
+    expect(
+      await prisma.notification.count({
+        where: { userId: appointment.barberId, type: 'appointment_reminder' },
+      }),
+    ).toBe(0);
+    await worker.close();
+    worker = undefined;
+    await queue.add(
+      SCHEDULE_REMINDERS_JOB,
+      {},
+      { jobId: 'scan-after-restart' },
+    );
+    await new NotificationBullMqQueue(queue).enqueue(event.id);
+    await startWorker();
+    await eventually(async () => {
+      expect(await queue.getJob('scan-after-restart')).toBeUndefined();
+      expect(await queue.getJob(`notification-${event.id}`)).toBeUndefined();
+    });
+    expect(
+      await prisma.notification.count({
+        where: { type: 'appointment_reminder' },
+      }),
+    ).toBe(1);
+    expect(
+      await prisma.notificationOutbox.count({
+        where: { type: 'appointment_reminder' },
+      }),
+    ).toBe(1);
+  });
+
+  it('descarta lembrete pendente na fila após cancelamento e preserva a confirmação histórica', async () => {
+    await schedule.execute();
+    const event = await prisma.notificationOutbox.findFirstOrThrow({
+      where: { type: 'appointment_reminder' },
+    });
+    await prisma.appointment.update({
+      where: { id: event.appointmentId },
+      data: { status: 'cancelled', version: { increment: 1 } },
+    });
+    await publish.execute();
+    await startWorker();
+    await eventually(async () => {
+      expect(
+        (
+          await prisma.notificationOutbox.findUniqueOrThrow({
+            where: { id: event.id },
+          })
+        ).processedAt,
+      ).toEqual(now);
+      expect(await queue.getJob(`notification-${event.id}`)).toBeUndefined();
+      expect(await prisma.notification.count()).toBe(2);
+    });
+    expect(
+      await prisma.notification.count({
+        where: { type: 'appointment_reminder' },
+      }),
+    ).toBe(0);
+    expect(
+      await prisma.notification.count({
+        where: { type: 'appointment_created' },
+      }),
+    ).toBe(2);
   });
 });

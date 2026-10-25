@@ -10,6 +10,8 @@ import {
 import { NotificationEntity } from '../../../domain/entities/notification.entity';
 import { NotificationType } from '../../../domain/entities/notification.props';
 import { NotificationModelMapper } from './notification-model.mapper';
+import { Clock, systemClock } from '@/shared/application/providers/clock';
+import { isAppointmentReminderDue } from '../../../application/services/appointment-reminder-policy';
 
 export class NotificationOutboxPrismaWriter implements NotificationOutboxWriter {
   constructor(private readonly client: Prisma.TransactionClient) {}
@@ -62,7 +64,10 @@ export class NotificationOutboxPrismaWriter implements NotificationOutboxWriter 
 }
 
 export class NotificationOutboxPrismaRepository implements NotificationOutboxRepository {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly clock: Clock = systemClock,
+  ) {}
 
   recordCreated(event: AppointmentCreatedNotification): Promise<void> {
     return new NotificationOutboxPrismaWriter(this.prisma).recordCreated(event);
@@ -87,6 +92,47 @@ export class NotificationOutboxPrismaRepository implements NotificationOutboxRep
         where: { id: eventId },
       });
       if (!event || event.processedAt) return;
+      let current: {
+        clientId: string;
+        version: number;
+        date: Date;
+        createdAt: Date;
+        status: string;
+      } | null;
+      if (event.type === NotificationType.appointmentReminder) {
+        // Lock the same appointment row changed by rescheduling/cancellation.
+        // Validation and notification persistence cannot race a committed change.
+        await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${event.appointmentId} FOR UPDATE`;
+        current = await tx.appointment.findUnique({
+          where: { id: event.appointmentId },
+          select: {
+            clientId: true,
+            version: true,
+            date: true,
+            createdAt: true,
+            status: true,
+          },
+        });
+      }
+      const now = this.clock.now();
+      if (
+        event.type === NotificationType.appointmentReminder &&
+        (!current ||
+          current.status !== 'scheduled' ||
+          current.version !== event.appointmentVersion ||
+          current.date.getTime() !== event.startsAt.getTime() ||
+          event.recipientIds.length !== 1 ||
+          event.recipientIds[0] !== current.clientId ||
+          !isAppointmentReminderDue(current.date, current.createdAt, now))
+      ) {
+        // An obsolete reminder is processed without creating an inbox entry.
+        // Keeping the marker prevents the outbox publisher from retrying it forever.
+        await tx.notificationOutbox.update({
+          where: { id: event.id },
+          data: { processedAt: now },
+        });
+        return;
+      }
       const {
         appointmentId,
         eventKey,
@@ -110,6 +156,7 @@ export class NotificationOutboxPrismaRepository implements NotificationOutboxRep
             previousStartsAt,
             previousServiceName,
             type: event.type as NotificationType,
+            createdAt: now,
           }),
         ),
       );
@@ -118,7 +165,7 @@ export class NotificationOutboxPrismaRepository implements NotificationOutboxRep
       await tx.notification.createMany({ data, skipDuplicates: true });
       await tx.notificationOutbox.update({
         where: { id: event.id },
-        data: { processedAt: new Date() },
+        data: { processedAt: now },
       });
     });
   }

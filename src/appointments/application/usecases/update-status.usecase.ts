@@ -35,7 +35,7 @@ export namespace UpdateStatusUseCase {
       private bookingPolicy: AppointmentBookingPolicy = new AppointmentBookingPolicy(),
       private bookingTransaction?: ProfessionalBookingTransaction,
       private serviceRepository?: ServicesRepository.Repository,
-    ) { }
+    ) {}
 
     async execute(input: Input): Promise<AppointmentOutput> {
       const { id, newStatus, userId } = input;
@@ -95,9 +95,9 @@ export namespace UpdateStatusUseCase {
           context.notificationOutbox;
         const [service, barberShop] = cancellation
           ? await Promise.all([
-            this.serviceRepository?.findById(appointment.serviceId),
-            this.barberShopRepository.findById(appointment.barberShopId),
-          ])
+              this.serviceRepository?.findById(appointment.serviceId),
+              this.barberShopRepository.findById(appointment.barberShopId),
+            ])
           : [null, null];
         if (cancellation && !service)
           throw new NotFoundError('Service not found');

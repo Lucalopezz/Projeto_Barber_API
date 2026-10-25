@@ -2,6 +2,7 @@ export enum NotificationType {
   appointmentCreated = 'appointment_created',
   appointmentUpdated = 'appointment_updated',
   appointmentCancelled = 'appointment_cancelled',
+  appointmentReminder = 'appointment_reminder',
 }
 
 export type NotificationProps = {

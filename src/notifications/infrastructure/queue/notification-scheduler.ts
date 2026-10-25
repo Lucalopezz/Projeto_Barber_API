@@ -5,6 +5,8 @@ import {
   NOTIFICATIONS_QUEUE,
   OUTBOX_SCHEDULER_ID,
   PUBLISH_OUTBOX_JOB,
+  REMINDER_SCHEDULER_ID,
+  SCHEDULE_REMINDERS_JOB,
 } from './notification-queue.config';
 
 @Injectable()
@@ -18,6 +20,11 @@ export class NotificationScheduler implements OnModuleInit {
       OUTBOX_SCHEDULER_ID,
       { pattern: '*/5 * * * * *', tz: 'UTC' },
       { name: PUBLISH_OUTBOX_JOB, data: {} },
+    );
+    await this.queue.upsertJobScheduler(
+      REMINDER_SCHEDULER_ID,
+      { pattern: '* * * * *', tz: 'UTC' },
+      { name: SCHEDULE_REMINDERS_JOB, data: {} },
     );
   }
 }

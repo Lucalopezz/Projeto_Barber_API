@@ -4,6 +4,8 @@ export const NOTIFICATIONS_QUEUE = 'notifications';
 export const PUBLISH_OUTBOX_JOB = 'publish-outbox';
 export const DELIVER_NOTIFICATION_JOB = 'deliver-notification';
 export const OUTBOX_SCHEDULER_ID = 'notification-outbox-publisher-v1';
+export const SCHEDULE_REMINDERS_JOB = 'schedule-reminders';
+export const REMINDER_SCHEDULER_ID = 'notification-appointment-reminders-v1';
 
 export function notificationQueueConfig(config: ConfigService) {
   const test = config.get<string>('NODE_ENV') === 'test';

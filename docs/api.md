@@ -57,7 +57,7 @@ não é prova de expiração. Na Swagger UI, Bearer continua disponível em Auth
 | `/api/v1/barber-shops` | leitura pública; escrita protegida  | Vitrine, gestão do estabelecimento e horários públicos. |
 | `/api/v1/services`     | leitura pública; escrita de `owner` | Catálogo e administração dos serviços.                  |
 | `/api/v1/appointments` | autenticado                         | Reservas, status, agenda semanal e folgas.              |
-| `/api/v1/notifications` | autenticado                        | Confirmações persistentes dos próprios agendamentos.   |
+| `/api/v1/notifications` | autenticado                        | Notificações persistentes dos próprios agendamentos.   |
 
 ### Usuários
 
@@ -186,6 +186,7 @@ não integram o contrato público.
 | `appointment_created` | Cliente e profissional atribuído | Confirmação com serviço e horário da reserva |
 | `appointment_updated` | Cliente e profissional atribuído | Novos serviço/horário e os valores anteriores |
 | `appointment_cancelled` | A outra parte, excluindo quem cancelou | Serviço e horário da reserva cancelada |
+| `appointment_reminder` | Cliente | Lembrete com serviço e horário da reserva |
 
 O dono só recebe se for o profissional da reserva. Um destinatário que acumule
 os dois papéis recebe uma confirmação/alteração; ao cancelar a própria reserva
@@ -212,8 +213,18 @@ selecionar outro destinatário.
 
 O frontend consulta listagem e contador a cada 30 segundos enquanto está em
 primeiro plano. Após leitura confirmada, atualiza os dados da sessão corrente
-e revalida contador/listas. Os lembretes continuam previstos na parte 3 do
-[plano](../.scratch/notificacoes-bullmq-redis/spec.md).
+e revalida contador/listas.
+
+Os lembretes são procurados a cada minuto, sem depender do cliente conectado.
+São elegíveis reservas `scheduled` futuras, criadas com pelo menos 24 horas
+de antecedência, cujo instante `startsAt - 24h` já passou. Se o worker estiver
+parado, a busca recupera os lembretes atrasados enquanto a reserva ainda for
+futura; no instante do início ou depois dele, o lembrete é descartado.
+Antes da entrega, o worker confere novamente status, data, versão e cliente.
+Remarcações e cancelamentos invalidam lembretes pendentes antigos. Cada
+versão/data válida gera no máximo uma notificação por cliente; confirmações,
+alterações e cancelamentos permanecem como histórico. O horário exibido usa
+o fuso da barbearia. Não há novos endpoints nesta etapa.
 
 ### Coleções
 

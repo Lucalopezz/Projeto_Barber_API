@@ -2,6 +2,7 @@ import { getQueueToken } from '@nestjs/bullmq';
 import { Test } from '@nestjs/testing';
 import { PrismaService } from '@/shared/infrastructure/database/prisma.service';
 import { PublishPendingNotificationsUseCase } from '../../../application/usecases/publish-pending-notifications.usecase';
+import { ScheduleAppointmentRemindersUseCase } from '../../../application/usecases/schedule-appointment-reminders.usecase';
 import { NotificationWorkerModule } from '../../notification-worker.module';
 import { NotificationProcessor } from '../../queue/notification.processor';
 import { NotificationScheduler } from '../../queue/notification-scheduler';
@@ -13,7 +14,7 @@ import {
 } from '../../queue/notification-queue.config';
 
 describe('Composição do worker separado, sem conexões externas', () => {
-  it('resolve os providers reais e registra a publicação estável', async () => {
+  it('resolve os providers reais e registra publicação e lembretes estáveis', async () => {
     const queue = {
       upsertJobScheduler: jest.fn().mockResolvedValue(undefined),
     };
@@ -28,8 +29,12 @@ describe('Composição do worker separado, sem conexões externas', () => {
     try {
       const processor = moduleRef.get(NotificationProcessor);
       const publish = moduleRef.get(PublishPendingNotificationsUseCase.UseCase);
+      const reminders = moduleRef.get(
+        ScheduleAppointmentRemindersUseCase.UseCase,
+      );
       const outbox = moduleRef.get('NotificationOutboxRepository');
       jest.spyOn(publish, 'execute').mockResolvedValue(undefined);
+      jest.spyOn(reminders, 'execute').mockResolvedValue(undefined);
       jest.spyOn(outbox, 'deliver').mockResolvedValue(undefined);
 
       await moduleRef.get(NotificationScheduler).onModuleInit();
@@ -38,8 +43,16 @@ describe('Composição do worker separado, sem conexões externas', () => {
         { pattern: '*/5 * * * * *', tz: 'UTC' },
         { name: PUBLISH_OUTBOX_JOB, data: {} },
       );
+      expect(queue.upsertJobScheduler).toHaveBeenCalledWith(
+        'notification-appointment-reminders-v1',
+        { pattern: '* * * * *', tz: 'UTC' },
+        { name: 'schedule-reminders', data: {} },
+      );
+      expect(queue.upsertJobScheduler).toHaveBeenCalledTimes(2);
       await processor.process({ name: PUBLISH_OUTBOX_JOB, data: {} } as any);
       expect(publish.execute).toHaveBeenCalledTimes(1);
+      await processor.process({ name: 'schedule-reminders', data: {} } as any);
+      expect(reminders.execute).toHaveBeenCalledTimes(1);
       await processor.process({
         name: DELIVER_NOTIFICATION_JOB,
         data: { eventId: 'event-id' },

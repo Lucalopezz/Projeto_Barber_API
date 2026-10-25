@@ -31,6 +31,8 @@ import {
   NotificationOutboxPrismaWriter,
 } from '../../notification-outbox-prisma.repository';
 import { NotificationPrismaRepository } from '../../notification-prisma.repository';
+import { AppointmentReminderPrismaRepository } from '../../appointment-reminder-prisma.repository';
+import { ScheduleAppointmentRemindersUseCase } from '@/notifications/application/usecases/schedule-appointment-reminders.usecase';
 
 describe('Confirmações transacionais e idempotência (PostgreSQL real)', () => {
   const prisma = new PrismaService();
@@ -568,5 +570,267 @@ describe('Confirmações transacionais e idempotência (PostgreSQL real)', () =>
     expect(first.toJSON().readAt).toEqual(saved.readAt);
     expect(second.toJSON().readAt).toEqual(saved.readAt);
     expect(await repository.countUnread(clientId)).toBe(0);
+  });
+
+  it('dois crons concorrentes e retries geram e entregam somente um lembrete ao cliente por versão', async () => {
+    const appointment = await book();
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { createdAt: new Date('2030-01-01T12:00:00.000Z') },
+    });
+    const clock = { now: () => new Date('2030-01-06T12:00:00.000Z') };
+    const schedule = new ScheduleAppointmentRemindersUseCase.UseCase(
+      new AppointmentReminderPrismaRepository(prisma),
+      clock,
+    );
+    await Promise.all([schedule.execute(), schedule.execute()]);
+    await schedule.execute();
+    const eventKey = `appointment-reminder-${appointment.id}-${clientId}-v0-${startsAt.getTime()}`;
+    const events = await prisma.notificationOutbox.findMany({
+      where: { eventKey },
+    });
+    expect(events).toHaveLength(1);
+    expect(events[0]).toEqual(
+      expect.objectContaining({
+        type: 'appointment_reminder',
+        recipientIds: [clientId],
+        appointmentVersion: 0,
+        startsAt,
+      }),
+    );
+    const delivery = new NotificationOutboxPrismaRepository(prisma, clock);
+    await Promise.all([
+      delivery.deliver(events[0].id),
+      delivery.deliver(events[0].id),
+    ]);
+    const notifications = await prisma.notification.findMany({
+      where: { eventKey },
+    });
+    expect(notifications).toHaveLength(1);
+    expect(notifications[0].userId).toBe(clientId);
+    expect(notifications[0].createdAt).toEqual(clock.now());
+    await schedule.execute();
+    expect(await prisma.notificationOutbox.count({ where: { eventKey } })).toBe(
+      1,
+    );
+  });
+
+  it('descarta lembrete pendente após remarcação e gera somente o da nova versão quando vencer', async () => {
+    const appointment = await book();
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { createdAt: new Date('2030-01-01T12:00:00.000Z') },
+    });
+    let now = new Date('2030-01-06T12:00:00.000Z');
+    const clock = { now: () => now };
+    const schedule = new ScheduleAppointmentRemindersUseCase.UseCase(
+      new AppointmentReminderPrismaRepository(prisma),
+      clock,
+    );
+    await schedule.execute();
+    const old = await prisma.notificationOutbox.findFirstOrThrow({
+      where: { type: 'appointment_reminder' },
+    });
+    const newDate = new Date('2030-01-07T14:00:00.000Z');
+    await reschedule.execute({
+      id: appointment.id,
+      userId: barberId,
+      date: newDate,
+    });
+    const delivery = new NotificationOutboxPrismaRepository(prisma, clock);
+    await delivery.deliver(old.id);
+    expect(
+      (
+        await prisma.notificationOutbox.findUniqueOrThrow({
+          where: { id: old.id },
+        })
+      ).processedAt,
+    ).toEqual(now);
+    expect(
+      await prisma.notification.count({
+        where: { type: 'appointment_reminder' },
+      }),
+    ).toBe(0);
+    now = new Date('2030-01-06T14:00:00.000Z');
+    await schedule.execute();
+    const current = await prisma.notificationOutbox.findUniqueOrThrow({
+      where: {
+        eventKey: `appointment-reminder-${appointment.id}-${clientId}-v1-${newDate.getTime()}`,
+      },
+    });
+    await delivery.deliver(current.id);
+    expect(
+      await prisma.notification.findMany({
+        where: { type: 'appointment_reminder' },
+      }),
+    ).toEqual([
+      expect.objectContaining({ userId: clientId, startsAt: newDate }),
+    ]);
+  });
+
+  it('lembrete pendente não é entregue depois de cancelamento confirmado', async () => {
+    const appointment = await book();
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { createdAt: new Date('2030-01-01T12:00:00.000Z') },
+    });
+    const clock = { now: () => new Date('2030-01-06T12:00:00.000Z') };
+    const schedule = new ScheduleAppointmentRemindersUseCase.UseCase(
+      new AppointmentReminderPrismaRepository(prisma),
+      clock,
+    );
+    await schedule.execute();
+    const event = await prisma.notificationOutbox.findFirstOrThrow({
+      where: { type: 'appointment_reminder' },
+    });
+    await changeStatus.execute({
+      id: appointment.id,
+      userId: clientId,
+      newStatus: AppointmentStatus.cancelled,
+    });
+    await new NotificationOutboxPrismaRepository(prisma, clock).deliver(
+      event.id,
+    );
+    expect(
+      await prisma.notification.count({
+        where: { type: 'appointment_reminder' },
+      }),
+    ).toBe(0);
+    expect(
+      (
+        await prisma.notificationOutbox.findUniqueOrThrow({
+          where: { id: event.id },
+        })
+      ).processedAt,
+    ).toEqual(clock.now());
+  });
+
+  it('não agenda lembrete para reserva criada um milissegundo dentro da janela de 24 horas', async () => {
+    const appointment = await book();
+    const dueAt = new Date(startsAt.getTime() - 24 * 60 * 60_000);
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { createdAt: new Date(dueAt.getTime() + 1) },
+    });
+    await new ScheduleAppointmentRemindersUseCase.UseCase(
+      new AppointmentReminderPrismaRepository(prisma),
+      { now: () => dueAt },
+    ).execute();
+    expect(
+      await prisma.notificationOutbox.count({
+        where: { type: 'appointment_reminder' },
+      }),
+    ).toBe(0);
+  });
+
+  it('recupera scan atrasado até antes do início e descarta entrega que ultrapassou o início', async () => {
+    const appointment = await book();
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { createdAt: new Date('2030-01-01T12:00:00.000Z') },
+    });
+    let now = new Date(startsAt.getTime() - 1);
+    const clock = { now: () => now };
+    const schedule = new ScheduleAppointmentRemindersUseCase.UseCase(
+      new AppointmentReminderPrismaRepository(prisma),
+      clock,
+    );
+    await schedule.execute();
+    const event = await prisma.notificationOutbox.findFirstOrThrow({
+      where: { type: 'appointment_reminder' },
+    });
+    now = new Date(startsAt);
+    await new NotificationOutboxPrismaRepository(prisma, clock).deliver(
+      event.id,
+    );
+    expect(
+      await prisma.notification.count({
+        where: { type: 'appointment_reminder' },
+      }),
+    ).toBe(0);
+    expect(
+      (
+        await prisma.notificationOutbox.findUniqueOrThrow({
+          where: { id: event.id },
+        })
+      ).processedAt,
+    ).toEqual(startsAt);
+  });
+
+  it('aguarda o lock da reserva e revalida o cancelamento confirmado antes de gravar', async () => {
+    const appointment = await book();
+    await prisma.appointment.update({
+      where: { id: appointment.id },
+      data: { createdAt: new Date('2030-01-01T12:00:00.000Z') },
+    });
+    const clock = { now: () => new Date('2030-01-06T12:00:00.000Z') };
+    await new ScheduleAppointmentRemindersUseCase.UseCase(
+      new AppointmentReminderPrismaRepository(prisma),
+      clock,
+    ).execute();
+    const event = await prisma.notificationOutbox.findFirstOrThrow({
+      where: { type: 'appointment_reminder' },
+    });
+    let release!: () => void;
+    let reached!: () => void;
+    const resume = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const locked = new Promise<void>((resolve) => {
+      reached = resolve;
+    });
+    const cancellation = prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT "id" FROM "Appointment" WHERE "id" = ${appointment.id} FOR UPDATE`;
+        await tx.appointment.update({
+          where: { id: appointment.id },
+          data: { status: 'cancelled', version: { increment: 1 } },
+        });
+        reached();
+        await resume;
+      },
+      { timeout: 15_000 },
+    );
+    await locked;
+    const pending = new NotificationOutboxPrismaRepository(
+      prisma,
+      clock,
+    ).deliver(event.id);
+    try {
+      let waiting = false;
+      for (let attempt = 0; attempt < 200 && !waiting; attempt++) {
+        const [activity] = await prisma.$queryRaw<{ waiting: boolean }[]>`
+          SELECT EXISTS (
+            SELECT 1 FROM pg_stat_activity
+            WHERE datname = current_database() AND pid <> pg_backend_pid()
+              AND state = 'active' AND wait_event_type = 'Lock'
+              AND query LIKE '%Appointment%FOR UPDATE%'
+          ) AS waiting`;
+        waiting = activity.waiting;
+        if (!waiting) await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+      expect(waiting).toBe(true);
+      expect(
+        await prisma.notification.count({
+          where: { type: 'appointment_reminder' },
+        }),
+      ).toBe(0);
+    } finally {
+      release();
+      await cancellation;
+    }
+    await pending;
+    expect(
+      await prisma.notification.count({
+        where: { type: 'appointment_reminder' },
+      }),
+    ).toBe(0);
+    expect(
+      (
+        await prisma.notificationOutbox.findUniqueOrThrow({
+          where: { id: event.id },
+        })
+      ).processedAt,
+    ).toEqual(clock.now());
   });
 });
