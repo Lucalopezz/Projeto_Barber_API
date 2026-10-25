@@ -7,6 +7,8 @@ allowBuilds:
   '@scarf/scarf': false
   '@parcel/watcher': true
   'unrs-resolver': true
+  # BullMQ works with msgpackr's JavaScript path; the native accelerator is optional.
+  'msgpackr-extract': false
 overrides:
   # Nest pins an older Fastify 5 release; preserve its major with security fixes.
   '@nestjs/platform-fastify>fastify': '5.12.7'

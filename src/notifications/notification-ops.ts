@@ -55,11 +55,11 @@ async function main(): Promise<void> {
   } catch (error) {
     const safeMessage =
       error instanceof Error &&
-        [
-          'Notification event not found',
-          'Notification event already processed',
-          'Job is not a notification delivery',
-        ].includes(error.message)
+      [
+        'Notification event not found',
+        'Notification event already processed',
+        'Job is not a notification delivery',
+      ].includes(error.message)
         ? error.message
         : 'Notification operations failed. Check PostgreSQL, Redis, and the event ID.';
     console.error(safeMessage);
